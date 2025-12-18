@@ -1,0 +1,288 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+// 创建会员抽屉圆角
+.create-member-drawer-wrapper.ant-drawer {
+  .ant-drawer-content-wrapper {
+    border-radius: 16px 0 0 16px;
+  }
+
+  .ant-drawer-content {
+    border-radius: 16px 0 0 16px;
+    overflow: hidden;
+  }
+}
+
+// 抽屉圆角全局样式
+.rounded-drawer {
+  .ant-drawer-content-wrapper {
+    border-radius: 20px 0 0 20px !important;
+    overflow: hidden;
+  }
+
+  .ant-drawer-content {
+    border-radius: 20px 0 0 20px !important;
+  }
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+// 暗黑模式全局样式
+.dark-mode {
+  // 滚动条
+  ::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #1f1f1f;
+  }
+
+  // 页面容器
+  .page-container {
+    background: #141414 !important;
+
+    .page-title {
+      color: #fff !important;
+    }
+
+    .total-text {
+      color: #8c8c8c !important;
+    }
+
+    .icon-btn {
+      color: #8c8c8c !important;
+
+      &:hover {
+        color: #1890ff !important;
+      }
+    }
+  }
+
+  // 抽屉
+  .ant-drawer {
+    .ant-drawer-header {
+      background: #1f1f1f !important;
+      border-bottom-color: #303030 !important;
+
+      .ant-drawer-title {
+        color: #fff !important;
+      }
+    }
+
+    .ant-drawer-body {
+      background: #1f1f1f !important;
+    }
+
+    .ant-drawer-content {
+      background: #1f1f1f !important;
+    }
+  }
+
+  // 表单
+  .ant-form-item-label > label {
+    color: #d9d9d9 !important;
+  }
+
+  .ant-input,
+  .ant-input-password,
+  .ant-input-affix-wrapper,
+  .ant-select-selector,
+  .ant-picker {
+    background: #262626 !important;
+    border-color: #434343 !important;
+    color: #d9d9d9 !important;
+
+    &::placeholder {
+      color: #6c6c6c !important;
+    }
+  }
+
+  .ant-input-affix-wrapper {
+    .ant-input {
+      background: transparent !important;
+    }
+  }
+
+  .ant-select-dropdown {
+    background: #262626 !important;
+
+    .ant-select-item {
+      color: #d9d9d9 !important;
+
+      &:hover {
+        background: #363636 !important;
+      }
+
+      &-option-selected {
+        background: #1890ff30 !important;
+      }
+    }
+  }
+
+  // 开关行
+  .switch-row {
+    background: #262626 !important;
+    border-color: #434343 !important;
+
+    .switch-label {
+      color: #8c8c8c !important;
+    }
+  }
+
+  // 二维码区域
+  .qrcode-section {
+    background: linear-gradient(135deg, #262626 0%, #1f1f1f 100%) !important;
+    border-color: #434343 !important;
+
+    .qrcode-tip {
+      color: #8c8c8c !important;
+    }
+
+    .secret-display {
+      background: #262626 !important;
+      border-color: #434343 !important;
+    }
+  }
+
+  // 表格
+  .ant-table {
+    background: #141414 !important;
+
+    .ant-table-thead > tr > th {
+      background: #1f1f1f !important;
+      color: #d9d9d9 !important;
+      border-color: #303030 !important;
+    }
+
+    .ant-table-tbody > tr > td {
+      background: #141414 !important;
+      color: #d9d9d9 !important;
+      border-color: #303030 !important;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #1f1f1f !important;
+    }
+  }
+
+  // 分页
+  .ant-pagination {
+    .ant-pagination-item {
+      background: #262626 !important;
+      border-color: #434343 !important;
+
+      a {
+        color: #d9d9d9 !important;
+      }
+
+      &-active {
+        border-color: #1890ff !important;
+      }
+    }
+
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      .ant-pagination-item-link {
+        background: #262626 !important;
+        border-color: #434343 !important;
+        color: #d9d9d9 !important;
+      }
+    }
+  }
+
+  // 权限树
+  .permission-content {
+    .select-all-row {
+      border-color: #303030 !important;
+    }
+
+    .ant-tree {
+      background: transparent !important;
+      color: #d9d9d9 !important;
+
+      .ant-tree-treenode:hover {
+        background: #262626 !important;
+      }
+
+      .tree-node-title {
+        color: #d9d9d9 !important;
+      }
+    }
+  }
+
+  // 筛选表单
+  .filter-form {
+    .ant-form-item-label > label {
+      color: #d9d9d9 !important;
+    }
+  }
+
+  // 日期选择器下拉
+  .ant-picker-dropdown {
+    .ant-picker-panel-container {
+      background: #262626 !important;
+    }
+
+    .ant-picker-header {
+      color: #d9d9d9 !important;
+      border-color: #434343 !important;
+
+      button {
+        color: #8c8c8c !important;
+
+        &:hover {
+          color: #1890ff !important;
+        }
+      }
+    }
+
+    .ant-picker-body {
+      .ant-picker-content th {
+        color: #8c8c8c !important;
+      }
+
+      .ant-picker-cell {
+        color: #d9d9d9 !important;
+
+        &:hover .ant-picker-cell-inner {
+          background: #363636 !important;
+        }
+
+        &-selected .ant-picker-cell-inner {
+          background: #1890ff !important;
+        }
+      }
+    }
+  }
+
+  // 消息提示
+  .ant-message {
+    .ant-message-notice-content {
+      background: #262626 !important;
+      color: #d9d9d9 !important;
+    }
+  }
+}

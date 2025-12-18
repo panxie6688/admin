@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"\n$content = Get-Content ''src/views/account/Member.vue'' -Raw\n$startPattern = ''// 创建会员表单验证规则''\n$endPattern = ''// 打开邀请码编辑弹窗''\n$replacement = @''\n// 创建会员表单验证规则\nconst createMemberRules = {\n  password: [\n    { required: true, message: ''请输入登录密码'', trigger: ''blur'' }\n  ]\n}\n\n// 打开邀请码编辑弹窗\n''@\n$regex = ''// 创建会员表单验证规则[\\s\\S]*?// 打开邀请码编辑弹窗''\n$newContent = $content -replace $regex, $replacement\nSet-Content ''src/views/account/Member.vue'' -Value $newContent -NoNewline\n\")",
+      "Bash(npm run dev)",
+      "Bash(copy:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
