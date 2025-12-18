@@ -2058,6 +2058,286 @@
       </div>
     </transition>
 
+    <!-- 下级用户层级页面 -->
+    <transition name="slide-up">
+      <div class="sub-users-page" v-if="subUsersModal.visible">
+        <div class="sub-users-page-content">
+          <!-- 顶部标题栏 -->
+          <div class="sub-users-header">
+            <h3 class="page-title">{{ subUsersModal.record?.username || 'xc03' }} - 层级</h3>
+            <div class="header-actions">
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshSubUsers">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="关闭">
+                <span class="toolbar-icon" @click="handleCloseSubUsersModal">
+                  <close-outlined />
+                </span>
+              </a-tooltip>
+              <a-tooltip v-if="!topMenuMode" title="全屏">
+                <span class="toolbar-icon" @click="toggleSubUsersFullscreen">
+                  <expand-outlined />
+                </span>
+              </a-tooltip>
+            </div>
+          </div>
+
+          <!-- 工具栏 -->
+          <div class="sub-users-toolbar">
+            <div class="toolbar-item">
+              <span class="toolbar-label">竖向布局</span>
+              <a-switch v-model:checked="subUsersModal.isVertical" />
+            </div>
+            <div class="toolbar-item">
+              <span class="toolbar-label">是否往上查询</span>
+              <a-switch v-model:checked="subUsersModal.isUpQuery" />
+            </div>
+            <div class="toolbar-item">
+              <a-input v-model:value="subUsersModal.searchUid" placeholder="请输入会员UID" style="width: 180px;" />
+            </div>
+            <div class="toolbar-item">
+              <a-button type="primary" @click="handleSearchSubUsers">查 询</a-button>
+            </div>
+          </div>
+
+          <!-- 层级树内容区域 -->
+          <div class="sub-users-tree-wrapper">
+            <div class="tree-container" :class="{ 'vertical': subUsersModal.isVertical }">
+              <!-- 根节点 -->
+              <div class="tree-root" v-if="subUsersModal.treeData">
+                <div class="tree-node root-node">
+                  <div class="node-content">
+                    <div class="node-id">{{ subUsersModal.treeData.id }}</div>
+                    <div class="node-count">({{ subUsersModal.treeData.count }}/人)</div>
+                  </div>
+                </div>
+
+                <!-- 第一级子节点 -->
+                <div class="tree-level level-1" v-if="subUsersModal.treeData.children && subUsersModal.treeData.children.length">
+                  <div class="level-connector"></div>
+                  <div class="level-nodes">
+                    <div class="tree-branch" v-for="child in subUsersModal.treeData.children" :key="child.id">
+                      <div class="branch-connector"></div>
+                      <div class="tree-node">
+                        <div class="node-content">
+                          <div class="node-id">{{ child.id }}</div>
+                          <div class="node-count">({{ child.count }}/人)</div>
+                        </div>
+                      </div>
+
+                      <!-- 第二级子节点 -->
+                      <div class="tree-level level-2" v-if="child.children && child.children.length">
+                        <div class="level-connector"></div>
+                        <div class="level-nodes">
+                          <div class="tree-branch" v-for="grandChild in child.children" :key="grandChild.id">
+                            <div class="branch-connector"></div>
+                            <div class="tree-node leaf-node">
+                              <div class="node-content">
+                                <div class="node-id">{{ grandChild.id }}</div>
+                                <div class="node-count">({{ grandChild.count }}/人)</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 后台充值-创建抽屉 -->
+    <a-drawer
+      v-model:open="addGiftRecordDrawer.visible"
+      placement="right"
+      :width="420"
+      :closable="false"
+      :headerStyle="{ display: 'none' }"
+      class="add-gift-record-drawer-wrapper"
+      :rootClassName="'rounded-drawer'"
+      @close="addGiftRecordDrawer.visible = false"
+    >
+      <div class="add-gift-record-drawer">
+        <!-- 自定义头部 -->
+        <div class="drawer-header">
+          <a-button type="text" class="close-btn" @click="addGiftRecordDrawer.visible = false">
+            <close-outlined />
+          </a-button>
+          <span class="drawer-title">后台充值-创建</span>
+          <a-button type="primary" @click="handleSaveAndCreateGiftRecord">保存&创建</a-button>
+        </div>
+
+        <!-- 表单内容 -->
+        <div class="drawer-form">
+          <!-- 资产信息（继续操作时显示） -->
+          <div class="asset-info" v-if="addGiftRecordDrawer.availableAmount !== null">
+            <div class="asset-item">
+              <span class="asset-label">可用数量</span>
+              <span class="asset-value">{{ addGiftRecordDrawer.availableAmount }}</span>
+            </div>
+            <div class="asset-item">
+              <span class="asset-label">冻结数量</span>
+              <span class="asset-value">{{ addGiftRecordDrawer.frozenAmount }}</span>
+            </div>
+          </div>
+          <div class="form-tip" v-else>输入会员UID和选择'到账币种'后显示资产</div>
+
+          <div class="form-item">
+            <div class="form-label">会员UID</div>
+            <div class="form-input-group">
+              <a-input v-model:value="addGiftRecordDrawer.memberUid" placeholder="请输入会员ID" />
+              <a-button type="primary" @click="handleSearchGiftMemberUid">搜 索</a-button>
+            </div>
+          </div>
+
+          <div class="form-item">
+            <div class="form-label">方式</div>
+            <a-radio-group v-model:value="addGiftRecordDrawer.type">
+              <a-radio value="sub">扣减</a-radio>
+              <a-radio value="add">增加</a-radio>
+            </a-radio-group>
+          </div>
+
+          <div class="form-item">
+            <div class="form-label">数量</div>
+            <a-input v-model:value="addGiftRecordDrawer.amount" placeholder="输入" />
+          </div>
+
+          <div class="form-item">
+            <div class="form-label">说明(选填)</div>
+            <a-textarea
+              v-model:value="addGiftRecordDrawer.remark"
+              placeholder="输入"
+              :rows="4"
+              :auto-size="{ minRows: 4, maxRows: 4 }"
+            />
+          </div>
+        </div>
+      </div>
+    </a-drawer>
+
+    <!-- 后台充值-筛选抽屉 -->
+    <a-drawer
+      v-model:open="giftRecordSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="380"
+      :closable="true"
+      class="gift-record-search-drawer"
+      rootClassName="rounded-drawer"
+      @close="giftRecordSearchDrawer.visible = false"
+    >
+      <template #closeIcon>
+        <CloseOutlined style="font-size: 16px;" />
+      </template>
+      <template #extra>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a style="color: #ff4d4f; cursor: pointer;" @click="handleResetGiftRecordSearch">重置</a>
+          <a-button type="primary" @click="handleSubmitGiftRecordSearch">提交</a-button>
+        </div>
+      </template>
+      <div class="gift-record-search-form">
+        <div class="form-item">
+          <div class="form-label">状态</div>
+          <a-select
+            v-model:value="giftRecordSearchDrawer.status"
+            placeholder="全部"
+            :options="giftRecordStatusOptions"
+            style="width: 100%;"
+            allowClear
+          />
+        </div>
+        <div class="form-item">
+          <div class="form-label">会员ID</div>
+          <a-input v-model:value="giftRecordSearchDrawer.memberId" placeholder="输入" />
+        </div>
+        <div class="form-item">
+          <div class="form-label">开始时间</div>
+          <a-date-picker
+            v-model:value="giftRecordSearchDrawer.startTime"
+            placeholder="请选择日期"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="form-item">
+          <div class="form-label">结束时间</div>
+          <a-date-picker
+            v-model:value="giftRecordSearchDrawer.endTime"
+            placeholder="请选择日期"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="form-item">
+          <div class="form-label">搜索(全称)</div>
+          <a-input-search
+            v-model:value="giftRecordSearchDrawer.keyword"
+            placeholder="搜索内容"
+            @search="handleSearchGiftRecordKeyword"
+          />
+        </div>
+        <div class="form-item">
+          <div class="form-label">排序字段</div>
+          <a-select
+            v-model:value="giftRecordSearchDrawer.sortField"
+            :options="giftRecordSortFieldOptions"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="form-item">
+          <div class="form-label">排序类型</div>
+          <a-select
+            v-model:value="giftRecordSearchDrawer.sortType"
+            :options="giftRecordSortTypeOptions"
+            style="width: 100%;"
+          />
+        </div>
+      </div>
+    </a-drawer>
+
+    <!-- 赠送记录财务日志抽屉 -->
+    <a-drawer
+      v-model:open="giftRecordFinanceDrawer.visible"
+      title="财务日志"
+      placement="right"
+      :width="800"
+      :closable="true"
+      class="gift-record-finance-drawer"
+      rootClassName="rounded-drawer"
+      @close="giftRecordFinanceDrawer.visible = false"
+    >
+      <template #closeIcon>
+        <CloseOutlined style="font-size: 16px;" />
+      </template>
+      <div class="gift-record-finance-content">
+        <a-table
+          :columns="giftRecordFinanceColumns"
+          :data-source="giftRecordFinanceDrawer.list"
+          :loading="giftRecordFinanceDrawer.loading"
+          :pagination="false"
+          size="small"
+          bordered
+          :scroll="{ y: 'calc(100vh - 180px)' }"
+        />
+        <div class="finance-footer">
+          <span class="total-text">统计: {{ giftRecordFinanceDrawer.pagination.total }}/条</span>
+          <a-pagination
+            v-model:current="giftRecordFinanceDrawer.pagination.current"
+            :total="giftRecordFinanceDrawer.pagination.total"
+            :page-size="giftRecordFinanceDrawer.pagination.pageSize"
+            size="small"
+            show-quick-jumper
+            :show-size-changer="false"
+          />
+        </div>
+      </div>
+    </a-drawer>
+
     <!-- 订单搜索抽屉 -->
     <a-drawer
       v-model:open="orderSearchDrawer.visible"
@@ -4274,6 +4554,98 @@ const giftRecordModal = reactive({
   }
 })
 
+// 后台充值-创建抽屉
+const addGiftRecordDrawer = reactive({
+  visible: false,
+  memberUid: '',
+  type: 'add', // add: 增加, sub: 扣减
+  amount: '',
+  remark: '',
+  availableAmount: null, // 可用数量
+  frozenAmount: null // 冻结数量
+})
+
+// 后台充值-筛选抽屉
+const giftRecordSearchDrawer = reactive({
+  visible: false,
+  status: undefined,
+  memberId: '',
+  startTime: null,
+  endTime: null,
+  keyword: '',
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+// 状态选项
+const giftRecordStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '扣减', value: 'sub' },
+  { label: '增加', value: 'add' }
+]
+
+// 排序字段选项(赠送记录)
+const giftRecordSortFieldOptions = [
+  { label: '全部', value: '' },
+  { label: '数量', value: 'amount' },
+  { label: '时间', value: 'time' }
+]
+
+// 排序类型选项(赠送记录)
+const giftRecordSortTypeOptions = [
+  { label: '全部', value: '' },
+  { label: '降序排序', value: 'desc' },
+  { label: '升序排序', value: 'asc' }
+]
+
+// 赠送记录财务日志抽屉
+const giftRecordFinanceDrawer = reactive({
+  visible: false,
+  record: null,
+  loading: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 20,
+    total: 0
+  }
+})
+
+// 赠送记录财务日志列配置
+const giftRecordFinanceColumns = [
+  { title: '方向', dataIndex: 'direction', key: 'direction', width: 80, align: 'center' },
+  { title: '类型', dataIndex: 'type', key: 'type', width: 100, align: 'center' },
+  { title: '前数量', dataIndex: 'beforeAmount', key: 'beforeAmount', width: 100, align: 'center' },
+  { title: '数量', dataIndex: 'amount', key: 'amount', width: 100, align: 'center' },
+  { title: '后数量', dataIndex: 'afterAmount', key: 'afterAmount', width: 100, align: 'center' },
+  { title: '时间', dataIndex: 'time', key: 'time', width: 160, align: 'center' }
+]
+
+// 下级用户层级页面
+const subUsersModal = reactive({
+  visible: false,
+  record: null,
+  isVertical: true, // 竖向布局
+  isUpQuery: false, // 是否往上查询
+  searchUid: '',
+  treeData: null,
+  isFullscreen: false
+})
+
+// 模拟层级树数据
+const mockSubUsersTreeData = {
+  id: '1-16267817514',
+  count: 6,
+  children: [
+    { id: '1-3213438096', count: 1, children: [{ id: '1-16264937284', count: 0, children: [] }] },
+    { id: '1-3525331038', count: 1, children: [{ id: '1-6241834296', count: 0, children: [] }] },
+    { id: '1-4146392243', count: 1, children: [{ id: '1-6268941365', count: 0, children: [] }] },
+    { id: '1-7077126783', count: 1, children: [{ id: '1-6268163492', count: 0, children: [] }] },
+    { id: '1-5045101674', count: 1, children: [{ id: '1-6218346279', count: 0, children: [] }] },
+    { id: '1-9736669632', count: 1, children: [{ id: '1-6243284167', count: 0, children: [] }] }
+  ]
+}
+
 // 订单搜索抽屉
 const orderSearchDrawer = reactive({
   visible: false,
@@ -4958,26 +5330,124 @@ const handleGiftRecordDensityChange = ({ key }) => {
 
 // 添加赠送数据
 const handleAddGiftRecord = () => {
-  message.info('添加赠送数据')
+  // 重置表单
+  addGiftRecordDrawer.memberUid = ''
+  addGiftRecordDrawer.type = 'add'
+  addGiftRecordDrawer.amount = ''
+  addGiftRecordDrawer.remark = ''
+  addGiftRecordDrawer.availableAmount = null
+  addGiftRecordDrawer.frozenAmount = null
+  addGiftRecordDrawer.visible = true
+}
+
+// 搜索会员UID
+const handleSearchGiftMemberUid = () => {
+  if (!addGiftRecordDrawer.memberUid) {
+    message.warning('请输入会员UID')
+    return
+  }
+  message.success(`搜索会员: ${addGiftRecordDrawer.memberUid}`)
+}
+
+// 保存并创建赠送记录
+const handleSaveAndCreateGiftRecord = () => {
+  if (!addGiftRecordDrawer.memberUid) {
+    message.warning('请输入会员UID')
+    return
+  }
+  if (!addGiftRecordDrawer.amount) {
+    message.warning('请输入数量')
+    return
+  }
+  message.success('保存成功')
+  addGiftRecordDrawer.visible = false
+  loadGiftRecordData()
 }
 
 // 更多搜索(赠送记录)
 const handleMoreGiftRecordSearch = () => {
-  message.info('更多搜索')
+  giftRecordSearchDrawer.visible = true
+}
+
+// 重置赠送记录筛选
+const handleResetGiftRecordSearch = () => {
+  giftRecordSearchDrawer.status = undefined
+  giftRecordSearchDrawer.memberId = ''
+  giftRecordSearchDrawer.startTime = null
+  giftRecordSearchDrawer.endTime = null
+  giftRecordSearchDrawer.keyword = ''
+  giftRecordSearchDrawer.sortField = 'time'
+  giftRecordSearchDrawer.sortType = 'desc'
+}
+
+// 提交赠送记录筛选
+const handleSubmitGiftRecordSearch = () => {
+  message.success('筛选条件已应用')
+  giftRecordSearchDrawer.visible = false
+  loadGiftRecordData()
+}
+
+// 搜索关键词(赠送记录)
+const handleSearchGiftRecordKeyword = () => {
+  if (giftRecordSearchDrawer.keyword) {
+    message.info(`搜索: ${giftRecordSearchDrawer.keyword}`)
+  }
 }
 
 // 赠送记录财务
 const handleGiftRecordFinance = (record) => {
-  message.info(`财务: ${record.orderNo}`)
+  giftRecordFinanceDrawer.record = record
+  giftRecordFinanceDrawer.list = []
+  giftRecordFinanceDrawer.pagination.total = 0
+  giftRecordFinanceDrawer.visible = true
 }
 
 // 赠送记录继续
 const handleGiftRecordContinue = (record) => {
-  message.info(`继续: ${record.orderNo}`)
+  // 从记录中提取会员ID
+  const memberId = record.member ? record.member.split('-')[1] : ''
+  addGiftRecordDrawer.memberUid = memberId
+  addGiftRecordDrawer.type = record.type === '增加' ? 'add' : 'sub'
+  addGiftRecordDrawer.amount = ''
+  addGiftRecordDrawer.remark = ''
+  // 模拟数据 - 实际应从接口获取
+  addGiftRecordDrawer.availableAmount = -14991.59
+  addGiftRecordDrawer.frozenAmount = 20537.82
+  addGiftRecordDrawer.visible = true
 }
 
 const handleSubUsers = (record) => {
-  message.info(`下级用户: ${record.uid}`)
+  subUsersModal.record = record
+  subUsersModal.searchUid = record.uid || ''
+  subUsersModal.treeData = mockSubUsersTreeData
+  subUsersModal.visible = true
+}
+
+// 关闭下级用户页面
+const handleCloseSubUsersModal = () => {
+  subUsersModal.visible = false
+}
+
+// 刷新下级用户数据
+const handleRefreshSubUsers = () => {
+  message.success('刷新成功')
+}
+
+// 查询下级用户
+const handleSearchSubUsers = () => {
+  if (!subUsersModal.searchUid) {
+    message.warning('请输入会员UID')
+    return
+  }
+  message.success(`查询: ${subUsersModal.searchUid}`)
+}
+
+// 下级用户全屏切换
+const toggleSubUsersFullscreen = () => {
+  subUsersModal.isFullscreen = !subUsersModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(subUsersModal.isFullscreen)
+  }
 }
 
 const handleParentUser = (record) => {
@@ -7869,6 +8339,377 @@ const handleCryptoOrder = (record) => {
     &.active {
       color: #1890ff;
       background: rgba(24, 144, 255, 0.1);
+    }
+  }
+}
+
+/* 后台充值-创建抽屉样式 */
+.add-gift-record-drawer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: -8px;
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+
+    .close-btn {
+      padding: 4px;
+      margin-left: -8px;
+      color: #666;
+
+      &:hover {
+        color: #1890ff;
+      }
+    }
+
+    .drawer-title {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+    }
+  }
+
+  .drawer-form {
+    flex: 1;
+    padding: 16px 0;
+
+    .asset-info {
+      margin-bottom: 20px;
+
+      .asset-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .asset-label {
+          color: #999;
+          font-size: 14px;
+        }
+
+        .asset-value {
+          color: #333;
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .form-tip {
+      color: #999;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .form-item {
+      margin-bottom: 20px;
+
+      .form-label {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 8px;
+      }
+
+      .form-input-group {
+        display: flex;
+        gap: 8px;
+
+        .ant-input {
+          flex: 1;
+          height: 38px;
+        }
+
+        .ant-btn {
+          height: 38px;
+        }
+      }
+
+      .ant-radio-group {
+        display: flex;
+        gap: 24px;
+      }
+
+      > .ant-input {
+        height: 38px;
+      }
+
+      .ant-input-textarea {
+        textarea.ant-input {
+          height: auto !important;
+          padding: 10px 12px;
+          resize: none;
+          border-radius: 6px;
+        }
+      }
+    }
+  }
+}
+
+/* 后台充值-筛选抽屉样式 */
+.gift-record-search-form {
+  .form-item {
+    margin-bottom: 16px;
+
+    .form-label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .ant-input,
+    .ant-select,
+    .ant-picker {
+      height: 38px;
+    }
+
+    .ant-select .ant-select-selector {
+      height: 38px !important;
+
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: 36px !important;
+      }
+    }
+  }
+}
+
+/* 赠送记录财务日志抽屉样式 */
+.gift-record-finance-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .ant-table-wrapper {
+    flex: 1;
+  }
+
+  .finance-footer {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    gap: 16px;
+
+    .total-text {
+      color: #666;
+      font-size: 13px;
+    }
+  }
+}
+
+/* 后台充值-创建抽屉wrapper样式 */
+.rounded-drawer.add-gift-record-drawer-wrapper {
+  .ant-drawer-body {
+    padding-top: 12px;
+  }
+}
+
+/* 下级用户层级页面样式 */
+.sub-users-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f5f7fa;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .sub-users-page-content {
+    flex: 1;
+    padding: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sub-users-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .page-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toolbar-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        color: #666;
+        border-radius: 4px;
+        transition: all 0.2s;
+
+        &:hover {
+          color: #1890ff;
+          background: rgba(0, 0, 0, 0.04);
+        }
+      }
+    }
+  }
+
+  .sub-users-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 12px;
+
+    .toolbar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toolbar-label {
+        color: #666;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .sub-users-tree-wrapper {
+    flex: 1;
+    background: #f8f9fc;
+    border-radius: 8px;
+    padding: 40px 20px;
+    overflow: auto;
+
+    .tree-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: max-content;
+
+      &.vertical {
+        .tree-root {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .tree-level {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+
+          &.level-1 {
+            > .level-connector {
+              width: 2px;
+              height: 40px;
+              background: #ccc;
+            }
+
+            > .level-nodes {
+              display: flex;
+              gap: 16px;
+              position: relative;
+              padding-top: 40px;
+
+              &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 68px;
+                right: 68px;
+                height: 2px;
+                background: #ccc;
+              }
+
+              > .tree-branch {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                position: relative;
+
+                &::before {
+                  content: '';
+                  position: absolute;
+                  top: -40px;
+                  left: 50%;
+                  width: 2px;
+                  height: 40px;
+                  background: #ccc;
+                }
+              }
+            }
+          }
+
+          &.level-2 {
+            > .level-connector {
+              width: 2px;
+              height: 40px;
+              background: #ccc;
+            }
+
+            > .level-nodes {
+              > .tree-branch {
+                > .branch-connector {
+                  display: none;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .tree-node {
+      .node-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 24px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        min-width: 130px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          border-color: #1890ff;
+          box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+          transform: translateY(-2px);
+        }
+
+        .node-id {
+          font-size: 13px;
+          color: #333;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+
+        .node-count {
+          font-size: 12px;
+          color: #888;
+          margin-top: 4px;
+        }
+      }
     }
   }
 }
