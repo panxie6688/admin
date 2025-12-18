@@ -1,5 +1,5 @@
 <template>
-  <div class="online-container">
+  <div class="online-container" :class="`size-${tableSize}`">
     <!-- 页面标题和搜索区域 -->
     <div class="page-header">
       <h2 class="page-title">在线管理</h2>
@@ -655,6 +655,36 @@ const handleForceLogout = (record) => {
   .ant-input,
   .ant-picker {
     border-radius: 4px;
+  }
+}
+
+// 密度样式
+.online-container {
+  &.size-large :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 16px 16px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 16px 16px;
+    }
+  }
+
+  &.size-middle :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 12px 12px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 12px 12px;
+    }
+  }
+
+  &.size-small :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 8px 8px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 8px 8px;
+    }
   }
 }
 </style>

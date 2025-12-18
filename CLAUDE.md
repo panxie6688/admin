@@ -355,5 +355,118 @@ export const getPhoneCountry = (value) => {...}                // 获取国家�
 
 ---
 
+## 十一、Member.vue 新增功能详解
+
+> 更新日期: 2025-12-19
+
+### 11.1 赠送记录功能（更多菜单）
+
+位置：会员列表 → 更多 → 赠送记录
+
+**包含组件**：
+
+| 组件 | 触发方式 | 功能说明 |
+|------|---------|---------|
+| 后台充值记录页面 | 点击"赠送记录" | 全屏覆盖式页面，显示充值记录表格 |
+| 后台充值-创建抽屉 | 点击"添加数据" | 创建新的充值记录 |
+| 后台充值-筛选抽屉 | 点击"更多搜索" | 筛选充值记录 |
+| 财务日志抽屉 | 点击"财务"按钮 | 查看财务日志 |
+| 继续操作 | 点击"继续"按钮 | 复用创建抽屉，显示可用/冻结数量 |
+
+**后台充值-创建抽屉字段**：
+```javascript
+const addGiftRecordDrawer = reactive({
+  visible: false,
+  memberUid: '',           // 会员UID
+  type: 'add',             // 方式: add(增加) / sub(扣减)
+  amount: '',              // 数量
+  remark: '',              // 说明(选填)
+  availableAmount: null,   // 可用数量(继续操作时显示)
+  frozenAmount: null       // 冻结数量(继续操作时显示)
+})
+```
+
+**后台充值-筛选抽屉字段**：
+```javascript
+const giftRecordSearchDrawer = reactive({
+  visible: false,
+  status: undefined,       // 状态: 全部/扣减/增加
+  memberId: '',            // 会员ID
+  startTime: null,         // 开始时间
+  endTime: null,           // 结束时间
+  keyword: '',             // 搜索关键词
+  sortField: 'time',       // 排序字段: 全部/数量/时间
+  sortType: 'desc'         // 排序类型: 全部/降序/升序
+})
+```
+
+### 11.2 下级用户层级页面（更多菜单）
+
+位置：会员列表 → 更多 → 下级用户
+
+**功能特点**：
+- 全屏覆盖式页面（`position: absolute`，不覆盖左侧菜单）
+- 树形层级结构展示（支持多级嵌套）
+- 工具栏：竖向布局开关、是否往上查询开关、会员UID搜索
+- 右上角：刷新、关闭、全屏按钮
+
+**状态数据**：
+```javascript
+const subUsersModal = reactive({
+  visible: false,
+  record: null,
+  isVertical: true,      // 竖向布局
+  isUpQuery: false,      // 是否往上查询
+  searchUid: '',         // 搜索UID
+  treeData: null,        // 树形数据
+  isFullscreen: false    // 全屏状态
+})
+```
+
+**树形数据结构**：
+```javascript
+{
+  id: '1-16267817514',
+  count: 6,              // 下级人数
+  children: [
+    {
+      id: '1-3213438096',
+      count: 1,
+      children: [...]
+    }
+  ]
+}
+```
+
+### 11.3 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.gift-record-page` | 赠送记录页面容器 |
+| `.add-gift-record-drawer` | 后台充值-创建抽屉 |
+| `.gift-record-search-form` | 筛选抽屉表单 |
+| `.gift-record-finance-content` | 财务日志抽屉 |
+| `.sub-users-page` | 下级用户层级页面 |
+| `.tree-container.vertical` | 树形结构竖向布局 |
+
+---
+
+## 十二、Online.vue 密度切换
+
+> 更新日期: 2025-12-19
+
+在线管理页面已支持表格密度切换：
+
+```vue
+<div class="online-container" :class="`size-${tableSize}`">
+```
+
+**密度样式**：
+- `size-large`: padding 16px（默认）
+- `size-middle`: padding 12px（中等）
+- `size-small`: padding 8px（紧凑）
+
+---
+
 *本文档由 Claude Code 维护，用于快速了解和开发项目*
-*最后更新: 2025-12-18*
+*最后更新: 2025-12-19*
