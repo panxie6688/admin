@@ -1,5 +1,5 @@
 <template>
-  <div class="auth-container">
+  <div class="auth-container" :class="`size-${tableSize}`">
     <!-- 页面头部：Tab + 按钮 + 搜索 + 工具 -->
     <div class="page-header">
       <div class="header-left">
@@ -18,7 +18,7 @@
         <a-input
           v-model:value="searchForm.keyword"
           placeholder="单号、会员信息"
-          style="width: 160px"
+          style="width: 200px"
           allow-clear
         >
           <template #suffix>
@@ -26,6 +26,33 @@
           </template>
         </a-input>
         <a-button type="primary" @click="openSearchDrawer">更多搜索</a-button>
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <template #icon>
+              <FullscreenExitOutlined v-if="contentFullscreen" />
+              <FullscreenOutlined v-else />
+            </template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip title="刷新">
+          <a-button class="icon-btn" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
+          </a-button>
+        </a-tooltip>
+        <a-dropdown>
+          <a-tooltip title="密度">
+            <a-button class="icon-btn">
+              <template #icon><ColumnHeightOutlined /></template>
+            </a-button>
+          </a-tooltip>
+          <template #overlay>
+            <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
+              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="middle">中等</a-menu-item>
+              <a-menu-item key="small">紧凑</a-menu-item>
+            </a-menu>
+          </template>
+        </a-dropdown>
       </div>
     </div>
 
@@ -132,7 +159,8 @@
             <a-select-option value="">全部</a-select-option>
             <a-select-option value="id_card">身份证</a-select-option>
             <a-select-option value="passport">护照</a-select-option>
-            <a-select-option value="driver">驾照</a-select-option>
+            <a-select-option value="driver_license">驾驶证</a-select-option>
+            <a-select-option value="vehicle_license">行驶证</a-select-option>
           </a-select>
         </a-form-item>
 
@@ -197,7 +225,8 @@
           <a-select v-model:value="addForm.type" placeholder="请选择认证类型">
             <a-select-option value="id_card">身份证</a-select-option>
             <a-select-option value="passport">护照</a-select-option>
-            <a-select-option value="driver">驾照</a-select-option>
+            <a-select-option value="driver_license">驾驶证</a-select-option>
+            <a-select-option value="vehicle_license">行驶证</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="真实姓名" required>
@@ -205,6 +234,13 @@
         </a-form-item>
         <a-form-item label="证件号码" required>
           <a-input v-model:value="addForm.idNumber" placeholder="请输入证件号码" />
+        </a-form-item>
+        <a-form-item label="状态信息" required>
+          <a-radio-group v-model:value="addForm.status">
+            <a-radio value="approved">通过</a-radio>
+            <a-radio value="rejected">拒绝</a-radio>
+            <a-radio value="pending">待审核</a-radio>
+          </a-radio-group>
         </a-form-item>
         <a-form-item label="证件图片">
           <a-upload
@@ -227,7 +263,11 @@ import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
 import {
   SearchOutlined,
   DownOutlined,
-  PlusOutlined
+  PlusOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+  ReloadOutlined,
+  ColumnHeightOutlined
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 
@@ -390,7 +430,8 @@ const addForm = reactive({
   memberUid: '',
   type: undefined,
   realName: '',
-  idNumber: ''
+  idNumber: '',
+  status: 'pending'
 })
 
 const handleAdd = () => {
@@ -410,6 +451,20 @@ const handleView = (record) => {
 // 审核
 const handleAudit = (record) => {
   message.info(`审核: ${record.memberId}`)
+}
+
+// 刷新
+const handleRefresh = () => {
+  loading.value = true
+  setTimeout(() => {
+    loading.value = false
+    message.success('刷新完成')
+  }, 500)
+}
+
+// 密度切换
+const handleDensityChange = ({ key }) => {
+  tableSize.value = key
 }
 </script>
 
@@ -459,6 +514,17 @@ const handleAudit = (record) => {
       display: flex;
       align-items: center;
       gap: 8px;
+
+      .icon-btn {
+        padding: 4px 8px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+      }
     }
   }
 
@@ -610,5 +676,35 @@ const handleAudit = (record) => {
 
 :deep(.ant-btn-primary) {
   border-radius: 4px;
+}
+
+// 密度样式
+.auth-container {
+  &.size-large :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 16px 16px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 16px 16px;
+    }
+  }
+
+  &.size-middle :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 12px 12px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 12px 12px;
+    }
+  }
+
+  &.size-small :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 8px 8px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 8px 8px;
+    }
+  }
 }
 </style>

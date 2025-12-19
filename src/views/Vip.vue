@@ -12,7 +12,7 @@
         <a-input
           v-model:value="searchText"
           placeholder="单号、会员信息"
-          style="width: 160px"
+          style="width: 200px"
           allow-clear
         >
           <template #suffix>
@@ -40,7 +40,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="default">默认</a-menu-item>
+              <a-menu-item key="large">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -57,14 +57,20 @@
         :loading="loading"
         :pagination="false"
         :size="tableSize"
-        :scroll="{ x: 1800, y: tableScrollY }"
+        :scroll="{ y: tableScrollY }"
         row-key="id"
         bordered
       >
         <template #bodyCell="{ column, record }">
           <!-- LOGO列 -->
           <template v-if="column.dataIndex === 'logo'">
-            <img :src="record.logo" class="level-logo" />
+            <a-upload
+              :show-upload-list="false"
+              accept="image/*"
+              @change="handleLogoChange($event, record)"
+            >
+              <img :src="record.logo" class="level-logo" style="cursor: pointer;" />
+            </a-upload>
           </template>
           <!-- 名称列 -->
           <template v-else-if="column.dataIndex === 'name'">
@@ -84,7 +90,7 @@
           </template>
           <!-- 次数 -->
           <template v-else-if="column.dataIndex === 'times'">
-            <span class="times-text">{{ record.times }}</span>
+            <span class="withdraw-text">{{ record.times }}</span>
           </template>
           <!-- 单日限制 -->
           <template v-else-if="column.dataIndex === 'dailyLimit'">
@@ -100,7 +106,7 @@
           </template>
           <!-- 手续费 -->
           <template v-else-if="column.dataIndex === 'fee'">
-            <span class="fee-text">{{ record.fee }}</span>
+            <span class="withdraw-text">{{ record.fee }}</span>
           </template>
           <!-- 操作列 -->
           <template v-else-if="column.key === 'action'">
@@ -127,67 +133,186 @@
       />
     </div>
 
-    <!-- 添加/编辑弹窗 -->
-    <a-modal
-      v-model:open="modalVisible"
-      :title="modalTitle"
-      :width="600"
-      @ok="handleModalOk"
-      @cancel="handleModalCancel"
+    <!-- 添加/编辑抽屉 -->
+    <a-drawer
+      v-model:open="drawerVisible"
+      :title="drawerTitle"
+      placement="right"
+      :width="620"
+      :closable="true"
+      :rootClassName="'rounded-drawer'"
+      @close="handleDrawerClose"
     >
-      <a-form :model="formData" layout="vertical">
-        <a-form-item label="等级名称">
-          <a-input v-model:value="formData.name" placeholder="请输入等级名称" />
-        </a-form-item>
-        <a-form-item label="等级">
-          <a-input-number v-model:value="formData.level" placeholder="请输入等级" style="width: 100%" />
-        </a-form-item>
-        <a-form-item label="金额(USD)">
-          <a-input-number v-model:value="formData.amount" placeholder="请输入金额" style="width: 100%" />
-        </a-form-item>
-        <a-form-item label="任务数量">
-          <a-input-number v-model:value="formData.taskCount" placeholder="请输入任务数量" style="width: 100%" />
-        </a-form-item>
-        <a-form-item label="组数">
-          <a-input-number v-model:value="formData.groupCount" placeholder="请输入组数" style="width: 100%" />
-        </a-form-item>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label="佣金-单一(%)">
-              <a-input-number v-model:value="formData.commissionSingle" placeholder="请输入" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="佣金-连单(%)">
-              <a-input-number v-model:value="formData.commissionMulti" placeholder="请输入" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="次数">
-          <a-input-number v-model:value="formData.times" placeholder="请输入次数" style="width: 100%" />
-        </a-form-item>
+      <template #extra>
+        <a-button type="primary" @click="handleDrawerSubmit">保存&创建</a-button>
+      </template>
+
+      <div class="edit-drawer-content">
+        <!-- Logo上传 -->
+        <div class="logo-upload-section">
+          <a-upload
+            :show-upload-list="false"
+            accept="image/*"
+            @change="handleMainLogoChange"
+          >
+            <div class="upload-box">
+              <plus-outlined class="upload-icon" />
+              <div class="upload-text">LOGO</div>
+            </div>
+          </a-upload>
+        </div>
+
+        <!-- VIP配置 -->
+        <div class="section-title">VIP配置</div>
         <a-row :gutter="16">
           <a-col :span="8">
-            <a-form-item label="单日限制">
-              <a-input-number v-model:value="formData.dailyLimit" placeholder="请输入" style="width: 100%" />
-            </a-form-item>
+            <div class="form-item">
+              <label><span class="required">*</span> 等级</label>
+              <a-input v-model:value="formData.level" />
+            </div>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="最低数量">
-              <a-input-number v-model:value="formData.minAmount" placeholder="请输入" style="width: 100%" />
-            </a-form-item>
+            <div class="form-item">
+              <label><span class="required">*</span> 模式</label>
+              <a-select v-model:value="formData.mode" style="width: 100%">
+                <a-select-option value="根据系统配置">根据系统配置</a-select-option>
+              </a-select>
+            </div>
           </a-col>
           <a-col :span="8">
-            <a-form-item label="最高数量">
-              <a-input-number v-model:value="formData.maxAmount" placeholder="请输入" style="width: 100%" />
-            </a-form-item>
+            <div class="form-item">
+              <label><span class="required">*</span> 金额(USD)</label>
+              <a-input v-model:value="formData.amount" />
+            </div>
           </a-col>
         </a-row>
-        <a-form-item label="手续费(%)">
-          <a-input-number v-model:value="formData.fee" placeholder="请输入手续费" style="width: 100%" />
-        </a-form-item>
-      </a-form>
-    </a-modal>
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 任务佣金(0.1=10%)</label>
+              <a-input v-model:value="formData.commissionSingle" />
+            </div>
+          </a-col>
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 连单任务佣金(0.1=10%)</label>
+              <a-input v-model:value="formData.commissionMulti" />
+            </div>
+          </a-col>
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 任务数量</label>
+              <a-input v-model:value="formData.taskCount" />
+            </div>
+          </a-col>
+        </a-row>
+
+        <!-- 提现 -->
+        <div class="section-title">提现</div>
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 次数</label>
+              <a-input v-model:value="formData.times" />
+            </div>
+          </a-col>
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 单日限制</label>
+              <a-input v-model:value="formData.dailyLimit" />
+            </div>
+          </a-col>
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 最低数量</label>
+              <a-input v-model:value="formData.minAmount" />
+            </div>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 最高数量</label>
+              <a-input v-model:value="formData.maxAmount" />
+            </div>
+          </a-col>
+          <a-col :span="8">
+            <div class="form-item">
+              <label><span class="required">*</span> 手续费(0.1=10%)</label>
+              <a-input v-model:value="formData.fee" />
+            </div>
+          </a-col>
+        </a-row>
+
+        <!-- 背景图片 -->
+        <div class="section-title">背景图片</div>
+        <div class="bg-upload-row">
+          <div class="bg-upload-item">
+            <div class="bg-label">当前等级</div>
+            <a-upload
+              :show-upload-list="false"
+              accept="image/*"
+              @change="handleBgCurrentChange"
+            >
+              <div class="upload-box">
+                <plus-outlined class="upload-icon" />
+                <div class="upload-text">LOGO</div>
+              </div>
+            </a-upload>
+          </div>
+          <div class="bg-upload-item">
+            <div class="bg-label">小于当前等级</div>
+            <a-upload
+              :show-upload-list="false"
+              accept="image/*"
+              @change="handleBgLowerChange"
+            >
+              <div class="upload-box">
+                <plus-outlined class="upload-icon" />
+                <div class="upload-text">LOGO</div>
+              </div>
+            </a-upload>
+          </div>
+          <div class="bg-upload-item">
+            <div class="bg-label">大于当前等级</div>
+            <a-upload
+              :show-upload-list="false"
+              accept="image/*"
+              @change="handleBgHigherChange"
+            >
+              <div class="upload-box">
+                <plus-outlined class="upload-icon" />
+                <div class="upload-text">LOGO</div>
+              </div>
+            </a-upload>
+          </div>
+        </div>
+
+        <!-- VIP等级名称 -->
+        <div class="section-title">VIP等级名称</div>
+        <div class="name-input-row">
+          <a-select v-model:value="newLangCode" style="width: 120px" placeholder="选择语言">
+            <a-select-option value="zh-cn">zh-cn</a-select-option>
+            <a-select-option value="en-us">en-us</a-select-option>
+            <a-select-option value="ja-jp">ja-jp</a-select-option>
+          </a-select>
+          <a-input v-model:value="newLangText" placeholder="请输入语言标识" style="flex: 1" />
+          <a-button type="primary" @click="handleAddLang">添 加</a-button>
+          <a-button @click="handleRefLang">参 考</a-button>
+        </div>
+
+        <!-- 已添加的语言列表 -->
+        <div class="lang-list">
+          <div v-for="(item, index) in formData.names" :key="index" class="lang-item">
+            <div class="lang-header">
+              <span>文本 - {{ item.lang }}</span>
+              <a class="delete-link" @click="handleDeleteLang(index)">删除</a>
+            </div>
+            <a-textarea v-model:value="item.text" :rows="2" />
+          </div>
+        </div>
+      </div>
+    </a-drawer>
 
     <!-- 说明弹窗 -->
     <a-modal
@@ -259,7 +384,7 @@ onUnmounted(() => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('default')
+const tableSize = ref('large')
 
 // 表格列配置 - 带合并表头
 const columns = [
@@ -332,18 +457,15 @@ const columns = [
     ]
   },
   {
-    title: '次数',
-    dataIndex: 'times',
-    key: 'times',
-    width: 60,
-    align: 'center',
-    customHeaderCell: () => ({
-      style: { color: '#1890ff' }
-    })
-  },
-  {
     title: '提现',
     children: [
+      {
+        title: '次数',
+        dataIndex: 'times',
+        key: 'times',
+        width: 60,
+        align: 'center'
+      },
       {
         title: '单日限制',
         dataIndex: 'dailyLimit',
@@ -364,22 +486,21 @@ const columns = [
         key: 'maxAmount',
         width: 100,
         align: 'center'
+      },
+      {
+        title: '手续费(%)',
+        dataIndex: 'fee',
+        key: 'fee',
+        width: 90,
+        align: 'center'
       }
     ]
-  },
-  {
-    title: '手续费(%)',
-    dataIndex: 'fee',
-    key: 'fee',
-    width: 90,
-    align: 'center'
   },
   {
     title: '操作',
     key: 'action',
     width: 140,
-    align: 'center',
-    fixed: 'right'
+    align: 'center'
   }
 ]
 
@@ -462,26 +583,34 @@ const pagination = reactive({
   total: 4
 })
 
-// 弹窗
-const modalVisible = ref(false)
-const modalTitle = ref('添加数据')
+// 抽屉
+const drawerVisible = ref(false)
+const drawerTitle = ref('添加数据')
 const isEdit = ref(false)
 
 const formData = reactive({
   id: null,
-  name: '',
-  level: null,
-  amount: null,
-  taskCount: null,
-  groupCount: null,
-  commissionSingle: null,
-  commissionMulti: null,
-  times: null,
-  dailyLimit: null,
-  minAmount: null,
-  maxAmount: null,
-  fee: null
+  logo: '',
+  level: '',
+  mode: '根据系统配置',
+  amount: '',
+  commissionSingle: '',
+  commissionMulti: '',
+  taskCount: '',
+  times: '',
+  dailyLimit: '',
+  minAmount: '',
+  maxAmount: '',
+  fee: '',
+  bgCurrent: '',
+  bgLower: '',
+  bgHigher: '',
+  names: []
 })
+
+// 语言输入
+const newLangCode = ref('zh-cn')
+const newLangText = ref('')
 
 // 说明弹窗
 const infoModalVisible = ref(false)
@@ -496,6 +625,69 @@ const handleRefresh = () => {
   }, 500)
 }
 
+// Logo修改
+const handleLogoChange = (info, record) => {
+  if (info.file.status === 'done' || info.file.originFileObj) {
+    const file = info.file.originFileObj || info.file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      record.logo = e.target.result
+      message.success('Logo已更新')
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 主Logo上传
+const handleMainLogoChange = (info) => {
+  if (info.file.status === 'done' || info.file.originFileObj) {
+    const file = info.file.originFileObj || info.file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formData.logo = e.target.result
+      message.success('Logo已上传')
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 背景图片上传
+const handleBgCurrentChange = (info) => {
+  if (info.file.status === 'done' || info.file.originFileObj) {
+    const file = info.file.originFileObj || info.file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formData.bgCurrent = e.target.result
+      message.success('当前等级背景已上传')
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const handleBgLowerChange = (info) => {
+  if (info.file.status === 'done' || info.file.originFileObj) {
+    const file = info.file.originFileObj || info.file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formData.bgLower = e.target.result
+      message.success('小于当前等级背景已上传')
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const handleBgHigherChange = (info) => {
+  if (info.file.status === 'done' || info.file.originFileObj) {
+    const file = info.file.originFileObj || info.file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formData.bgHigher = e.target.result
+      message.success('大于当前等级背景已上传')
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 // 密度切换
 const handleDensityChange = ({ key }) => {
   tableSize.value = key
@@ -503,32 +695,39 @@ const handleDensityChange = ({ key }) => {
 
 // 添加
 const handleAdd = () => {
-  modalTitle.value = '添加数据'
+  drawerTitle.value = '添加数据'
   isEdit.value = false
   resetForm()
-  modalVisible.value = true
+  drawerVisible.value = true
 }
 
 // 编辑
 const handleEdit = (record) => {
-  modalTitle.value = '编辑数据'
+  drawerTitle.value = `编辑VIP等级-${record.level}`
   isEdit.value = true
   Object.assign(formData, {
     id: record.id,
-    name: record.name,
-    level: record.level,
-    amount: record.amount,
-    taskCount: record.taskCount,
-    groupCount: record.groupCount,
-    commissionSingle: parseFloat(record.commissionSingle),
-    commissionMulti: parseFloat(record.commissionMulti),
-    times: record.times,
-    dailyLimit: record.dailyLimit,
-    minAmount: record.minAmount,
-    maxAmount: record.maxAmount,
-    fee: parseFloat(record.fee)
+    logo: record.logo,
+    level: String(record.level),
+    mode: record.mode || '根据系统配置',
+    amount: String(record.amount),
+    commissionSingle: record.commissionSingle?.replace('%', '') || '',
+    commissionMulti: record.commissionMulti?.replace('%', '') || '',
+    taskCount: String(record.taskCount),
+    times: String(record.times),
+    dailyLimit: String(record.dailyLimit),
+    minAmount: String(record.minAmount),
+    maxAmount: String(record.maxAmount),
+    fee: record.fee?.replace('%', '') || '',
+    bgCurrent: '',
+    bgLower: '',
+    bgHigher: '',
+    names: [
+      { lang: 'zh-cn', text: '导师级别' },
+      { lang: 'en-us', text: record.name }
+    ]
   })
-  modalVisible.value = true
+  drawerVisible.value = true
 }
 
 // 说明
@@ -554,29 +753,69 @@ const handleDelete = (record) => {
 // 重置表单
 const resetForm = () => {
   formData.id = null
-  formData.name = ''
-  formData.level = null
-  formData.amount = null
-  formData.taskCount = null
-  formData.groupCount = null
-  formData.commissionSingle = null
-  formData.commissionMulti = null
-  formData.times = null
-  formData.dailyLimit = null
-  formData.minAmount = null
-  formData.maxAmount = null
-  formData.fee = null
+  formData.logo = ''
+  formData.level = ''
+  formData.mode = '根据系统配置'
+  formData.amount = ''
+  formData.commissionSingle = ''
+  formData.commissionMulti = ''
+  formData.taskCount = ''
+  formData.times = ''
+  formData.dailyLimit = ''
+  formData.minAmount = ''
+  formData.maxAmount = ''
+  formData.fee = ''
+  formData.bgCurrent = ''
+  formData.bgLower = ''
+  formData.bgHigher = ''
+  formData.names = []
+  newLangCode.value = 'zh-cn'
+  newLangText.value = ''
 }
 
-// 弹窗确认
-const handleModalOk = () => {
+// 抽屉关闭
+const handleDrawerClose = () => {
+  drawerVisible.value = false
+}
+
+// 抽屉提交
+const handleDrawerSubmit = () => {
   message.success(isEdit.value ? '编辑成功' : '添加成功')
-  modalVisible.value = false
+  drawerVisible.value = false
 }
 
-// 弹窗取消
-const handleModalCancel = () => {
-  modalVisible.value = false
+// Logo重新上传
+const handleReuploadLogo = () => {
+  message.info('重新上传Logo')
+}
+
+// Logo重置
+const handleResetLogo = () => {
+  formData.logo = ''
+  message.success('Logo已重置')
+}
+
+// 添加语言
+const handleAddLang = () => {
+  if (!newLangText.value) {
+    message.warning('请输入语言标识')
+    return
+  }
+  formData.names.push({
+    lang: newLangCode.value,
+    text: newLangText.value
+  })
+  newLangText.value = ''
+}
+
+// 参考
+const handleRefLang = () => {
+  message.info('查看参考')
+}
+
+// 删除语言
+const handleDeleteLang = (index) => {
+  formData.names.splice(index, 1)
 }
 </script>
 
@@ -608,13 +847,7 @@ const handleModalCancel = () => {
       }
 
       .add-btn {
-        background: linear-gradient(135deg, #ff6b9d 0%, #ff8a80 100%);
-        border: none;
         border-radius: 4px;
-
-        &:hover {
-          background: linear-gradient(135deg, #ff5a8a 0%, #ff7a70 100%);
-        }
       }
     }
 
@@ -671,16 +904,8 @@ const handleModalCancel = () => {
     color: #1890ff;
   }
 
-  .times-text {
-    color: #1890ff;
-  }
-
   .withdraw-text {
     color: #fa541c;
-  }
-
-  .fee-text {
-    color: #ff4d4f;
   }
 
   .action-link {
@@ -743,12 +968,12 @@ const handleModalCancel = () => {
     font-weight: 600;
     color: #333;
     font-size: 14px;
-    padding: 12px 8px;
+    padding: 16px 8px;
     text-align: center;
   }
 
   .ant-table-tbody > tr > td {
-    padding: 12px 8px;
+    padding: 16px 8px;
     font-size: 14px;
     color: #333;
   }
@@ -796,32 +1021,228 @@ const handleModalCancel = () => {
 // 表头颜色 - 全局样式
 .vip-container {
   .ant-table-thead > tr > th {
-    &:nth-child(n+8):nth-child(-n+9) {
+    // 佣金表头颜色
+    &:nth-child(8) {
       color: #1890ff !important;
     }
 
-    &:nth-child(n+11):nth-child(-n+13) {
+    // 提现表头颜色
+    &:nth-child(9) {
       color: #fa541c !important;
+    }
+
+    // 操作表头黑色
+    &:nth-child(10) {
+      color: #333 !important;
     }
   }
 
   // 子表头颜色
   .ant-table-thead > tr:nth-child(2) > th {
+    // 佣金子表头
     &:nth-child(1),
     &:nth-child(2) {
       color: #1890ff !important;
     }
 
+    // 提现子表头
     &:nth-child(3),
     &:nth-child(4),
-    &:nth-child(5) {
+    &:nth-child(5),
+    &:nth-child(6),
+    &:nth-child(7) {
       color: #fa541c !important;
     }
   }
+}
 
-  // 手续费表头颜色
-  .ant-table-thead > tr > th:last-child {
-    color: #ff4d4f !important;
+// 抽屉全局样式
+.rounded-drawer {
+  .ant-drawer-content {
+    border-radius: 8px 0 0 8px;
+  }
+
+  .ant-drawer-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .ant-drawer-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+
+  .ant-drawer-body {
+    padding: 16px 24px 24px;
+  }
+
+  .ant-drawer-extra {
+    .ant-btn-primary {
+      height: 32px;
+      border-radius: 6px;
+      font-size: 14px;
+      padding: 0 16px;
+    }
+  }
+}
+
+// 编辑抽屉内容样式
+.edit-drawer-content {
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin: 28px 0 16px;
+
+    &:first-of-type {
+      margin-top: 24px;
+    }
+  }
+
+  .form-item {
+    margin-bottom: 18px;
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 400;
+
+      .required {
+        color: #ff4d4f;
+        margin-right: 4px;
+      }
+    }
+
+    .ant-input,
+    .ant-select-selector {
+      height: 36px !important;
+      border-radius: 6px;
+      border-color: #d9d9d9;
+      font-size: 14px;
+
+      &:hover {
+        border-color: #40a9ff;
+      }
+    }
+
+    .ant-select-selector {
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: 34px !important;
+      }
+    }
+  }
+
+  .logo-upload-section {
+    margin-bottom: 8px;
+  }
+
+  .upload-box {
+    width: 104px;
+    height: 104px;
+    border: 1px dashed #d9d9d9;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fafafa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #1890ff;
+      background: #f0f7ff;
+
+      .upload-icon,
+      .upload-text {
+        color: #1890ff;
+      }
+    }
+
+    .upload-icon {
+      font-size: 24px;
+      color: #bfbfbf;
+      margin-bottom: 8px;
+      transition: color 0.3s;
+    }
+
+    .upload-text {
+      font-size: 14px;
+      color: #bfbfbf;
+      transition: color 0.3s;
+    }
+  }
+
+  .bg-upload-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .bg-upload-item {
+    .bg-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+  }
+
+  .name-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .ant-select-selector,
+    .ant-input {
+      height: 36px !important;
+      border-radius: 6px;
+    }
+
+    .ant-select-selector {
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: 34px !important;
+      }
+    }
+
+    .ant-btn {
+      height: 36px;
+      border-radius: 6px;
+      min-width: 70px;
+    }
+  }
+
+  .lang-list {
+    .lang-item {
+      margin-bottom: 16px;
+
+      .lang-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #333;
+
+        .delete-link {
+          color: #ff4d4f;
+          cursor: pointer;
+          font-size: 13px;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .ant-input {
+        border-radius: 6px;
+      }
+    }
   }
 }
 </style>

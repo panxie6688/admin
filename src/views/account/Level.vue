@@ -1,35 +1,211 @@
 <template>
-  <div class="page-container">
+  <div class="level-container">
+    <!-- 页面头部 -->
     <div class="page-header">
-      <h2>层级查询</h2>
+      <h2 class="page-title">分享层级查询</h2>
+      <div class="header-actions">
+        <a-tooltip title="刷新">
+          <a-button class="icon-btn" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <template #icon>
+              <FullscreenExitOutlined v-if="contentFullscreen" />
+              <FullscreenOutlined v-else />
+            </template>
+          </a-button>
+        </a-tooltip>
+      </div>
     </div>
-    <a-table :columns="columns" :data-source="[]" :loading="false">
-      <template #emptyText>
-        <a-empty description="暂无数据" />
-      </template>
-    </a-table>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="toolbar-item">
+        <span class="toolbar-label">竖向布局</span>
+        <a-switch v-model:checked="isVertical" />
+      </div>
+      <div class="toolbar-item">
+        <span class="toolbar-label">是否往上查询</span>
+        <a-switch v-model:checked="isUpQuery" />
+      </div>
+      <a-input
+        v-model:value="memberInfo"
+        placeholder="会员信息"
+        style="width: 160px"
+        allow-clear
+      />
+      <a-button type="primary" @click="handleQuery">查 询</a-button>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-wrapper">
+      <!-- 未查询时显示提示 -->
+      <div v-if="!treeData" class="empty-tip">
+        <div class="tip-icon">
+          <ExclamationOutlined />
+        </div>
+        <div class="tip-title">输入会员信息</div>
+        <div class="tip-desc">根据会员信息展开关系树</div>
+      </div>
+
+      <!-- 查询后显示树形结构 -->
+      <div v-else class="tree-wrapper" :class="{ vertical: isVertical }">
+        <!-- 树形结构内容 -->
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id' },
-  { title: '用户名', dataIndex: 'username', key: 'username' },
-  { title: '上级用户', dataIndex: 'parent', key: 'parent' },
-  { title: '下级数量', dataIndex: 'childCount', key: 'childCount' },
-  { title: '团队人数', dataIndex: 'teamCount', key: 'teamCount' },
-  { title: '操作', key: 'action' }
-]
+import { ref, inject } from 'vue'
+import {
+  ReloadOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+  ExclamationOutlined
+} from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
+
+// 注入布局状态
+const topMenuMode = inject('topMenuMode')
+const contentFullscreen = inject('contentFullscreen')
+const toggleContentFullscreen = inject('toggleContentFullscreen')
+
+// 状态
+const isVertical = ref(true)
+const isUpQuery = ref(false)
+const memberInfo = ref('')
+const treeData = ref(null)
+
+// 刷新
+const handleRefresh = () => {
+  message.success('刷新完成')
+}
+
+// 查询
+const handleQuery = () => {
+  if (!memberInfo.value) {
+    message.warning('请输入会员信息')
+    return
+  }
+  message.info(`查询会员: ${memberInfo.value}`)
+  // TODO: 实际查询逻辑
+}
 </script>
 
 <style scoped lang="less">
-.page-container {
+.level-container {
+  background: #fff;
+  border-radius: 4px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
   .page-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    h2 { margin: 0; font-size: 18px; }
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .page-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .icon-btn {
+        padding: 4px 8px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+
+        &:hover {
+          background: #f5f5f5;
+        }
+      }
+    }
+  }
+
+  .toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #fff;
+
+    .toolbar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toolbar-label {
+        font-size: 14px;
+        color: #333;
+      }
+    }
+  }
+
+  .content-wrapper {
+    flex: 1;
+    background: #f5f7fa;
+    margin: 0 16px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    min-height: 400px;
+
+    .empty-tip {
+      text-align: center;
+      padding: 40px;
+
+      .tip-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 20px;
+        background: #1890ff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        :deep(.anticon) {
+          font-size: 32px;
+          color: #fff;
+        }
+      }
+
+      .tip-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .tip-desc {
+        font-size: 14px;
+        color: #999;
+        line-height: 1.6;
+      }
+    }
+
+    .tree-wrapper {
+      padding: 20px;
+      width: 100%;
+      height: 100%;
+    }
   }
 }
 </style>

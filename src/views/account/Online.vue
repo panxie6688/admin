@@ -36,7 +36,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">默认</a-menu-item>
+              <a-menu-item key="large">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
