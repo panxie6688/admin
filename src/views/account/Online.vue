@@ -53,7 +53,7 @@
         :loading="loading"
         :pagination="false"
         :size="tableSize"
-        :scroll="{ y: tableScrollY }"
+        :scroll="{ x: 980, y: tableScrollY }"
         row-key="id"
         bordered
       >
@@ -340,48 +340,54 @@ const columns = [
     title: '会员',
     key: 'member',
     dataIndex: 'memberId',
-    width: 220,
-    align: 'center'
+    width: 150,
+    align: 'center',
+    ellipsis: true
   },
   {
     title: '用户名',
     key: 'username',
     dataIndex: 'username',
-    width: 200,
-    align: 'center'
+    width: 120,
+    align: 'center',
+    ellipsis: true
   },
   {
     title: '登录账户',
     dataIndex: 'loginAccount',
     key: 'loginAccount',
-    width: 220,
-    align: 'center'
+    width: 130,
+    align: 'center',
+    ellipsis: true
   },
   {
     title: 'IP',
     dataIndex: 'ip',
     key: 'ip',
-    width: 200,
+    width: 130,
     align: 'center'
   },
   {
     title: '客户端',
     dataIndex: 'client',
     key: 'client',
-    width: 120,
+    width: 80,
     align: 'center'
   },
   {
     title: '设备',
     dataIndex: 'device',
     key: 'device',
-    align: 'center'
+    width: 280,
+    align: 'center',
+    ellipsis: true
   },
   {
     title: '操作',
     key: 'action',
-    width: 120,
-    align: 'center'
+    width: 90,
+    align: 'center',
+    fixed: 'right'
   }
 ]
 
