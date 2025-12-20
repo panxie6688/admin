@@ -98,7 +98,7 @@ const handleQuery = () => {
 <style scoped lang="less">
 .level-container {
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -108,7 +108,7 @@ const handleQuery = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 16px 24px;
     border-bottom: 1px solid #f0f0f0;
 
     .page-title {
@@ -129,69 +129,81 @@ const handleQuery = () => {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 20px;
+    gap: 20px;
+    padding: 16px 24px;
     background: #fff;
+    border-bottom: 1px solid #f0f0f0;
 
     .toolbar-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
 
       .toolbar-label {
         font-size: 14px;
-        color: #333;
+        color: #666;
       }
+    }
+
+    .ant-input {
+      border-radius: 6px;
+    }
+
+    .ant-btn-primary {
+      border-radius: 6px;
+      padding: 0 20px;
     }
   }
 
   .content-wrapper {
     flex: 1;
-    background: #f5f7fa;
-    margin: 0 16px 16px;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
+    margin: 20px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: auto;
     min-height: 400px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
 
     .empty-tip {
       text-align: center;
-      padding: 40px;
+      padding: 60px 40px;
 
       .tip-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 20px;
-        background: #1890ff;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 24px;
+        background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 8px 24px rgba(24, 144, 255, 0.3);
 
         :deep(.anticon) {
-          font-size: 32px;
+          font-size: 36px;
           color: #fff;
         }
       }
 
       .tip-title {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 600;
         color: #333;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
       }
 
       .tip-desc {
         font-size: 14px;
         color: #999;
-        line-height: 1.6;
+        line-height: 1.8;
       }
     }
 
     .tree-wrapper {
-      padding: 20px;
+      padding: 24px;
       width: 100%;
       height: 100%;
     }
