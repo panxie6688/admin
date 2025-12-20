@@ -122,17 +122,6 @@ const handleQuery = () => {
       display: flex;
       align-items: center;
       gap: 8px;
-
-      .icon-btn {
-        padding: 4px 8px;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-
-        &:hover {
-          background: #f5f5f5;
-        }
-      }
     }
   }
 

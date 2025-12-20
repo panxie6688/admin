@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",
+    "@tinymce/tinymce-vue": "^6.3.0",
     "ant-design-vue": "^4.1.0",
     "axios": "^1.6.0",
     "dayjs": "^1.11.10",
     "pinia": "^2.1.7",
     "qrcode.vue": "^3.6.0",
+    "tinymce": "^8.3.1",
     "vue": "^3.4.0",
     "vue-router": "^4.2.5"
   },

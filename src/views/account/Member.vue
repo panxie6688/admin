@@ -18,21 +18,23 @@
         <a-button type="primary" @click="showMoreSearch = !showMoreSearch">
           更多搜索
         </a-button>
-        <a-tooltip v-if="!topMenuMode" :title="isFullscreen ? '退出全屏' : '全屏'">
-          <a-button type="text" class="icon-btn" @click="toggleFullscreen">
-            <compress-outlined v-if="isFullscreen" />
-            <expand-outlined v-else />
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <template #icon>
+              <FullscreenExitOutlined v-if="contentFullscreen" />
+              <FullscreenOutlined v-else />
+            </template>
           </a-button>
         </a-tooltip>
         <a-tooltip title="刷新">
-          <a-button type="text" class="icon-btn" @click="handleRefresh">
-            <reload-outlined />
+          <a-button class="icon-btn" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
           </a-button>
         </a-tooltip>
         <a-dropdown>
           <a-tooltip title="密度">
-            <a-button type="text" class="icon-btn">
-              <column-height-outlined />
+            <a-button class="icon-btn">
+              <template #icon><ColumnHeightOutlined /></template>
             </a-button>
           </a-tooltip>
           <template #overlay>
@@ -341,12 +343,13 @@
       v-model:open="vipLevelModal.visible"
       title="设置会员VIP等级"
       :width="400"
+      :rootClassName="'warning-modal'"
       @ok="handleVipLevelOk"
       @cancel="vipLevelModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>设置会员VIP等级</span>
         </div>
       </template>
@@ -374,12 +377,13 @@
     <a-modal
       v-model:open="remarkModal.visible"
       :width="400"
+      :rootClassName="'warning-modal'"
       @ok="handleRemarkOk"
       @cancel="remarkModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>设置备注(可为空)</span>
         </div>
       </template>
@@ -392,12 +396,13 @@
     <a-modal
       v-model:open="creditScoreModal.visible"
       :width="400"
+      :rootClassName="'warning-modal'"
       @ok="handleCreditScoreOk"
       @cancel="creditScoreModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改信用积分(0-100)</span>
         </div>
       </template>
@@ -412,12 +417,13 @@
     <a-modal
       v-model:open="inviteCodeModal.visible"
       :width="400"
+      :rootClassName="'warning-modal'"
       @ok="handleInviteCodeOk"
       @cancel="inviteCodeModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改邀请码</span>
         </div>
       </template>
@@ -432,13 +438,14 @@
     <a-modal
       v-model:open="balanceModal.visible"
       :width="480"
+      :rootClassName="'warning-modal'"
       @ok="handleBalanceOk"
       @cancel="balanceModal.visible = false"
       class="balance-modal"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>余额管理</span>
         </div>
       </template>
@@ -565,19 +572,21 @@
                 @search="onOrderSearch"
               />
               <a-tooltip v-if="!topMenuMode" :title="orderModal.isFullscreen ? '退出全屏' : '全屏'">
-                <a-button type="text" class="icon-btn" @click="toggleOrderFullscreen">
-                  <compress-outlined v-if="orderModal.isFullscreen" />
-                  <expand-outlined v-else />
+                <a-button class="icon-btn" @click="toggleOrderFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="orderModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
                 </a-button>
               </a-tooltip>
               <a-tooltip title="刷新">
-                <a-button type="text" class="icon-btn" @click="handleRefreshOrders">
-                  <reload-outlined />
+                <a-button class="icon-btn" @click="handleRefreshOrders">
+                  <template #icon><ReloadOutlined /></template>
                 </a-button>
               </a-tooltip>
               <a-dropdown>
-                <a-button type="text" class="icon-btn">
-                  <column-height-outlined />
+                <a-button class="icon-btn">
+                  <template #icon><ColumnHeightOutlined /></template>
                 </a-button>
                 <template #overlay>
                   <a-menu @click="handleOrderDensityChange">
@@ -1007,14 +1016,15 @@
     <a-modal
       v-model:open="editPriceModal.visible"
       :width="420"
+      :rootClassName="'warning-modal'"
       @ok="handleEditPriceOk"
       @cancel="editPriceModal.visible = false"
       okText="确 定"
       cancelText="取 消"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 22px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改价格</span>
         </div>
       </template>
@@ -1094,13 +1104,14 @@
       v-model:open="modifyBalanceModal.visible"
       :width="400"
       class="modify-balance-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px' }"
       @ok="handleModifyBalanceOk"
       @cancel="modifyBalanceModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>余额管理</span>
         </div>
       </template>
@@ -1143,13 +1154,14 @@
       v-model:open="modifyUsernameModal.visible"
       :width="380"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyUsernameOk"
       @cancel="modifyUsernameModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改用户名</span>
         </div>
       </template>
@@ -1237,13 +1249,14 @@
       v-model:open="modifyGroupCountModal.visible"
       :width="400"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyGroupCountOk"
       @cancel="modifyGroupCountModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改组数</span>
         </div>
       </template>
@@ -1343,13 +1356,14 @@
       v-model:open="modifyPasswordModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyPasswordOk"
       @cancel="modifyPasswordModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改登录密码</span>
         </div>
       </template>
@@ -1368,13 +1382,14 @@
       v-model:open="modifyTradePasswordModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyTradePasswordOk"
       @cancel="modifyTradePasswordModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改交易密码</span>
         </div>
       </template>
@@ -1393,13 +1408,14 @@
       v-model:open="modifyParentModal.visible"
       :width="480"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyParentOk"
       @cancel="modifyParentModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改上级</span>
         </div>
       </template>
@@ -1440,13 +1456,14 @@
       v-model:open="modifyInviteCodeModal.visible"
       :width="450"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyInviteCodeOk"
       @cancel="modifyInviteCodeModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改邀请码</span>
         </div>
       </template>
@@ -1466,13 +1483,14 @@
       v-model:open="modifyVipLevelModal.visible"
       :width="450"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyVipLevelOk"
       @cancel="modifyVipLevelModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>设置会员VIP等级</span>
         </div>
       </template>
@@ -1504,13 +1522,14 @@
       v-model:open="modifyLoginVerifyModal.visible"
       :width="500"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyLoginVerifyOk"
       @cancel="modifyLoginVerifyModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改登录验证</span>
         </div>
       </template>
@@ -1599,13 +1618,14 @@
       v-model:open="modifyAuthStatusModal.visible"
       :width="520"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyAuthStatusOk"
       @cancel="modifyAuthStatusModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改认证状态</span>
         </div>
       </template>
@@ -1655,13 +1675,14 @@
       v-model:open="modifyCreditScoreModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyCreditScoreOk"
       @cancel="modifyCreditScoreModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>修改信用积分(0-100)</span>
         </div>
       </template>
@@ -1688,13 +1709,14 @@
       v-model:open="modifyRemarkModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleModifyRemarkOk"
       @cancel="modifyRemarkModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>设置备注(可为空)</span>
         </div>
       </template>
@@ -1712,13 +1734,14 @@
       v-model:open="disableAccountModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleDisableAccountOk"
       @cancel="disableAccountModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>账户启停</span>
         </div>
       </template>
@@ -1732,13 +1755,14 @@
       v-model:open="disableTradeModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleDisableTradeOk"
       @cancel="disableTradeModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>交易启停</span>
         </div>
       </template>
@@ -1752,13 +1776,14 @@
       v-model:open="disableWithdrawModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleDisableWithdrawOk"
       @cancel="disableWithdrawModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>提现启停</span>
         </div>
       </template>
@@ -1772,13 +1797,14 @@
       v-model:open="disableCommentModal.visible"
       :width="420"
       class="quick-edit-modal"
+      :rootClassName="'warning-modal'"
       :bodyStyle="{ padding: '20px 24px' }"
       @ok="handleDisableCommentOk"
       @cancel="disableCommentModal.visible = false"
     >
       <template #title>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <exclamation-circle-outlined style="color: #faad14; font-size: 20px;" />
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
           <span>评论启停</span>
         </div>
       </template>
@@ -2643,8 +2669,8 @@ import {
   PlusOutlined,
   MinusOutlined,
   MinusCircleOutlined,
-  ExpandOutlined,
-  CompressOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
   ReloadOutlined,
   ColumnHeightOutlined,
   EditOutlined,
@@ -2697,11 +2723,12 @@ import PhoneCodeSelect from '@/components/PhoneCodeSelect.vue'
 const loading = ref(false)
 const showMoreSearch = ref(false)
 const searchText = ref('')
-const isFullscreen = ref(false)
 const tableSize = ref('small')
 
 const setCollapsed = inject('setCollapsed', null)
 const topMenuMode = inject('topMenuMode', ref(false))
+const contentFullscreen = inject('contentFullscreen', ref(false))
+const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
 
 // 筛选表单
 const filterForm = reactive({
@@ -3995,13 +4022,6 @@ const onPageChange = (page) => {
   pagination.current = page
 }
 
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value
-  if (setCollapsed) {
-    setCollapsed(isFullscreen.value)
-  }
-}
-
 const handleRefresh = () => {
   loading.value = true
   setTimeout(() => {
@@ -4177,6 +4197,7 @@ const handleDeleteOrder = (record) => {
     okText: '确定',
     cancelText: '取消',
     okType: 'danger',
+    class: 'warning-modal',
     onOk() {
       // 从列表中删除
       const index = mockOrderList.findIndex(o => o.id === record.id)
@@ -4914,6 +4935,7 @@ const handleOrderSkip = (record) => {
     content: `确定要跳过订单 ${record.orderNo} 吗？`,
     okText: '确认',
     cancelText: '取消',
+    class: 'warning-modal',
     onOk() {
       message.success('跳单成功')
     }
@@ -5523,14 +5545,6 @@ const handleCryptoOrder = (record) => {
       display: flex;
       align-items: center;
       gap: 12px;
-
-      .icon-btn {
-        color: #666;
-
-        &:hover {
-          color: #1890ff;
-        }
-      }
     }
   }
 
@@ -6111,14 +6125,6 @@ const handleCryptoOrder = (record) => {
         display: flex;
         align-items: center;
         gap: 8px;
-
-        .icon-btn {
-          color: #666;
-
-          &:hover {
-            color: #1890ff;
-          }
-        }
       }
     }
 

@@ -458,6 +458,7 @@ const handleForceLogout = (record) => {
     content: `确认要强制退出用户 "${record.username}" 登录信息吗？退出后需要重新登录`,
     okText: '确定',
     cancelText: '取消',
+    class: 'warning-modal',
     onOk() {
       message.success(`已强制退出用户: ${record.username}`)
     }
@@ -491,17 +492,6 @@ const handleForceLogout = (record) => {
       display: flex;
       align-items: center;
       gap: 8px;
-
-      .icon-btn {
-        padding: 4px 8px;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-
-        &:hover {
-          background: #f5f5f5;
-        }
-      }
     }
   }
 

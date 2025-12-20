@@ -471,7 +471,7 @@ const handleDensityChange = ({ key }) => {
 <style scoped lang="less">
 .auth-container {
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -482,7 +482,6 @@ const handleDensityChange = ({ key }) => {
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
-    border-bottom: 1px solid #f0f0f0;
 
     .header-left {
       display: flex;
@@ -501,12 +500,25 @@ const handleDensityChange = ({ key }) => {
         }
 
         :deep(.ant-tabs-tab) {
-          padding: 16px 0;
+          padding: 16px 4px;
+          margin: 0 16px 0 0;
+          font-size: 14px;
+          color: #666;
+
+          &.ant-tabs-tab-active .ant-tabs-tab-btn {
+            color: #1890ff;
+            font-weight: 500;
+          }
+        }
+
+        :deep(.ant-tabs-ink-bar) {
+          background: #1890ff;
         }
       }
 
       .add-btn {
         border-radius: 4px;
+        height: 32px;
       }
     }
 
@@ -514,17 +526,6 @@ const handleDensityChange = ({ key }) => {
       display: flex;
       align-items: center;
       gap: 8px;
-
-      .icon-btn {
-        padding: 4px 8px;
-        border: none;
-        background: transparent;
-        box-shadow: none;
-
-        &:hover {
-          background: #f5f5f5;
-        }
-      }
     }
   }
 
@@ -539,9 +540,8 @@ const handleDensityChange = ({ key }) => {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    border-top: 1px solid #f0f0f0;
     background: #fff;
-    border-radius: 0 0 4px 4px;
+    border-radius: 0 0 8px 8px;
   }
 
   .member-cell {
@@ -555,6 +555,7 @@ const handleDensityChange = ({ key }) => {
 
       &:hover {
         color: #40a9ff;
+        text-decoration: underline;
       }
     }
 
@@ -601,7 +602,6 @@ const handleDensityChange = ({ key }) => {
     overflow: hidden;
   }
 
-  // 横向滚动条移到底部
   .ant-table-container {
     display: flex;
     flex-direction: column;
@@ -617,11 +617,11 @@ const handleDensityChange = ({ key }) => {
 :deep(.ant-table) {
   .ant-table-thead > tr > th {
     background: #fafafa;
-    font-weight: 600;
+    font-weight: 500;
     color: #333;
     font-size: 14px;
-    padding: 14px 16px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
     text-align: center;
 
     &::before {
@@ -638,11 +638,12 @@ const handleDensityChange = ({ key }) => {
     padding: 12px 16px;
     font-size: 14px;
     color: #333;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
   }
 
   .ant-table-tbody > tr:hover > td {
-    background: #fafafa;
+    background: #f5f5f5;
   }
 
   // 固定列背景色
@@ -655,7 +656,50 @@ const handleDensityChange = ({ key }) => {
   }
 
   .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
-    background: #fafafa;
+    background: #f5f5f5;
+  }
+
+  // 去除表格边框
+  &.ant-table-bordered {
+    > .ant-table-container {
+      border: none;
+
+      > .ant-table-content > table,
+      > .ant-table-header > table,
+      > .ant-table-body > table {
+        border-top: none;
+
+        > thead > tr > th,
+        > tbody > tr > td {
+          border-right: none;
+        }
+      }
+    }
+  }
+}
+
+// 空数据样式
+:deep(.ant-table-placeholder) {
+  .ant-table-cell {
+    border-bottom: none !important;
+  }
+
+  .ant-empty {
+    margin: 60px 0;
+
+    .ant-empty-image {
+      height: 80px;
+
+      svg {
+        width: 80px;
+        height: 80px;
+      }
+    }
+
+    .ant-empty-description {
+      color: #999;
+      font-size: 14px;
+    }
   }
 }
 
@@ -672,6 +716,7 @@ const handleDensityChange = ({ key }) => {
 
 :deep(.ant-input-affix-wrapper) {
   border-radius: 4px;
+  height: 32px;
 }
 
 :deep(.ant-btn-primary) {
@@ -704,6 +749,149 @@ const handleDensityChange = ({ key }) => {
     }
     .ant-table-tbody > tr > td {
       padding: 8px 8px;
+    }
+  }
+}
+
+// 响应式样式
+@media screen and (max-width: 1200px) {
+  .auth-container {
+    .page-header {
+      .header-left {
+        .add-btn {
+          span:not(.anticon) {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .auth-container {
+    .page-header {
+      flex-wrap: wrap;
+      padding: 8px 12px;
+      gap: 8px;
+
+      .header-left {
+        width: 100%;
+        justify-content: space-between;
+
+        .header-tabs {
+          :deep(.ant-tabs-tab) {
+            padding: 12px 2px;
+            margin: 0 8px 0 0;
+            font-size: 13px;
+          }
+        }
+
+        .add-btn {
+          height: 28px;
+          font-size: 12px;
+          padding: 0 8px;
+        }
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    .pagination-wrapper {
+      padding: 8px 12px;
+
+      :deep(.ant-pagination) {
+        .ant-pagination-total-text {
+          margin-right: 8px;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .auth-container {
+    border-radius: 0;
+
+    .page-header {
+      .header-left {
+        .header-tabs {
+          :deep(.ant-tabs-tab) {
+            padding: 10px 0;
+            margin: 0 6px 0 0;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .header-right {
+        gap: 4px;
+
+        :deep(.ant-input-affix-wrapper) {
+          width: 120px !important;
+          height: 28px;
+          font-size: 12px;
+        }
+
+        :deep(.ant-btn-primary) {
+          height: 28px;
+          font-size: 12px;
+          padding: 0 8px;
+        }
+      }
+    }
+
+    .pagination-wrapper {
+      justify-content: center;
+    }
+  }
+
+  :deep(.ant-table) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 8px !important;
+      font-size: 12px;
+    }
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .auth-container {
+    .page-header {
+      .header-left {
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .header-tabs {
+          width: 100%;
+
+          :deep(.ant-tabs-nav) {
+            width: 100%;
+          }
+        }
+
+        .add-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      .header-right {
+        flex-wrap: wrap;
+        justify-content: center;
+
+        :deep(.ant-input-affix-wrapper) {
+          width: 100% !important;
+        }
+
+        :deep(.ant-btn-primary) {
+          flex: 1;
+        }
+      }
     }
   }
 }

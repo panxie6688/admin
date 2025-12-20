@@ -14,7 +14,12 @@
       "Bash(git config:*)",
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npm run build:*)",
+      "WebSearch",
+      "Bash(if not exist \"D:\\work\\untitled\\admin\\public\\tinymce\" mkdir \"D:\\work\\untitled\\admin\\public\\tinymce\")",
+      "WebFetch(domain:cdn.tiny.cloud)"
     ],
     "deny": [],
     "ask": []

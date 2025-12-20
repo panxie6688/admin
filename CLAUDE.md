@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> 最后更新: 2025-12-18
+> 最后更新: 2025-12-20
 
 ---
 
@@ -28,6 +28,7 @@ npm run preview  # 预览生产构建
 | Axios | 1.6.0 | HTTP 客户端 |
 | Less | - | CSS 预处理器 |
 | Dayjs | 1.11.10 | 日期处理 |
+| TinyMCE | 7.x (CDN) | 富文本编辑器 |
 
 ---
 
@@ -39,6 +40,11 @@ admin/
 ├── vite.config.js                    # Vite 构建配置（API代理: /api → localhost:8080）
 ├── index.html                        # HTML 入口
 ├── CLAUDE.md                         # 本文档
+│
+├── public/
+│   └── tinymce/
+│       └── langs/
+│           └── zh_CN.js              # TinyMCE 中文语言包
 │
 └── src/
     ├── main.js                       # 应用入口，注册 Pinia/Router/AntDesignVue
@@ -55,7 +61,8 @@ admin/
     │   └── MainLayout.vue            # 主布局（侧边/顶部菜单 + 暗黑模式 + 全屏）
     │
     ├── components/
-    │   └── PhoneCodeSelect.vue       # 国家区号选择器（200+国家）
+    │   ├── PhoneCodeSelect.vue       # 国家区号选择器（200+国家）
+    │   └── RichTextEditor.vue        # 富文本编辑器（TinyMCE封装）
     │
     ├── utils/
     │   └── phoneCode.js              # 手机区号数据 + 工具函数
@@ -198,6 +205,51 @@ export const filterPhoneCodeOption = (input, option) => {...}  // 搜索过滤
 export const getPhoneCode = (value) => {...}                   // 提取区号
 export const getPhoneCountry = (value) => {...}                // 获取国家信息
 ```
+
+### 5.4 RichTextEditor.vue - 富文本编辑器
+
+**基于 TinyMCE 7.x 封装的全局富文本编辑器组件**
+
+**Props**：
+```javascript
+modelValue: String = ''           // v-model 绑定值（HTML内容）
+placeholder: String = '请输入内容'  // 占位文本
+height: String|Number = '100%'    // 编辑器高度
+menubar: Boolean|String = 'file edit view insert format tools table help'  // 菜单栏
+statusbar: Boolean = true         // 是否显示状态栏
+```
+
+**使用示例**：
+```vue
+<template>
+  <RichTextEditor
+    v-model="content"
+    placeholder="请输入内容（en-us）"
+    height="400px"
+  />
+</template>
+
+<script setup>
+import RichTextEditor from '@/components/RichTextEditor.vue'
+import { ref } from 'vue'
+
+const content = ref('')
+</script>
+```
+
+**功能特性**：
+- 中文界面（语言包：`/tinymce/langs/zh_CN.js`）
+- 双行工具栏（toolbar_mode: wrap）
+- 本地图片上传（点击图片按钮打开文件选择器）
+- 内置插件：表格、代码、表情、链接、图片、媒体、全屏等
+
+**TinyMCE API Key**：
+```javascript
+const apiKey = 'gi9o0q815ws4m9zlu3e37k1txaet5yi5u9r6a47bticec4zl'
+```
+
+**图片上传**：
+编辑器使用 `file_picker_callback` 实现本地图片选择，将图片转为 Base64 嵌入内容。
 
 ---
 
@@ -468,5 +520,89 @@ const subUsersModal = reactive({
 
 ---
 
+## 十三、Vip.vue VIP等级设置
+
+> 更新日期: 2025-12-20
+
+### 13.1 页面功能
+
+VIP等级设置页面，包含等级列表和编辑功能。
+
+**主要功能**：
+- VIP等级列表（带合并表头）
+- 添加/编辑VIP等级（抽屉）
+- VIP说明编辑（抽屉 + 富文本编辑器）
+- 多语言支持（语言代码表）
+
+### 13.2 说明抽屉功能
+
+位置：VIP等级列表 → 操作 → 说明
+
+**两栏布局**：
+- 左侧：语言列表（可添加/删除）
+- 右侧：富文本编辑器（TinyMCE）
+
+**语言列表样式**：
+- 未选中：白色背景 + 灰色边框
+- 选中：蓝色背景 + 白色文字
+- 删除按钮：红色垃圾桶图标（独立显示）
+
+**富文本编辑器**：
+- 使用全局组件 `RichTextEditor`
+- placeholder 动态显示语言代码：`请输入内容（en-us）`
+
+### 13.3 数据结构
+
+**说明表单数据**：
+```javascript
+const infoFormData = reactive({
+  enabled: false,           // VIP说明开关
+  languages: [              // 语言列表
+    {
+      lang: 'en-us',        // 语言代码
+      langName: '英语(美国)', // 语言名称
+      content: ''           // 富文本内容
+    }
+  ]
+})
+```
+
+**编辑表单数据**：
+```javascript
+const formData = reactive({
+  id: null,
+  logo: '',                 // Logo图片
+  level: '',                // 等级
+  mode: '根据系统配置',      // 模式
+  amount: '',               // 金额(USD)
+  commissionSingle: '',     // 任务佣金
+  commissionMulti: '',      // 连单任务佣金
+  taskCount: '',            // 任务数量
+  times: '',                // 提现次数
+  dailyLimit: '',           // 单日限制
+  minAmount: '',            // 最低数量
+  maxAmount: '',            // 最高数量
+  fee: '',                  // 手续费
+  bgCurrent: '',            // 当前等级背景
+  bgLower: '',              // 小于当前等级背景
+  bgHigher: '',             // 大于当前等级背景
+  names: []                 // 多语言名称列表
+})
+```
+
+### 13.4 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.vip-container` | 页面容器 |
+| `.info-drawer-content` | 说明抽屉内容 |
+| `.info-two-column` | 两栏布局 |
+| `.info-left-panel` | 左侧语言列表 |
+| `.info-right-panel` | 右侧编辑器 |
+| `.info-lang-item` | 语言列表项 |
+| `.edit-drawer-content` | 编辑抽屉内容 |
+
+---
+
 *本文档由 Claude Code 维护，用于快速了解和开发项目*
-*最后更新: 2025-12-19*
+*最后更新: 2025-12-20*

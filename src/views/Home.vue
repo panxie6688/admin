@@ -5,15 +5,15 @@
       <div class="section-title">数据总览</div>
       <div class="section-actions">
         <a-tooltip title="刷新数据">
-          <a-button type="text" size="small" @click="handleRefresh">
-            <template #icon><reload-outlined /></template>
+          <a-button class="icon-btn" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
           </a-button>
         </a-tooltip>
-        <a-tooltip :title="expanded ? '退出全屏' : '全屏'">
-          <a-button type="text" size="small" @click="toggleExpand">
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
             <template #icon>
-              <compress-outlined v-if="expanded" />
-              <expand-outlined v-else />
+              <FullscreenExitOutlined v-if="contentFullscreen" />
+              <FullscreenOutlined v-else />
             </template>
           </a-button>
         </a-tooltip>
@@ -153,23 +153,17 @@ import {
   BankOutlined,
   TransactionOutlined,
   ReloadOutlined,
-  ExpandOutlined,
-  CompressOutlined
+  FullscreenOutlined,
+  FullscreenExitOutlined
 } from '@ant-design/icons-vue'
 
-const expanded = ref(false)
-const toggleCollapsed = inject('toggleCollapsed', null)
-const setCollapsed = inject('setCollapsed', null)
+// 注入布局状态
+const topMenuMode = inject('topMenuMode', ref(false))
+const contentFullscreen = inject('contentFullscreen', ref(false))
+const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
 
 const handleRefresh = () => {
   // 刷新数据逻辑
-}
-
-const toggleExpand = () => {
-  expanded.value = !expanded.value
-  if (setCollapsed) {
-    setCollapsed(expanded.value)
-  }
 }
 </script>
 

@@ -18,21 +18,23 @@
         <a-button type="primary" @click="showMoreSearch = !showMoreSearch">
           更多搜索
         </a-button>
-        <a-tooltip v-if="!topMenuMode" :title="isFullscreen ? '退出全屏' : '全屏'">
-          <a-button type="text" class="icon-btn" @click="toggleFullscreen">
-            <compress-outlined v-if="isFullscreen" />
-            <expand-outlined v-else />
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <template #icon>
+              <FullscreenExitOutlined v-if="contentFullscreen" />
+              <FullscreenOutlined v-else />
+            </template>
           </a-button>
         </a-tooltip>
         <a-tooltip title="刷新">
-          <a-button type="text" class="icon-btn" @click="handleRefresh">
-            <reload-outlined />
+          <a-button class="icon-btn" @click="handleRefresh">
+            <template #icon><ReloadOutlined /></template>
           </a-button>
         </a-tooltip>
         <a-dropdown>
           <a-tooltip title="密度">
-            <a-button type="text" class="icon-btn">
-              <column-height-outlined />
+            <a-button class="icon-btn">
+              <template #icon><ColumnHeightOutlined /></template>
             </a-button>
           </a-tooltip>
           <template #overlay>
@@ -346,8 +348,8 @@ import { message } from 'ant-design-vue'
 import QrcodeVue from 'qrcode.vue'
 import {
   PlusOutlined,
-  ExpandOutlined,
-  CompressOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
   ReloadOutlined,
   ColumnHeightOutlined,
   UserOutlined,
@@ -372,7 +374,6 @@ import {
 const loading = ref(false)
 const showMoreSearch = ref(false)
 const searchText = ref('')
-const isFullscreen = ref(false)
 const tableSize = ref('middle')
 const drawerVisible = ref(false)
 const isEdit = ref(false)
@@ -439,6 +440,8 @@ const indeterminate = ref(false)
 
 const setCollapsed = inject('setCollapsed', null)
 const topMenuMode = inject('topMenuMode', ref(false))
+const contentFullscreen = inject('contentFullscreen', ref(false))
+const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
 
 // 权限树数据
 const permissionTreeData = [
@@ -731,13 +734,6 @@ const onPageChange = (page) => {
   pagination.current = page
 }
 
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value
-  if (setCollapsed) {
-    setCollapsed(isFullscreen.value)
-  }
-}
-
 const handleRefresh = () => {
   loading.value = true
   setTimeout(() => {
@@ -785,14 +781,6 @@ const handleDensityChange = ({ key }) => {
       display: flex;
       align-items: center;
       gap: 12px;
-
-      .icon-btn {
-        color: #666;
-
-        &:hover {
-          color: #1890ff;
-        }
-      }
     }
   }
 
