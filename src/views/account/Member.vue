@@ -2178,6 +2178,78 @@
       </div>
     </transition>
 
+    <!-- 上级用户层级页面 -->
+    <transition name="slide-up">
+      <div class="parent-user-page" v-if="parentUserModal.visible">
+        <div class="parent-user-page-content">
+          <!-- 顶部标题栏 -->
+          <div class="parent-user-header">
+            <h3 class="page-title">{{ parentUserModal.record?.username || '0003' }} - 层级</h3>
+            <div class="header-actions">
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshParentUser">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-tooltip title="关闭">
+                <span class="toolbar-icon" @click="handleCloseParentUserModal">
+                  <close-outlined />
+                </span>
+              </a-tooltip>
+              <a-tooltip v-if="!topMenuMode" title="全屏">
+                <span class="toolbar-icon" @click="toggleParentUserFullscreen">
+                  <expand-outlined />
+                </span>
+              </a-tooltip>
+            </div>
+          </div>
+
+          <!-- 工具栏 -->
+          <div class="parent-user-toolbar">
+            <div class="toolbar-item">
+              <span class="toolbar-label">竖向布局</span>
+              <a-switch v-model:checked="parentUserModal.isVertical" />
+            </div>
+            <div class="toolbar-item">
+              <span class="toolbar-label">是否往上查询</span>
+              <a-switch v-model:checked="parentUserModal.isUpQuery" />
+            </div>
+            <a-input v-model:value="parentUserModal.searchUid" placeholder="会员信息" style="width: 160px;" allow-clear />
+            <a-button type="primary" @click="handleSearchParentUser">查 询</a-button>
+          </div>
+
+          <!-- 层级树内容区域 -->
+          <div class="parent-user-tree-wrapper">
+            <div class="tree-container" :class="{ 'vertical': parentUserModal.isVertical }">
+              <!-- 根节点 -->
+              <div class="tree-root" v-if="parentUserModal.treeData">
+                <div class="tree-node root-node">
+                  <div class="node-content">
+                    <div class="node-id">{{ parentUserModal.treeData.id }}</div>
+                    <div class="node-count">({{ parentUserModal.treeData.count }}/人)</div>
+                  </div>
+                </div>
+
+                <!-- 子节点 -->
+                <div class="tree-children" v-if="parentUserModal.treeData.children && parentUserModal.treeData.children.length">
+                  <div class="tree-connector-line"></div>
+                  <div class="tree-child-node" v-for="child in parentUserModal.treeData.children" :key="child.id">
+                    <div class="child-connector-line"></div>
+                    <div class="tree-node child-node" @click="handleLoadParentUserChildren(child)">
+                      <div class="node-content">
+                        <div class="node-id">{{ child.id }}</div>
+                        <div class="node-action">点击加载</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- 后台充值-创建抽屉 -->
     <a-drawer
       v-model:open="addGiftRecordDrawer.visible"
@@ -4667,6 +4739,26 @@ const mockSubUsersTreeData = {
   ]
 }
 
+// 上级用户层级页面
+const parentUserModal = reactive({
+  visible: false,
+  record: null,
+  isVertical: true, // 竖向布局
+  isUpQuery: true, // 是否往上查询
+  searchUid: '',
+  treeData: null,
+  isFullscreen: false
+})
+
+// 模拟上级用户层级树数据
+const mockParentUserTreeData = {
+  id: '1-223344556677',
+  count: 1,
+  children: [
+    { id: '1-223344556677', loaded: false }
+  ]
+}
+
 // 订单搜索抽屉
 const orderSearchDrawer = reactive({
   visible: false,
@@ -5473,7 +5565,43 @@ const toggleSubUsersFullscreen = () => {
 }
 
 const handleParentUser = (record) => {
-  message.info(`上级用户: ${record.uid}`)
+  parentUserModal.record = record
+  parentUserModal.searchUid = record.uid || ''
+  parentUserModal.treeData = mockParentUserTreeData
+  parentUserModal.visible = true
+}
+
+// 关闭上级用户页面
+const handleCloseParentUserModal = () => {
+  parentUserModal.visible = false
+}
+
+// 刷新上级用户数据
+const handleRefreshParentUser = () => {
+  message.success('刷新成功')
+}
+
+// 查询上级用户
+const handleSearchParentUser = () => {
+  if (!parentUserModal.searchUid) {
+    message.warning('请输入会员信息')
+    return
+  }
+  message.success(`查询: ${parentUserModal.searchUid}`)
+}
+
+// 点击加载上级用户子节点
+const handleLoadParentUserChildren = (node) => {
+  message.info(`加载子节点: ${node.id}`)
+  // TODO: 调用接口加载子节点数据
+}
+
+// 上级用户全屏切换
+const toggleParentUserFullscreen = () => {
+  parentUserModal.isFullscreen = !parentUserModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(parentUserModal.isFullscreen)
+  }
 }
 
 const handleAuthInfo = (record) => {
@@ -8713,6 +8841,192 @@ const handleCryptoOrder = (record) => {
         .node-count {
           font-size: 12px;
           color: #888;
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+}
+
+/* 上级用户层级页面样式 */
+.parent-user-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .parent-user-page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .parent-user-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .page-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #333;
+      margin: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toolbar-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        color: #1890ff;
+        border-radius: 4px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(24, 144, 255, 0.1);
+        }
+      }
+    }
+  }
+
+  .parent-user-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+
+    .toolbar-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .toolbar-label {
+        color: #333;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+    }
+
+    :deep(.ant-input) {
+      border-radius: 4px;
+    }
+
+    :deep(.ant-btn-primary) {
+      border-radius: 4px;
+    }
+  }
+
+  .parent-user-tree-wrapper {
+    flex: 1;
+    background: linear-gradient(180deg, #e8f4fc 0%, #f0f5fa 100%);
+    padding: 40px 20px;
+    overflow: auto;
+
+    .tree-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding-left: 40px;
+
+      &.vertical {
+        .tree-root {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .tree-children {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          margin-left: 60px;
+          padding-top: 20px;
+
+          .tree-connector-line {
+            position: absolute;
+            top: 0;
+            left: -30px;
+            width: 2px;
+            height: 100%;
+            background: #d9d9d9;
+          }
+
+          .tree-child-node {
+            position: relative;
+            margin-bottom: 16px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .child-connector-line {
+              position: absolute;
+              top: 50%;
+              left: -30px;
+              width: 30px;
+              height: 2px;
+              background: #d9d9d9;
+            }
+          }
+        }
+      }
+    }
+
+    .tree-node {
+      .node-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        min-width: 140px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+        &:hover {
+          border-color: #1890ff;
+          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+        }
+
+        .node-id {
+          font-size: 14px;
+          color: #333;
+          font-weight: 400;
+          line-height: 1.5;
+        }
+
+        .node-count {
+          font-size: 13px;
+          color: #666;
+          margin-top: 4px;
+        }
+
+        .node-action {
+          font-size: 13px;
+          color: #1890ff;
           margin-top: 4px;
         }
       }
