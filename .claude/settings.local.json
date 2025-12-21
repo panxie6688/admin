@@ -19,7 +19,10 @@
       "Bash(npm run build:*)",
       "WebSearch",
       "Bash(if not exist \"D:\\work\\untitled\\admin\\public\\tinymce\" mkdir \"D:\\work\\untitled\\admin\\public\\tinymce\")",
-      "WebFetch(domain:cdn.tiny.cloud)"
+      "WebFetch(domain:cdn.tiny.cloud)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []

@@ -2090,7 +2090,7 @@
         <div class="sub-users-page-content">
           <!-- 顶部标题栏 -->
           <div class="sub-users-header">
-            <h3 class="page-title">{{ subUsersModal.record?.username || 'xc03' }} - 层级</h3>
+            <h3 class="page-title">{{ subUsersModal.record?.username || 'xc03' }} - 下级用户</h3>
             <div class="header-actions">
               <a-tooltip title="刷新">
                 <span class="toolbar-icon" @click="handleRefreshSubUsers">
@@ -2117,11 +2117,11 @@
               <a-switch v-model:checked="subUsersModal.isVertical" />
             </div>
             <div class="toolbar-item">
-              <span class="toolbar-label">是否往上查询</span>
+              <span class="toolbar-label">往上查询</span>
               <a-switch v-model:checked="subUsersModal.isUpQuery" />
             </div>
             <div class="toolbar-item">
-              <a-input v-model:value="subUsersModal.searchUid" placeholder="请输入会员UID" style="width: 180px;" />
+              <a-input v-model:value="subUsersModal.searchUid" placeholder="会员信息" style="width: 160px;" allow-clear />
             </div>
             <div class="toolbar-item">
               <a-button type="primary" @click="handleSearchSubUsers">查 询</a-button>
@@ -2130,47 +2130,141 @@
 
           <!-- 层级树内容区域 -->
           <div class="sub-users-tree-wrapper">
-            <div class="tree-container" :class="{ 'vertical': subUsersModal.isVertical }">
-              <!-- 根节点 -->
-              <div class="tree-root" v-if="subUsersModal.treeData">
-                <div class="tree-node root-node">
-                  <div class="node-content">
-                    <div class="node-id">{{ subUsersModal.treeData.id }}</div>
-                    <div class="node-count">({{ subUsersModal.treeData.count }}/人)</div>
-                  </div>
-                </div>
-
-                <!-- 第一级子节点 -->
-                <div class="tree-level level-1" v-if="subUsersModal.treeData.children && subUsersModal.treeData.children.length">
-                  <div class="level-connector"></div>
-                  <div class="level-nodes">
-                    <div class="tree-branch" v-for="child in subUsersModal.treeData.children" :key="child.id">
-                      <div class="branch-connector"></div>
-                      <div class="tree-node">
-                        <div class="node-content">
-                          <div class="node-id">{{ child.id }}</div>
-                          <div class="node-count">({{ child.count }}/人)</div>
+            <div class="pyramid-tree-container" :class="{ 'vertical': subUsersModal.isVertical, 'horizontal': !subUsersModal.isVertical }">
+              <!-- 金字塔树形结构 -->
+              <div class="pyramid-tree" v-if="subUsersModal.treeData">
+                <!-- 递归渲染树节点 -->
+                <div class="pyramid-level root-level">
+                  <!-- 根节点 -->
+                  <div class="pyramid-node-wrapper">
+                    <div class="pyramid-node" :class="{ 'is-top': subUsersModal.treeData.isTop, 'is-current': subUsersModal.treeData.isCurrent, 'has-children': subUsersModal.treeData.children?.length }" @click="toggleNodeExpand(subUsersModal.treeData)">
+                      <div class="node-badge" v-if="subUsersModal.treeData.isTop">顶级</div>
+                      <div class="node-badge current" v-if="subUsersModal.treeData.isCurrent">当前</div>
+                      <div class="node-avatar">
+                        <crown-outlined v-if="subUsersModal.treeData.isTop || subUsersModal.treeData.isCurrent" />
+                        <user-outlined v-else />
+                      </div>
+                      <div class="node-content">
+                        <div class="node-header">
+                          <span class="node-name">{{ subUsersModal.treeData.username }}</span>
+                          <a-tag :color="subUsersModal.treeData.isTop ? 'red' : (subUsersModal.treeData.isCurrent ? 'blue' : 'orange')" size="small">{{ subUsersModal.treeData.vipLevel }}</a-tag>
+                        </div>
+                        <div class="node-id">ID: {{ subUsersModal.treeData.id }}</div>
+                        <div class="node-stats">
+                          <span><team-outlined /> {{ subUsersModal.treeData.count }}人</span>
+                          <span><wallet-outlined /> {{ subUsersModal.treeData.balance?.toFixed(2) }}</span>
                         </div>
                       </div>
+                      <div class="node-toggle" v-if="subUsersModal.treeData.children?.length">
+                        <down-outlined v-if="subUsersModal.treeData.expanded" />
+                        <right-outlined v-else />
+                      </div>
+                    </div>
 
-                      <!-- 第二级子节点 -->
-                      <div class="tree-level level-2" v-if="child.children && child.children.length">
-                        <div class="level-connector"></div>
-                        <div class="level-nodes">
-                          <div class="tree-branch" v-for="grandChild in child.children" :key="grandChild.id">
-                            <div class="branch-connector"></div>
-                            <div class="tree-node leaf-node">
+                    <!-- 子节点容器 -->
+                    <div class="pyramid-children" v-if="subUsersModal.treeData.expanded && subUsersModal.treeData.children?.length">
+                      <div class="connector-line main-line"></div>
+                      <div class="children-row">
+                        <template v-for="(child1, idx1) in subUsersModal.treeData.children" :key="child1.id">
+                          <div class="pyramid-node-wrapper">
+                            <div class="connector-line branch-line" :class="{ 'first': idx1 === 0, 'last': idx1 === subUsersModal.treeData.children.length - 1, 'only': subUsersModal.treeData.children.length === 1 }"></div>
+                            <div class="pyramid-node" :class="{ 'is-current': child1.isCurrent, 'has-children': child1.children?.length }" @click="toggleNodeExpand(child1)">
+                              <div class="node-badge current" v-if="child1.isCurrent">当前</div>
+                              <div class="node-avatar">
+                                <user-outlined />
+                              </div>
                               <div class="node-content">
-                                <div class="node-id">{{ grandChild.id }}</div>
-                                <div class="node-count">({{ grandChild.count }}/人)</div>
+                                <div class="node-header">
+                                  <span class="node-name">{{ child1.username }}</span>
+                                  <a-tag :color="child1.isCurrent ? 'blue' : 'orange'" size="small">{{ child1.vipLevel }}</a-tag>
+                                </div>
+                                <div class="node-id">ID: {{ child1.id }}</div>
+                                <div class="node-stats">
+                                  <span><team-outlined /> {{ child1.count }}人</span>
+                                  <span><wallet-outlined /> {{ child1.balance?.toFixed(2) }}</span>
+                                </div>
+                              </div>
+                              <div class="node-toggle" v-if="child1.children?.length">
+                                <down-outlined v-if="child1.expanded" />
+                                <right-outlined v-else />
+                              </div>
+                            </div>
+
+                            <!-- 二级子节点 -->
+                            <div class="pyramid-children" v-if="child1.expanded && child1.children?.length">
+                              <div class="connector-line main-line"></div>
+                              <div class="children-row">
+                                <template v-for="(child2, idx2) in child1.children" :key="child2.id">
+                                  <div class="pyramid-node-wrapper">
+                                    <div class="connector-line branch-line" :class="{ 'first': idx2 === 0, 'last': idx2 === child1.children.length - 1, 'only': child1.children.length === 1 }"></div>
+                                    <div class="pyramid-node" :class="{ 'is-current': child2.isCurrent, 'has-children': child2.children?.length }" @click="toggleNodeExpand(child2)">
+                                      <div class="node-badge current" v-if="child2.isCurrent">当前</div>
+                                      <div class="node-avatar">
+                                        <user-outlined />
+                                      </div>
+                                      <div class="node-content">
+                                        <div class="node-header">
+                                          <span class="node-name">{{ child2.username }}</span>
+                                          <a-tag :color="child2.isCurrent ? 'blue' : 'green'" size="small">{{ child2.vipLevel }}</a-tag>
+                                        </div>
+                                        <div class="node-id">ID: {{ child2.id }}</div>
+                                        <div class="node-stats">
+                                          <span><team-outlined /> {{ child2.count }}人</span>
+                                          <span><wallet-outlined /> {{ child2.balance?.toFixed(2) }}</span>
+                                        </div>
+                                      </div>
+                                      <div class="node-toggle" v-if="child2.children?.length">
+                                        <down-outlined v-if="child2.expanded" />
+                                        <right-outlined v-else />
+                                      </div>
+                                    </div>
+
+                                    <!-- 三级子节点 -->
+                                    <div class="pyramid-children" v-if="child2.expanded && child2.children?.length">
+                                      <div class="connector-line main-line"></div>
+                                      <div class="children-row">
+                                        <template v-for="(child3, idx3) in child2.children" :key="child3.id">
+                                          <div class="pyramid-node-wrapper">
+                                            <div class="connector-line branch-line" :class="{ 'first': idx3 === 0, 'last': idx3 === child2.children.length - 1, 'only': child2.children.length === 1 }"></div>
+                                            <div class="pyramid-node leaf-node" :class="{ 'is-current': child3.isCurrent }">
+                                              <div class="node-badge current" v-if="child3.isCurrent">当前</div>
+                                              <div class="node-avatar leaf">
+                                                <user-outlined />
+                                              </div>
+                                              <div class="node-content">
+                                                <div class="node-header">
+                                                  <span class="node-name">{{ child3.username }}</span>
+                                                  <a-tag :color="child3.isCurrent ? 'blue' : 'cyan'" size="small">{{ child3.vipLevel }}</a-tag>
+                                                </div>
+                                                <div class="node-id">ID: {{ child3.id }}</div>
+                                                <div class="node-stats">
+                                                  <span><team-outlined /> {{ child3.count }}人</span>
+                                                  <span><wallet-outlined /> {{ child3.balance?.toFixed(2) }}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </template>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </template>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </template>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- 空状态 -->
+              <div v-else class="tree-empty">
+                <div class="empty-icon">
+                  <team-outlined />
+                </div>
+                <div class="empty-text">暂无层级数据</div>
               </div>
             </div>
           </div>
@@ -2184,7 +2278,7 @@
         <div class="parent-user-page-content">
           <!-- 顶部标题栏 -->
           <div class="parent-user-header">
-            <h3 class="page-title">{{ parentUserModal.record?.username || '0003' }} - 层级</h3>
+            <h3 class="page-title">{{ parentUserModal.record?.username || '0003' }} - 上级用户</h3>
             <div class="header-actions">
               <a-tooltip title="刷新">
                 <span class="toolbar-icon" @click="handleRefreshParentUser">
@@ -2211,42 +2305,415 @@
               <a-switch v-model:checked="parentUserModal.isVertical" />
             </div>
             <div class="toolbar-item">
-              <span class="toolbar-label">是否往上查询</span>
+              <span class="toolbar-label">往上查询</span>
               <a-switch v-model:checked="parentUserModal.isUpQuery" />
             </div>
-            <a-input v-model:value="parentUserModal.searchUid" placeholder="会员信息" style="width: 160px;" allow-clear />
-            <a-button type="primary" @click="handleSearchParentUser">查 询</a-button>
+            <div class="toolbar-item">
+              <a-input v-model:value="parentUserModal.searchUid" placeholder="会员信息" style="width: 160px;" allow-clear />
+            </div>
+            <div class="toolbar-item">
+              <a-button type="primary" @click="handleSearchParentUser">查 询</a-button>
+            </div>
           </div>
 
-          <!-- 层级树内容区域 -->
+          <!-- 层级树内容区域 - 上级树形展示 -->
           <div class="parent-user-tree-wrapper">
-            <div class="tree-container" :class="{ 'vertical': parentUserModal.isVertical }">
-              <!-- 根节点 -->
-              <div class="tree-root" v-if="parentUserModal.treeData">
-                <div class="tree-node root-node">
-                  <div class="node-content">
-                    <div class="node-id">{{ parentUserModal.treeData.id }}</div>
-                    <div class="node-count">({{ parentUserModal.treeData.count }}/人)</div>
-                  </div>
-                </div>
-
-                <!-- 子节点 -->
-                <div class="tree-children" v-if="parentUserModal.treeData.children && parentUserModal.treeData.children.length">
-                  <div class="tree-connector-line"></div>
-                  <div class="tree-child-node" v-for="child in parentUserModal.treeData.children" :key="child.id">
-                    <div class="child-connector-line"></div>
-                    <div class="tree-node child-node" @click="handleLoadParentUserChildren(child)">
+            <div class="pyramid-tree-container" :class="{ 'vertical': parentUserModal.isVertical, 'horizontal': !parentUserModal.isVertical }">
+              <!-- 金字塔树形结构 -->
+              <div class="pyramid-tree" v-if="parentUserModal.treeData">
+                <!-- 递归渲染树节点 -->
+                <div class="pyramid-level root-level">
+                  <!-- 根节点（顶级） -->
+                  <div class="pyramid-node-wrapper">
+                    <div class="pyramid-node" :class="{ 'is-top': parentUserModal.treeData.isTop, 'is-current': parentUserModal.treeData.isCurrent, 'has-children': parentUserModal.treeData.children?.length }" @click="toggleNodeExpand(parentUserModal.treeData)">
+                      <div class="node-badge" v-if="parentUserModal.treeData.isTop">顶级</div>
+                      <div class="node-badge current" v-if="parentUserModal.treeData.isCurrent">当前</div>
+                      <div class="node-avatar">
+                        <crown-outlined v-if="parentUserModal.treeData.isTop" />
+                        <user-outlined v-else />
+                      </div>
                       <div class="node-content">
-                        <div class="node-id">{{ child.id }}</div>
-                        <div class="node-action">点击加载</div>
+                        <div class="node-header">
+                          <span class="node-name">{{ parentUserModal.treeData.username }}</span>
+                          <a-tag :color="parentUserModal.treeData.isTop ? 'red' : (parentUserModal.treeData.isCurrent ? 'blue' : 'orange')" size="small">{{ parentUserModal.treeData.vipLevel }}</a-tag>
+                        </div>
+                        <div class="node-id">ID: {{ parentUserModal.treeData.id }}</div>
+                        <div class="node-stats">
+                          <span><team-outlined /> {{ parentUserModal.treeData.count }}人</span>
+                          <span><wallet-outlined /> {{ parentUserModal.treeData.balance?.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="node-toggle" v-if="parentUserModal.treeData.children?.length">
+                        <down-outlined v-if="parentUserModal.treeData.expanded" />
+                        <right-outlined v-else />
+                      </div>
+                    </div>
+
+                    <!-- 子节点容器 -->
+                    <div class="pyramid-children" v-if="parentUserModal.treeData.expanded && parentUserModal.treeData.children?.length">
+                      <div class="connector-line main-line"></div>
+                      <div class="children-row">
+                        <template v-for="(child1, idx1) in parentUserModal.treeData.children" :key="child1.id">
+                          <div class="pyramid-node-wrapper">
+                            <div class="connector-line branch-line" :class="{ 'first': idx1 === 0, 'last': idx1 === parentUserModal.treeData.children.length - 1, 'only': parentUserModal.treeData.children.length === 1 }"></div>
+                            <div class="pyramid-node" :class="{ 'is-current': child1.isCurrent, 'has-children': child1.children?.length }" @click="toggleNodeExpand(child1)">
+                              <div class="node-badge current" v-if="child1.isCurrent">当前</div>
+                              <div class="node-avatar">
+                                <user-outlined />
+                              </div>
+                              <div class="node-content">
+                                <div class="node-header">
+                                  <span class="node-name">{{ child1.username }}</span>
+                                  <a-tag :color="child1.isCurrent ? 'blue' : 'orange'" size="small">{{ child1.vipLevel }}</a-tag>
+                                </div>
+                                <div class="node-id">ID: {{ child1.id }}</div>
+                                <div class="node-stats">
+                                  <span><team-outlined /> {{ child1.count }}人</span>
+                                  <span><wallet-outlined /> {{ child1.balance?.toFixed(2) }}</span>
+                                </div>
+                              </div>
+                              <div class="node-toggle" v-if="child1.children?.length">
+                                <down-outlined v-if="child1.expanded" />
+                                <right-outlined v-else />
+                              </div>
+                            </div>
+
+                            <!-- 二级子节点 -->
+                            <div class="pyramid-children" v-if="child1.expanded && child1.children?.length">
+                              <div class="connector-line main-line"></div>
+                              <div class="children-row">
+                                <template v-for="(child2, idx2) in child1.children" :key="child2.id">
+                                  <div class="pyramid-node-wrapper">
+                                    <div class="connector-line branch-line" :class="{ 'first': idx2 === 0, 'last': idx2 === child1.children.length - 1, 'only': child1.children.length === 1 }"></div>
+                                    <div class="pyramid-node" :class="{ 'is-current': child2.isCurrent, 'has-children': child2.children?.length }" @click="toggleNodeExpand(child2)">
+                                      <div class="node-badge current" v-if="child2.isCurrent">当前</div>
+                                      <div class="node-avatar">
+                                        <user-outlined />
+                                      </div>
+                                      <div class="node-content">
+                                        <div class="node-header">
+                                          <span class="node-name">{{ child2.username }}</span>
+                                          <a-tag :color="child2.isCurrent ? 'blue' : 'green'" size="small">{{ child2.vipLevel }}</a-tag>
+                                        </div>
+                                        <div class="node-id">ID: {{ child2.id }}</div>
+                                        <div class="node-stats">
+                                          <span><team-outlined /> {{ child2.count }}人</span>
+                                          <span><wallet-outlined /> {{ child2.balance?.toFixed(2) }}</span>
+                                        </div>
+                                      </div>
+                                      <div class="node-toggle" v-if="child2.children?.length">
+                                        <down-outlined v-if="child2.expanded" />
+                                        <right-outlined v-else />
+                                      </div>
+                                    </div>
+
+                                    <!-- 三级子节点 -->
+                                    <div class="pyramid-children" v-if="child2.expanded && child2.children?.length">
+                                      <div class="connector-line main-line"></div>
+                                      <div class="children-row">
+                                        <template v-for="(child3, idx3) in child2.children" :key="child3.id">
+                                          <div class="pyramid-node-wrapper">
+                                            <div class="connector-line branch-line" :class="{ 'first': idx3 === 0, 'last': idx3 === child2.children.length - 1, 'only': child2.children.length === 1 }"></div>
+                                            <div class="pyramid-node leaf-node" :class="{ 'is-current': child3.isCurrent }">
+                                              <div class="node-badge current" v-if="child3.isCurrent">当前</div>
+                                              <div class="node-avatar leaf">
+                                                <user-outlined />
+                                              </div>
+                                              <div class="node-content">
+                                                <div class="node-header">
+                                                  <span class="node-name">{{ child3.username }}</span>
+                                                  <a-tag :color="child3.isCurrent ? 'blue' : 'cyan'" size="small">{{ child3.vipLevel }}</a-tag>
+                                                </div>
+                                                <div class="node-id">ID: {{ child3.id }}</div>
+                                                <div class="node-stats">
+                                                  <span><team-outlined /> {{ child3.count }}人</span>
+                                                  <span><wallet-outlined /> {{ child3.balance?.toFixed(2) }}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </template>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </template>
+                              </div>
+                            </div>
+                          </div>
+                        </template>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- 空状态 -->
+              <div v-else class="tree-empty">
+                <div class="empty-icon">
+                  <user-switch-outlined />
+                </div>
+                <div class="empty-text">暂无上级用户数据</div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </transition>
+
+    <!-- 认证信息全屏页面 -->
+    <transition name="slide-up">
+      <div class="auth-info-page" v-if="authInfoModal.visible" :class="`size-${authInfoModal.tableSize}`">
+        <!-- 页面头部：Tab + 按钮 + 搜索 + 工具 -->
+        <div class="page-header">
+          <div class="header-left">
+            <a-tabs v-model:activeKey="authInfoModal.activeTab" class="header-tabs">
+              <a-tab-pane key="all" tab="全部" />
+              <a-tab-pane key="pending" tab="待审核" />
+              <a-tab-pane key="approved" tab="通过" />
+              <a-tab-pane key="rejected" tab="拒绝" />
+            </a-tabs>
+            <a-button type="primary" class="add-btn" @click="handleAddAuthInfo">
+              <template #icon><PlusOutlined /></template>
+              添加会员认证资料
+            </a-button>
+          </div>
+          <div class="header-right">
+            <a-input
+              v-model:value="authInfoModal.searchKeyword"
+              placeholder="单号、会员信息"
+              style="width: 200px"
+              allow-clear
+            >
+              <template #suffix>
+                <SearchOutlined style="color: #bfbfbf" />
+              </template>
+            </a-input>
+            <a-button type="primary" @click="authInfoModal.searchDrawerVisible = true">更多搜索</a-button>
+            <a-tooltip title="刷新">
+              <a-button class="icon-btn" @click="handleRefreshAuthInfo">
+                <template #icon><ReloadOutlined /></template>
+              </a-button>
+            </a-tooltip>
+            <a-dropdown>
+              <a-tooltip title="密度">
+                <a-button class="icon-btn">
+                  <template #icon><ColumnHeightOutlined /></template>
+                </a-button>
+              </a-tooltip>
+              <template #overlay>
+                <a-menu @click="handleAuthInfoDensityChange" :selectedKeys="[authInfoModal.tableSize]">
+                  <a-menu-item key="large">宽松</a-menu-item>
+                  <a-menu-item key="middle">中等</a-menu-item>
+                  <a-menu-item key="small">紧凑</a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+            <a-tooltip title="关闭">
+              <a-button class="icon-btn" @click="handleCloseAuthInfo">
+                <template #icon><CloseOutlined /></template>
+              </a-button>
+            </a-tooltip>
+          </div>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="table-wrapper">
+          <a-table
+            :columns="authInfoModal.columns"
+            :data-source="authInfoModal.tableData"
+            :loading="authInfoModal.loading"
+            :pagination="false"
+            :size="authInfoModal.tableSize"
+            :scroll="{ x: 1200, y: authInfoModal.tableScrollY }"
+            row-key="id"
+            bordered
+          >
+            <template #bodyCell="{ column, record }">
+              <!-- 会员列 -->
+              <template v-if="column.key === 'member'">
+                <div class="member-cell">
+                  <a class="member-id">{{ record.memberId }}</a>
+                  <a-dropdown>
+                    <DownOutlined class="dropdown-icon" />
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="1">查看详情</a-menu-item>
+                        <a-menu-item key="2">编辑</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </div>
+              </template>
+
+              <!-- 用户名列 -->
+              <template v-else-if="column.key === 'username'">
+                <span class="username-text">{{ record.username }}</span>
+              </template>
+
+              <!-- 图片列 -->
+              <template v-else-if="column.key === 'image'">
+                <a-image
+                  v-if="record.image"
+                  :src="record.image"
+                  :width="60"
+                  :height="40"
+                  style="object-fit: cover; border-radius: 4px;"
+                />
+                <span v-else>-</span>
+              </template>
+
+              <!-- 状态列 -->
+              <template v-else-if="column.key === 'status'">
+                <a-tag v-if="record.status === 'pending'" color="orange">待审核</a-tag>
+                <a-tag v-else-if="record.status === 'approved'" color="green">通过</a-tag>
+                <a-tag v-else-if="record.status === 'rejected'" color="red">拒绝</a-tag>
+              </template>
+
+              <!-- 操作列 -->
+              <template v-else-if="column.key === 'action'">
+                <a-space>
+                  <a class="action-link" @click="handleViewAuthDetail(record)">查看</a>
+                  <a class="action-link" @click="handleAuditAuth(record)">审核</a>
+                </a-space>
+              </template>
+            </template>
+          </a-table>
+        </div>
+
+        <!-- 固定分页 -->
+        <div class="pagination-wrapper">
+          <a-pagination
+            v-model:current="authInfoModal.pagination.current"
+            v-model:page-size="authInfoModal.pagination.pageSize"
+            :total="authInfoModal.pagination.total"
+            :show-total="(total) => `统计: ${total}/条`"
+            :show-size-changer="false"
+            :show-quick-jumper="true"
+            size="small"
+          />
+        </div>
+
+        <!-- 更多搜索抽屉 -->
+        <a-drawer
+          v-model:open="authInfoModal.searchDrawerVisible"
+          title="筛选"
+          placement="right"
+          :width="450"
+          class="search-drawer"
+        >
+          <template #extra>
+            <a-space>
+              <a-button type="link" danger @click="handleResetAuthSearch">重置</a-button>
+              <a-button type="primary" @click="handleSubmitAuthSearch">提交</a-button>
+            </a-space>
+          </template>
+
+          <a-form layout="vertical" :model="authInfoModal.advancedSearch">
+            <a-form-item label="认证类型">
+              <a-select
+                v-model:value="authInfoModal.advancedSearch.type"
+                placeholder="请选择"
+                allow-clear
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="id_card">身份证</a-select-option>
+                <a-select-option value="passport">护照</a-select-option>
+                <a-select-option value="driver_license">驾驶证</a-select-option>
+                <a-select-option value="vehicle_license">行驶证</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="审核状态">
+              <a-select
+                v-model:value="authInfoModal.advancedSearch.status"
+                placeholder="请选择"
+                allow-clear
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="pending">待审核</a-select-option>
+                <a-select-option value="approved">通过</a-select-option>
+                <a-select-option value="rejected">拒绝</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="会员UID">
+              <a-input
+                v-model:value="authInfoModal.advancedSearch.memberUid"
+                placeholder="请输入会员ID"
+              />
+            </a-form-item>
+
+            <a-form-item label="证件号">
+              <a-input
+                v-model:value="authInfoModal.advancedSearch.idNumber"
+                placeholder="请输入证件号"
+              />
+            </a-form-item>
+
+            <a-form-item label="开始时间">
+              <a-date-picker
+                v-model:value="authInfoModal.advancedSearch.startTime"
+                placeholder="请选择日期"
+                style="width: 100%"
+              />
+            </a-form-item>
+
+            <a-form-item label="结束时间">
+              <a-date-picker
+                v-model:value="authInfoModal.advancedSearch.endTime"
+                placeholder="请选择日期"
+                style="width: 100%"
+              />
+            </a-form-item>
+          </a-form>
+        </a-drawer>
+
+        <!-- 添加认证资料弹窗 -->
+        <a-modal
+          v-model:open="authInfoModal.addModalVisible"
+          title="添加会员认证资料"
+          :width="500"
+          @ok="handleAddAuthSubmit"
+          @cancel="authInfoModal.addModalVisible = false"
+        >
+          <a-form layout="vertical" :model="authInfoModal.addForm">
+            <a-form-item label="会员UID" required>
+              <a-input v-model:value="authInfoModal.addForm.memberUid" placeholder="请输入会员UID" />
+            </a-form-item>
+            <a-form-item label="认证类型" required>
+              <a-select v-model:value="authInfoModal.addForm.type" placeholder="请选择认证类型">
+                <a-select-option value="id_card">身份证</a-select-option>
+                <a-select-option value="passport">护照</a-select-option>
+                <a-select-option value="driver_license">驾驶证</a-select-option>
+                <a-select-option value="vehicle_license">行驶证</a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="真实姓名" required>
+              <a-input v-model:value="authInfoModal.addForm.realName" placeholder="请输入真实姓名" />
+            </a-form-item>
+            <a-form-item label="证件号码" required>
+              <a-input v-model:value="authInfoModal.addForm.idNumber" placeholder="请输入证件号码" />
+            </a-form-item>
+            <a-form-item label="状态信息" required>
+              <a-radio-group v-model:value="authInfoModal.addForm.status">
+                <a-radio value="approved">通过</a-radio>
+                <a-radio value="rejected">拒绝</a-radio>
+                <a-radio value="pending">待审核</a-radio>
+              </a-radio-group>
+            </a-form-item>
+            <a-form-item label="证件图片">
+              <a-upload
+                list-type="picture-card"
+                :max-count="3"
+              >
+                <div>
+                  <PlusOutlined />
+                  <div style="margin-top: 8px">上传</div>
+                </div>
+              </a-upload>
+            </a-form-item>
+          </a-form>
+        </a-modal>
       </div>
     </transition>
 
@@ -2788,7 +3255,11 @@ import {
   GlobalOutlined,
   FileProtectOutlined,
   LoginOutlined,
-  RiseOutlined
+  RiseOutlined,
+  RightOutlined,
+  ArrowUpOutlined,
+  ArrowLeftOutlined,
+  ExpandOutlined
 } from '@ant-design/icons-vue'
 import PhoneCodeSelect from '@/components/PhoneCodeSelect.vue'
 
@@ -4722,20 +5193,73 @@ const subUsersModal = reactive({
   isUpQuery: false, // 是否往上查询
   searchUid: '',
   treeData: null,
-  isFullscreen: false
+  isFullscreen: false,
+  expandedKeys: [] // 展开的节点
 })
 
-// 模拟层级树数据
+// 模拟层级树数据 - 增加更多用户信息
 const mockSubUsersTreeData = {
   id: '1-16267817514',
+  username: 'admin001',
+  vipLevel: 'VIP3',
   count: 6,
+  balance: 15680.50,
+  expanded: true,
   children: [
-    { id: '1-3213438096', count: 1, children: [{ id: '1-16264937284', count: 0, children: [] }] },
-    { id: '1-3525331038', count: 1, children: [{ id: '1-6241834296', count: 0, children: [] }] },
-    { id: '1-4146392243', count: 1, children: [{ id: '1-6268941365', count: 0, children: [] }] },
-    { id: '1-7077126783', count: 1, children: [{ id: '1-6268163492', count: 0, children: [] }] },
-    { id: '1-5045101674', count: 1, children: [{ id: '1-6218346279', count: 0, children: [] }] },
-    { id: '1-9736669632', count: 1, children: [{ id: '1-6243284167', count: 0, children: [] }] }
+    {
+      id: '1-3213438096',
+      username: 'user001',
+      vipLevel: 'VIP2',
+      count: 2,
+      balance: 3250.00,
+      expanded: true,
+      children: [
+        { id: '1-16264937284', username: 'user_a01', vipLevel: 'VIP1', count: 0, balance: 520.00, expanded: false, children: [] },
+        { id: '1-16264937285', username: 'user_a02', vipLevel: 'VIP1', count: 0, balance: 180.00, expanded: false, children: [] }
+      ]
+    },
+    {
+      id: '1-3525331038',
+      username: 'user002',
+      vipLevel: 'VIP2',
+      count: 1,
+      balance: 4800.00,
+      expanded: true,
+      children: [
+        { id: '1-6241834296', username: 'user_b01', vipLevel: 'VIP1', count: 0, balance: 890.00, expanded: false, children: [] }
+      ]
+    },
+    {
+      id: '1-4146392243',
+      username: 'user003',
+      vipLevel: 'VIP1',
+      count: 1,
+      balance: 2100.00,
+      expanded: false,
+      children: [
+        { id: '1-6268941365', username: 'user_c01', vipLevel: 'VIP1', count: 0, balance: 450.00, expanded: false, children: [] }
+      ]
+    },
+    {
+      id: '1-7077126783',
+      username: 'user004',
+      vipLevel: 'VIP2',
+      count: 1,
+      balance: 6300.00,
+      expanded: false,
+      children: [
+        { id: '1-6268163492', username: 'user_d01', vipLevel: 'VIP1', count: 0, balance: 320.00, expanded: false, children: [] }
+      ]
+    },
+    {
+      id: '1-5045101674',
+      username: 'user005',
+      vipLevel: 'VIP1',
+      count: 0,
+      balance: 1500.00,
+      expanded: false,
+      children: []
+    }
   ]
 }
 
@@ -4750,12 +5274,74 @@ const parentUserModal = reactive({
   isFullscreen: false
 })
 
-// 模拟上级用户层级树数据
+// 模拟上级用户层级树数据 - 向上的金字塔树形结构（顶级在根部，children向下展开到当前用户）
 const mockParentUserTreeData = {
-  id: '1-223344556677',
-  count: 1,
+  id: '1-000000000001',
+  username: 'root_admin',
+  vipLevel: 'VIP5',
+  balance: 500000.00,
+  count: 128,
+  expanded: true,
+  isTop: true,  // 顶级用户标记
   children: [
-    { id: '1-223344556677', loaded: false }
+    {
+      id: '1-112233445566',
+      username: 'super_agent',
+      vipLevel: 'VIP4',
+      balance: 156000.00,
+      count: 45,
+      expanded: true,
+      children: [
+        {
+          id: '1-998877665544',
+          username: 'agent001',
+          vipLevel: 'VIP3',
+          balance: 28500.00,
+          count: 12,
+          expanded: true,
+          children: [
+            {
+              id: '1-223344556677',
+              username: '0003',
+              vipLevel: 'VIP2',
+              balance: 5680.50,
+              count: 3,
+              expanded: true,
+              isCurrent: true,  // 当前用户标记
+              children: []
+            }
+          ]
+        },
+        {
+          id: '1-887766554433',
+          username: 'agent002',
+          vipLevel: 'VIP3',
+          balance: 18200.00,
+          count: 8,
+          expanded: false,
+          children: [
+            {
+              id: '1-665544332211',
+              username: 'user_a',
+              vipLevel: 'VIP2',
+              balance: 3500.00,
+              count: 2,
+              expanded: false,
+              children: []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: '1-999888777666',
+      username: 'super_agent2',
+      vipLevel: 'VIP4',
+      balance: 89000.00,
+      count: 32,
+      expanded: false,
+      children: []
+    }
   ]
 }
 
@@ -5564,6 +6150,22 @@ const toggleSubUsersFullscreen = () => {
   }
 }
 
+// 切换节点展开/收起
+const toggleNodeExpand = (node) => {
+  node.expanded = !node.expanded
+}
+
+// 获取上级链条数组（用于展示）
+const getParentChain = (data) => {
+  const chain = []
+  let current = data
+  while (current) {
+    chain.push(current)
+    current = current.parent
+  }
+  return chain
+}
+
 const handleParentUser = (record) => {
   parentUserModal.record = record
   parentUserModal.searchUid = record.uid || ''
@@ -5604,8 +6206,156 @@ const toggleParentUserFullscreen = () => {
   }
 }
 
+// 认证信息弹窗
+const authInfoModal = reactive({
+  visible: false,
+  record: null,
+  activeTab: 'pending',
+  searchKeyword: '',
+  searchDrawerVisible: false,
+  addModalVisible: false,
+  loading: false,
+  tableSize: 'large',
+  tableScrollY: 400,
+  tableData: [],
+  pagination: {
+    current: 1,
+    pageSize: 20,
+    total: 0
+  },
+  advancedSearch: {
+    type: undefined,
+    status: undefined,
+    memberUid: '',
+    idNumber: '',
+    startTime: null,
+    endTime: null
+  },
+  addForm: {
+    memberUid: '',
+    type: undefined,
+    realName: '',
+    idNumber: '',
+    status: 'pending'
+  },
+  columns: [
+    {
+      title: '会员',
+      key: 'member',
+      dataIndex: 'memberId',
+      width: 150,
+      align: 'center',
+      customHeaderCell: () => ({ class: 'header-blue' })
+    },
+    {
+      title: '用户名',
+      key: 'username',
+      dataIndex: 'username',
+      width: 120,
+      align: 'center',
+      customHeaderCell: () => ({ class: 'header-blue' })
+    },
+    {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+      align: 'center'
+    },
+    {
+      title: '名称',
+      dataIndex: 'realName',
+      key: 'realName',
+      width: 120,
+      align: 'center'
+    },
+    {
+      title: '证件号',
+      dataIndex: 'idNumber',
+      key: 'idNumber',
+      width: 180,
+      align: 'center'
+    },
+    {
+      title: '图片',
+      key: 'image',
+      width: 100,
+      align: 'center'
+    },
+    {
+      title: '状态',
+      key: 'status',
+      dataIndex: 'status',
+      width: 100,
+      align: 'center',
+      fixed: 'right'
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 120,
+      align: 'center',
+      fixed: 'right'
+    }
+  ]
+})
+
 const handleAuthInfo = (record) => {
-  message.info(`认证信息: ${record.uid}`)
+  authInfoModal.record = record
+  authInfoModal.visible = true
+  // 计算表格高度
+  authInfoModal.tableScrollY = window.innerHeight - 200
+}
+
+const handleCloseAuthInfo = () => {
+  authInfoModal.visible = false
+}
+
+const handleRefreshAuthInfo = () => {
+  authInfoModal.loading = true
+  setTimeout(() => {
+    authInfoModal.loading = false
+    message.success('刷新完成')
+  }, 500)
+}
+
+const handleAuthInfoDensityChange = ({ key }) => {
+  authInfoModal.tableSize = key
+}
+
+const handleAddAuthInfo = () => {
+  authInfoModal.addModalVisible = true
+}
+
+const handleAddAuthSubmit = () => {
+  message.success('添加成功')
+  authInfoModal.addModalVisible = false
+}
+
+const handleResetAuthSearch = () => {
+  authInfoModal.advancedSearch.type = undefined
+  authInfoModal.advancedSearch.status = undefined
+  authInfoModal.advancedSearch.memberUid = ''
+  authInfoModal.advancedSearch.idNumber = ''
+  authInfoModal.advancedSearch.startTime = null
+  authInfoModal.advancedSearch.endTime = null
+}
+
+const handleSubmitAuthSearch = () => {
+  authInfoModal.searchDrawerVisible = false
+  authInfoModal.loading = true
+  setTimeout(() => {
+    authInfoModal.loading = false
+    message.success('搜索完成')
+  }, 500)
+}
+
+const handleViewAuthDetail = (record) => {
+  message.info(`查看: ${record.memberId}`)
+}
+
+const handleAuditAuth = (record) => {
+  message.info(`审核: ${record.memberId}`)
 }
 
 const handleOnlineInfo = (record) => {
@@ -8650,7 +9400,7 @@ const handleCryptoOrder = (record) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #f5f7fa;
+  background: #fff;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -8670,10 +9420,11 @@ const handleCryptoOrder = (record) => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+    padding: 0 4px;
 
     .page-title {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 18px;
+      font-weight: 600;
       color: #333;
       margin: 0;
     }
@@ -8687,16 +9438,16 @@ const handleCryptoOrder = (record) => {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         cursor: pointer;
         color: #666;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: all 0.2s;
 
         &:hover {
           color: #1890ff;
-          background: rgba(0, 0, 0, 0.04);
+          background: rgba(24, 144, 255, 0.1);
         }
       }
     }
@@ -8707,9 +9458,10 @@ const handleCryptoOrder = (record) => {
     align-items: center;
     gap: 20px;
     padding: 12px 16px;
-    background: #fff;
+    background: #fafafa;
     border-radius: 8px;
     margin-bottom: 12px;
+    border: 1px solid #f0f0f0;
 
     .toolbar-item {
       display: flex;
@@ -8726,124 +9478,608 @@ const handleCryptoOrder = (record) => {
 
   .sub-users-tree-wrapper {
     flex: 1;
-    background: #f8f9fc;
-    border-radius: 8px;
-    padding: 40px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+    border-radius: 12px;
+    padding: 30px;
     overflow: auto;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+}
 
-    .tree-container {
+/* 通用金字塔树形结构样式 */
+.pyramid-tree-container {
+  min-width: max-content;
+  min-height: 100%;
+
+  /* 竖向布局 - 紧凑型 */
+  &.vertical {
+    .pyramid-tree {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-width: max-content;
+    }
 
-      &.vertical {
-        .tree-root {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+    .pyramid-level {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pyramid-node-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .pyramid-children {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 0;
+      padding-top: 0;
+      position: relative;
+
+      /* 主干线 - 从父节点向下 */
+      > .connector-line.main-line {
+        width: 2px;
+        height: 24px;
+        background: #b8d4ff;
+        flex-shrink: 0;
+      }
+
+      .children-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        position: relative;
+
+        /* 横向连接线 - 覆盖所有子节点 */
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          height: 2px;
+          background: #b8d4ff;
+          left: 50%;
+          right: 50%;
+          /* 动态计算，由 JS 控制或用 CSS 覆盖 */
+        }
+      }
+
+      /* 每个子节点wrapper */
+      .children-row > .pyramid-node-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        padding: 0 10px;
+        padding-top: 24px;
+
+        /* 向下的分支线 */
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 2px;
+          height: 24px;
+          background: #b8d4ff;
+          transform: translateX(-50%);
         }
 
-        .tree-level {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+        /* 隐藏模板中的 branch-line 元素 */
+        > .connector-line.branch-line {
+          display: none;
+        }
 
-          &.level-1 {
-            > .level-connector {
-              width: 2px;
-              height: 40px;
-              background: #ccc;
-            }
+        /* 横向连接线 - 连接到相邻节点 */
+        &::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          height: 2px;
+          background: #b8d4ff;
+          left: 0;
+          right: 0;
+        }
 
-            > .level-nodes {
-              display: flex;
-              gap: 16px;
-              position: relative;
-              padding-top: 40px;
+        /* 第一个子节点：横线从中间开始向右 */
+        &:first-child::after {
+          left: 50%;
+        }
 
-              &::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 68px;
-                right: 68px;
-                height: 2px;
-                background: #ccc;
-              }
+        /* 最后一个子节点：横线从左边到中间 */
+        &:last-child::after {
+          right: 50%;
+        }
 
-              > .tree-branch {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                position: relative;
+        /* 唯一子节点：不需要横线 */
+        &:only-child::after {
+          display: none;
+        }
+      }
+    }
 
-                &::before {
-                  content: '';
-                  position: absolute;
-                  top: -40px;
-                  left: 50%;
-                  width: 2px;
-                  height: 40px;
-                  background: #ccc;
-                }
-              }
-            }
+    /* 竖向布局节点 */
+    .pyramid-node {
+      flex-direction: column;
+      text-align: center;
+      padding: 12px 16px;
+      min-width: 140px;
+
+      .node-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+
+      .node-content {
+        text-align: center;
+
+        .node-header {
+          justify-content: center;
+          gap: 6px;
+          margin-bottom: 3px;
+
+          .node-name {
+            font-size: 14px;
+          }
+        }
+
+        .node-id {
+          font-size: 12px;
+          margin-bottom: 3px;
+        }
+
+        .node-stats {
+          justify-content: center;
+          gap: 8px;
+
+          > span {
+            font-size: 12px;
+          }
+        }
+      }
+
+      .node-toggle {
+        margin-top: 6px;
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+      }
+
+      .node-badge {
+        top: -8px;
+        padding: 1px 6px;
+        font-size: 10px;
+      }
+    }
+  }
+
+  /* 横向布局 - 宽松型 */
+  &.horizontal {
+    .pyramid-tree {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .pyramid-level {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .pyramid-node-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      position: relative;
+    }
+
+    .pyramid-children {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-left: 0;
+      padding-left: 0;
+      position: relative;
+
+      /* 主干线 - 从父节点向右 */
+      > .connector-line.main-line {
+        width: 24px;
+        height: 2px;
+        background: #b8d4ff;
+        flex-shrink: 0;
+      }
+
+      .children-row {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+      }
+
+      /* 每个子节点wrapper */
+      .children-row > .pyramid-node-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+        padding: 8px 0;
+        padding-left: 24px;
+
+        /* 向右的分支线 */
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          width: 24px;
+          height: 2px;
+          background: #b8d4ff;
+          transform: translateY(-50%);
+        }
+
+        /* 隐藏模板中的 branch-line 元素 */
+        > .connector-line.branch-line {
+          display: none;
+        }
+
+        /* 竖向连接线 - 连接到相邻节点 */
+        &::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          width: 2px;
+          background: #b8d4ff;
+          top: 0;
+          bottom: 0;
+        }
+
+        /* 第一个子节点：竖线从中间开始向下 */
+        &:first-child::after {
+          top: 50%;
+        }
+
+        /* 最后一个子节点：竖线从上边到中间 */
+        &:last-child::after {
+          bottom: 50%;
+        }
+
+        /* 唯一子节点：不需要竖线 */
+        &:only-child::after {
+          display: none;
+        }
+      }
+    }
+
+    /* 横向布局节点 - 更大 */
+    .pyramid-node {
+      padding: 14px 18px;
+      min-width: 200px;
+
+      .node-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+      }
+
+      .node-content {
+        .node-header {
+          gap: 8px;
+          margin-bottom: 3px;
+
+          .node-name {
+            font-size: 14px;
           }
 
-          &.level-2 {
-            > .level-connector {
-              width: 2px;
-              height: 40px;
-              background: #ccc;
-            }
+          :deep(.ant-tag) {
+            font-size: 11px;
+            line-height: 18px;
+            padding: 0 6px;
+          }
+        }
 
-            > .level-nodes {
-              > .tree-branch {
-                > .branch-connector {
-                  display: none;
-                }
-              }
+        .node-id {
+          font-size: 11px;
+          margin-bottom: 3px;
+        }
+
+        .node-stats {
+          gap: 10px;
+
+          > span {
+            font-size: 11px;
+
+            :deep(.anticon) {
+              font-size: 11px;
             }
+          }
+        }
+      }
+
+      .node-toggle {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+      }
+
+      .node-badge {
+        top: -8px;
+        padding: 1px 8px;
+        font-size: 10px;
+      }
+    }
+  }
+
+  /* 节点通用样式 */
+  .pyramid-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    min-width: 180px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    position: relative;
+
+    &:hover {
+      border-color: #1890ff;
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(24, 144, 255, 0.1);
+    }
+
+    /* 根节点/顶级 */
+    &.is-root,
+    &.is-top {
+      background: linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%);
+      border-color: #ffc53d;
+
+      .node-avatar {
+        background: linear-gradient(135deg, #ffc53d 0%, #faad14 100%);
+        box-shadow: 0 2px 6px rgba(250, 173, 20, 0.3);
+      }
+
+      &:hover {
+        border-color: #faad14;
+        box-shadow: 0 4px 12px rgba(250, 173, 20, 0.2);
+      }
+    }
+
+    /* 当前用户 */
+    &.is-current {
+      background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+      border-color: #1890ff;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+
+      .node-avatar {
+        background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+        box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3);
+      }
+    }
+
+    /* 一级节点 */
+    &.level-1 {
+      border-color: #91d5ff;
+
+      .node-avatar {
+        background: linear-gradient(135deg, #1890ff 0%, #69c0ff 100%);
+      }
+    }
+
+    /* 二级节点 */
+    &.level-2 {
+      border-color: #b7eb8f;
+
+      .node-avatar {
+        background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+      }
+
+      &:hover {
+        border-color: #52c41a;
+        box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+      }
+    }
+
+    /* 三级/叶子节点 */
+    &.level-3,
+    &.leaf-node {
+      border-color: #87e8de;
+
+      .node-avatar,
+      .node-avatar.leaf {
+        background: linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%);
+      }
+
+      &:hover {
+        border-color: #13c2c2;
+        box-shadow: 0 4px 12px rgba(19, 194, 194, 0.15);
+      }
+    }
+
+    /* 节点徽章 */
+    .node-badge {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 1px 6px;
+      background: #faad14;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: 8px;
+      white-space: nowrap;
+      z-index: 10;
+
+      &.current {
+        background: #1890ff;
+      }
+    }
+
+    /* 头像 */
+    .node-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1890ff 0%, #69c0ff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+      transition: transform 0.2s ease;
+    }
+
+    &:hover .node-avatar {
+      transform: scale(1.05);
+    }
+
+    /* 内容区 */
+    .node-content {
+      flex: 1;
+      min-width: 0;
+
+      .node-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 2px;
+
+        .node-name {
+          font-size: 13px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        :deep(.ant-tag) {
+          margin: 0;
+          font-size: 10px;
+          line-height: 16px;
+          padding: 0 4px;
+          border-radius: 3px;
+        }
+      }
+
+      .node-id {
+        font-size: 10px;
+        color: #999;
+        font-family: 'Monaco', 'Menlo', monospace;
+        margin-bottom: 2px;
+      }
+
+      .node-stats {
+        display: flex;
+        gap: 8px;
+
+        > span {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-size: 10px;
+          color: #666;
+
+          :deep(.anticon) {
+            font-size: 10px;
+            color: #1890ff;
           }
         }
       }
     }
 
-    .tree-node {
-      .node-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 14px 24px;
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 6px;
-        min-width: 130px;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    &:hover .node-content .node-header .node-name {
+      color: #1890ff;
+    }
 
-        &:hover {
-          border-color: #1890ff;
-          box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-          transform: translateY(-2px);
-        }
+    /* 展开/收起按钮 */
+    .node-toggle {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      transition: all 0.2s ease;
+      border-radius: 50%;
+      font-size: 10px;
 
-        .node-id {
-          font-size: 13px;
-          color: #333;
-          font-weight: 500;
-          line-height: 1.5;
-        }
-
-        .node-count {
-          font-size: 12px;
-          color: #888;
-          margin-top: 4px;
-        }
+      &:hover {
+        color: #1890ff;
+        background: rgba(24, 144, 255, 0.1);
       }
+    }
+  }
+
+  /* 子节点展开动画 */
+  .pyramid-children {
+    animation: slideIn 0.2s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 空状态 */
+  .tree-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    width: 100%;
+    height: 100%;
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+
+      :deep(.anticon) {
+        font-size: 36px;
+        color: #1890ff;
+      }
+    }
+
+    .empty-text {
+      font-size: 14px;
+      color: #999;
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
     }
   }
 }
@@ -8877,8 +10113,8 @@ const handleCryptoOrder = (record) => {
     border-bottom: 1px solid #f0f0f0;
 
     .page-title {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 18px;
+      font-weight: 600;
       color: #333;
       margin: 0;
     }
@@ -8892,11 +10128,11 @@ const handleCryptoOrder = (record) => {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         cursor: pointer;
         color: #1890ff;
-        border-radius: 4px;
+        border-radius: 6px;
         transition: all 0.2s;
 
         &:hover {
@@ -8909,10 +10145,12 @@ const handleCryptoOrder = (record) => {
   .parent-user-toolbar {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px 20px;
-    background: #fff;
-    border-bottom: 1px solid #f0f0f0;
+    gap: 20px;
+    padding: 12px 16px;
+    background: #fafafa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #f0f0f0;
 
     .toolbar-item {
       display: flex;
@@ -8920,116 +10158,315 @@ const handleCryptoOrder = (record) => {
       gap: 8px;
 
       .toolbar-label {
-        color: #333;
+        color: #666;
         font-size: 14px;
         white-space: nowrap;
       }
     }
 
     :deep(.ant-input) {
-      border-radius: 4px;
+      border-radius: 6px;
     }
 
     :deep(.ant-btn-primary) {
-      border-radius: 4px;
+      border-radius: 6px;
     }
   }
 
   .parent-user-tree-wrapper {
     flex: 1;
-    background: linear-gradient(180deg, #e8f4fc 0%, #f0f5fa 100%);
-    padding: 40px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+    border-radius: 12px;
+    padding: 30px;
     overflow: auto;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+}
 
-    .tree-container {
+/* 认证信息全屏页面样式 - 与 Auth.vue 一致 */
+.auth-info-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 8px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+
+  .page-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+
+    .header-left {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      padding-left: 40px;
+      align-items: center;
+      gap: 16px;
 
-      &.vertical {
-        .tree-root {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
+      .header-tabs {
+        margin-bottom: 0;
+
+        :deep(.ant-tabs-nav) {
+          margin-bottom: 0;
+
+          &::before {
+            border-bottom: none;
+          }
         }
 
-        .tree-children {
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          margin-left: 60px;
-          padding-top: 20px;
+        :deep(.ant-tabs-tab) {
+          padding: 16px 4px;
+          margin: 0 16px 0 0;
+          font-size: 14px;
+          color: #666;
 
-          .tree-connector-line {
-            position: absolute;
-            top: 0;
-            left: -30px;
-            width: 2px;
-            height: 100%;
-            background: #d9d9d9;
+          &.ant-tabs-tab-active .ant-tabs-tab-btn {
+            color: #1890ff;
+            font-weight: 500;
           }
+        }
 
-          .tree-child-node {
-            position: relative;
-            margin-bottom: 16px;
+        :deep(.ant-tabs-ink-bar) {
+          background: #1890ff;
+        }
+      }
 
-            &:last-child {
-              margin-bottom: 0;
-            }
+      .add-btn {
+        border-radius: 4px;
+        height: 32px;
+      }
+    }
 
-            .child-connector-line {
-              position: absolute;
-              top: 50%;
-              left: -30px;
-              width: 30px;
-              height: 2px;
-              background: #d9d9d9;
-            }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .table-wrapper {
+    flex: 1;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .pagination-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .member-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .member-id {
+      color: #1890ff;
+      cursor: pointer;
+
+      &:hover {
+        color: #40a9ff;
+        text-decoration: underline;
+      }
+    }
+
+    .dropdown-icon {
+      margin-left: 6px;
+      font-size: 10px;
+      color: #999;
+      cursor: pointer;
+    }
+  }
+
+  .username-text {
+    color: #1890ff;
+  }
+
+  .action-link {
+    color: #1890ff;
+    cursor: pointer;
+
+    &:hover {
+      color: #40a9ff;
+    }
+  }
+
+  :deep(.ant-table-wrapper) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .ant-spin-nested-loading {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    .ant-table {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .ant-table-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .ant-table-body {
+      overflow-x: auto !important;
+      overflow-y: auto !important;
+    }
+  }
+
+  :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      background: #fafafa;
+      font-weight: 500;
+      color: #333;
+      font-size: 14px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e8e8e8;
+      text-align: center;
+
+      &::before {
+        display: none !important;
+      }
+
+      // 蓝色表头字体
+      &.header-blue {
+        color: #1890ff;
+      }
+    }
+
+    .ant-table-tbody > tr > td {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      text-align: center;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background: #f5f5f5;
+    }
+
+    // 固定列背景色
+    .ant-table-cell-fix-right {
+      background: #fafafa;
+    }
+
+    .ant-table-tbody > tr > .ant-table-cell-fix-right {
+      background: #fff;
+    }
+
+    .ant-table-tbody > tr:hover > .ant-table-cell-fix-right {
+      background: #f5f5f5;
+    }
+
+    // 去除表格边框
+    &.ant-table-bordered {
+      > .ant-table-container {
+        border: none;
+
+        > .ant-table-content > table,
+        > .ant-table-header > table,
+        > .ant-table-body > table {
+          border-top: none;
+
+          > thead > tr > th,
+          > tbody > tr > td {
+            border-right: none;
           }
         }
       }
     }
+  }
 
-    .tree-node {
-      .node-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 12px 20px;
-        background: #fff;
-        border: 1px solid #e8e8e8;
-        border-radius: 4px;
-        min-width: 140px;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  // 空数据样式
+  :deep(.ant-table-placeholder) {
+    .ant-table-cell {
+      border-bottom: none !important;
+    }
 
-        &:hover {
-          border-color: #1890ff;
-          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
-        }
+    .ant-empty {
+      margin: 60px 0;
 
-        .node-id {
-          font-size: 14px;
-          color: #333;
-          font-weight: 400;
-          line-height: 1.5;
-        }
+      .ant-empty-image {
+        height: 80px;
 
-        .node-count {
-          font-size: 13px;
-          color: #666;
-          margin-top: 4px;
-        }
-
-        .node-action {
-          font-size: 13px;
-          color: #1890ff;
-          margin-top: 4px;
+        svg {
+          width: 80px;
+          height: 80px;
         }
       }
+
+      .ant-empty-description {
+        color: #999;
+        font-size: 14px;
+      }
+    }
+  }
+
+  :deep(.ant-pagination) {
+    margin: 0;
+
+    .ant-pagination-total-text {
+      flex: none;
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+
+  :deep(.ant-input-affix-wrapper) {
+    border-radius: 4px;
+    height: 32px;
+  }
+
+  :deep(.ant-btn-primary) {
+    border-radius: 4px;
+  }
+
+  // 密度样式
+  &.size-large :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 16px 16px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 16px 16px;
+    }
+  }
+
+  &.size-middle :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 12px 12px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 12px 12px;
+    }
+  }
+
+  &.size-small :deep(.ant-table) {
+    .ant-table-thead > tr > th {
+      padding: 8px 8px;
+    }
+    .ant-table-tbody > tr > td {
+      padding: 8px 8px;
     }
   }
 }
