@@ -662,7 +662,7 @@ document.addEventListener('fullscreenchange', () => {
     background: #f5f7fa;
     border-radius: 8px;
     height: calc(100vh - 64px - 32px);
-    overflow: auto;
+    overflow: hidden;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

@@ -2,8 +2,10 @@
   <div class="online-container" :class="`size-${tableSize}`">
     <!-- 页面标题和搜索区域 -->
     <div class="page-header">
-      <h2 class="page-title">在线管理</h2>
-      <div class="header-actions">
+      <div class="header-left">
+        <h2 class="page-title">在线管理</h2>
+      </div>
+      <div class="header-right">
         <a-input
           v-model:value="searchForm.keyword"
           placeholder="单号、会员信息"
@@ -88,17 +90,12 @@
     </div>
 
     <!-- 固定分页 -->
-    <div class="pagination-wrapper">
-      <a-pagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-total="pagination.showTotal"
-        :show-size-changer="pagination.showSizeChanger"
-        :show-quick-jumper="pagination.showQuickJumper"
-        @change="handlePageChange"
-      />
-    </div>
+    <TablePagination
+      v-model:current="pagination.current"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-quick-jumper="true"
+    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -232,7 +229,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
 import {
   SearchOutlined,
   FullscreenOutlined,
@@ -252,12 +249,11 @@ const toggleContentFullscreen = inject('toggleContentFullscreen')
 const tableScrollY = ref(400)
 
 const calcTableHeight = () => {
-  // 头部64 + 内容区margin32 + 页面头部56 + 分页56
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
   const paginationHeight = 56
-  const extra = 20
+  const extra = 24
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -419,23 +415,8 @@ const tableData = ref([
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 1855,
-  showTotal: (total) => `统计: ${total}/条`,
-  showSizeChanger: false,
-  showQuickJumper: true
+  total: 1855
 })
-
-// 表格变化
-const handleTableChange = (pag) => {
-  pagination.current = pag.current
-  pagination.pageSize = pag.pageSize
-}
-
-// 分页变化
-const handlePageChange = (page, pageSize) => {
-  pagination.current = page
-  pagination.pageSize = pageSize
-}
 
 // 刷新
 const handleRefresh = () => {
@@ -469,10 +450,12 @@ const handleForceLogout = (record) => {
 <style scoped lang="less">
 .online-container {
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 
   .page-header {
     flex-shrink: 0;
@@ -481,14 +464,20 @@ const handleForceLogout = (record) => {
     align-items: center;
     padding: 12px 16px;
 
-    .page-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .page-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+      }
     }
 
-    .header-actions {
+    .header-right {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -498,17 +487,8 @@ const handleForceLogout = (record) => {
   .table-wrapper {
     flex: 1;
     overflow: hidden;
-    padding: 0 0 0 0;
-  }
-
-  .pagination-wrapper {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-top: 1px solid #f0f0f0;
-    background: #fff;
-    border-radius: 0 0 4px 4px;
+    padding: 0 16px;
+    min-height: 0;
   }
 
   .member-cell {
@@ -546,6 +526,28 @@ const handleForceLogout = (record) => {
       color: #ff7875;
     }
   }
+
+  // 密度样式
+  &.size-large :deep(.ant-table) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-middle :deep(.ant-table) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 8px;
+    }
+  }
+
+  &.size-small :deep(.ant-table) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 8px 4px;
+    }
+  }
 }
 
 :deep(.ant-table-wrapper) {
@@ -569,12 +571,10 @@ const handleForceLogout = (record) => {
 
 :deep(.ant-table) {
   .ant-table-thead > tr > th {
-    background: #fff;
-    font-weight: 600;
+    background: #fafafa;
+    font-weight: 500;
     color: #333;
     font-size: 14px;
-    padding: 14px 16px;
-    border-bottom: 1px solid #f0f0f0;
     text-align: center;
 
     &::before {
@@ -583,10 +583,9 @@ const handleForceLogout = (record) => {
   }
 
   .ant-table-tbody > tr > td {
-    padding: 12px 16px;
     font-size: 14px;
     color: #333;
-    border-bottom: 1px solid #f5f5f5;
+    text-align: center;
   }
 
   .ant-table-tbody > tr:hover > td {
@@ -596,13 +595,6 @@ const handleForceLogout = (record) => {
 
 :deep(.ant-pagination) {
   margin: 0;
-
-  .ant-pagination-total-text {
-    flex: none;
-    margin-right: 16px;
-    color: #666;
-    font-size: 14px;
-  }
 }
 
 :deep(.ant-input-affix-wrapper) {
@@ -651,36 +643,6 @@ const handleForceLogout = (record) => {
   .ant-input,
   .ant-picker {
     border-radius: 4px;
-  }
-}
-
-// 密度样式
-.online-container {
-  &.size-large :deep(.ant-table) {
-    .ant-table-thead > tr > th {
-      padding: 16px 16px;
-    }
-    .ant-table-tbody > tr > td {
-      padding: 16px 16px;
-    }
-  }
-
-  &.size-middle :deep(.ant-table) {
-    .ant-table-thead > tr > th {
-      padding: 12px 12px;
-    }
-    .ant-table-tbody > tr > td {
-      padding: 12px 12px;
-    }
-  }
-
-  &.size-small :deep(.ant-table) {
-    .ant-table-thead > tr > th {
-      padding: 8px 8px;
-    }
-    .ant-table-tbody > tr > td {
-      padding: 8px 8px;
-    }
   }
 }
 </style>

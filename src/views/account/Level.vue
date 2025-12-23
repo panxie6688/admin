@@ -102,6 +102,7 @@ const handleQuery = () => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   .page-header {
     flex-shrink: 0;

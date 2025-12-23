@@ -116,17 +116,11 @@
     </div>
 
     <!-- 分页 -->
-    <div class="pagination-wrapper">
-      <span class="total-text">统计: {{ pagination.total }}/条</span>
-      <a-pagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-size-changer="false"
-        :show-quick-jumper="false"
-        simple
-      />
-    </div>
+    <TablePagination
+      v-model:current="pagination.current"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+    />
 
     <!-- 添加/编辑抽屉 -->
     <a-drawer
@@ -786,7 +780,7 @@ const formData = reactive({
 })
 
 // 语言输入
-const newLangCode = ref('en')
+const newLangCode = ref(undefined)
 const newLangText = ref('')
 
 // 可用语言列表（动态）
@@ -806,7 +800,7 @@ const availableLangs = ref([
 const infoDrawerVisible = ref(false)
 const currentRecord = ref(null)
 const infoLangModalVisible = ref(false)
-const selectedInfoLang = ref('')
+const selectedInfoLang = ref(undefined)
 const selectedInfoLangIndex = ref(0)
 
 // 说明表单数据
@@ -1246,7 +1240,7 @@ const handleConfirmInfoLang = () => {
   selectedInfoLangIndex.value = infoFormData.languages.length - 1
 
   infoLangModalVisible.value = false
-  selectedInfoLang.value = ''
+  selectedInfoLang.value = undefined
 }
 
 // 删除说明语言（带确认）
@@ -1323,7 +1317,7 @@ const resetForm = () => {
   formData.bgLower = ''
   formData.bgHigher = ''
   formData.names = []
-  newLangCode.value = 'en'
+  newLangCode.value = undefined
   newLangText.value = ''
 }
 
@@ -1447,6 +1441,7 @@ const handleDeleteLang = (index) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   .page-header {
     flex-shrink: 0;
@@ -1483,21 +1478,6 @@ const handleDeleteLang = (index) => {
     flex: 1;
     overflow: hidden;
     padding: 0 16px;
-  }
-
-  .pagination-wrapper {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-top: 1px solid #f0f0f0;
-    background: #fff;
-
-    .total-text {
-      margin-right: 16px;
-      color: #666;
-      font-size: 14px;
-    }
   }
 
   .level-logo {

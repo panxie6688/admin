@@ -257,17 +257,12 @@
     </div>
 
     <!-- 底部分页 -->
-    <div class="page-footer">
-      <span class="total-text">统计: {{ pagination.total }}/条</span>
-      <a-pagination
-        v-model:current="pagination.current"
-        :total="pagination.total"
-        :page-size="pagination.pageSize"
-        show-quick-jumper
-        :show-size-changer="false"
-        @change="onPageChange"
-      />
-    </div>
+    <TablePagination
+      v-model:current="pagination.current"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-quick-jumper="true"
+    />
 
     <!-- 筛选抽屉 -->
     <a-drawer
@@ -6392,7 +6387,7 @@ const handleCryptoOrder = (record) => {
   background: #fff;
   border-radius: 8px;
   padding: 24px 0;
-  height: calc(100vh - 120px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -6432,14 +6427,23 @@ const handleCryptoOrder = (record) => {
 
     :deep(.ant-table-wrapper) {
       height: 100%;
+      display: flex;
+      flex-direction: column;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
       .ant-spin-container {
         height: 100%;
+        display: flex;
+        flex-direction: column;
       }
 
       .ant-table {
-        height: 100%;
+        flex: 1;
+        overflow: hidden;
 
         .ant-table-container {
           height: 100%;
@@ -6457,19 +6461,6 @@ const handleCryptoOrder = (record) => {
           }
         }
       }
-    }
-  }
-
-  .page-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px 0;
-    flex-shrink: 0;
-
-    .total-text {
-      color: #666;
-      font-size: 14px;
     }
   }
 

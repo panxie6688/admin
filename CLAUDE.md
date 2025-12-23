@@ -604,5 +604,211 @@ const formData = reactive({
 
 ---
 
+## 十四、全局样式类（global.less）
+
+> 更新日期: 2025-12-23
+
+### 14.1 语言选择行样式 `.lang-add-row`
+
+用于语言选择 + 输入 + 按钮的组合行，适用于 Banner.vue、Grid.vue 等需要多语言管理的抽屉。
+
+**样式特点**：
+- `flex-wrap: wrap` 支持自动换行
+- 选择框宽度：130px
+- 输入框宽度：160px（能完整显示"请输入语言标识"）
+- 按钮高度：36px
+- 间距：8px
+
+**使用示例**：
+```vue
+<div class="lang-add-row">
+  <a-select v-model:value="newLang" placeholder="选择语言">
+    <a-select-option v-for="lang in langs" :key="lang.code" :value="lang.code">
+      {{ lang.name }}
+    </a-select-option>
+  </a-select>
+  <a-input v-model:value="newText" placeholder="请输入语言标识" />
+  <a-button type="primary" @click="handleAdd">添 加</a-button>
+  <a-button @click="refModalVisible = true">参 考</a-button>
+</div>
+```
+
+**注意**：使用全局类名时，不需要在组件内再写 `style="width: xxx"`，样式由全局控制。
+
+### 14.2 抽屉两栏布局
+
+编辑抽屉常用的两栏布局模式：
+
+```less
+.edit-drawer-content {
+  .edit-two-column {
+    display: flex;
+    gap: 24px;
+  }
+
+  .edit-left-panel {
+    width: 420px;           // 固定宽度
+    flex-shrink: 0;
+    padding: 16px 24px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .edit-right-panel {
+    flex: 1;
+    min-width: 0;           // 防止内容溢出
+    padding: 16px 24px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;       // 防止内容溢出
+  }
+}
+```
+
+**关键点**：
+- 右侧面板必须添加 `min-width: 0` 和 `overflow: hidden` 防止内容（图片、按钮）溢出
+
+### 14.3 图片预览悬浮样式
+
+LOGO 风格的图片预览，鼠标悬浮显示操作按钮：
+
+```less
+.upload-preview-with-actions {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e8e8e8;
+
+  > img {
+    width: 100%;
+    display: block;
+    object-fit: contain;
+  }
+
+  .preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  &:hover .preview-overlay {
+    opacity: 1;
+  }
+}
+```
+
+**使用示例**：
+```vue
+<div class="upload-preview-with-actions">
+  <img :src="imageUrl" alt="预览" />
+  <div class="preview-overlay">
+    <a-upload :show-upload-list="false" @change="handleUpdate">
+      <a-button type="primary" size="small">重新上传</a-button>
+    </a-upload>
+    <a-button type="primary" danger size="small" @click="handleReset">重 置</a-button>
+  </div>
+</div>
+```
+
+### 14.4 全局样式类速查表
+
+| 类名 | 用途 | 文件 |
+|------|------|------|
+| `.icon-btn` | 工具栏图标按钮（全屏、刷新、密度） | global.less |
+| `.rounded-drawer` | 抽屉圆角（20px） | global.less |
+| `.warning-modal` | 警告弹窗样式 | global.less |
+| `.warning-tip-box` | 黄色警告提示框 | global.less |
+| `.lang-add-row` | 语言选择行（选择框+输入框+按钮） | global.less |
+
+---
+
+## 十五、Banner.vue 轮播图管理
+
+> 更新日期: 2025-12-23
+
+### 15.1 页面功能
+
+轮播图管理页面，包含列表展示和编辑功能。
+
+**表格列**：
+- 名称、客户端、显示类型、排序、状态、统一点击配置、图片、操作
+
+### 15.2 编辑抽屉
+
+两栏布局：
+- **左侧**：基本信息（名称、显示类型、状态、排序、点击方式、访问权限、路径URL）
+- **右侧**：多语言图片管理
+
+**显示类型选项**：
+- 首页
+- 客户列表
+- 首页模版V2
+- 首页前-轮播图
+
+### 15.3 多语言图片管理
+
+**数据结构**：
+```javascript
+const editForm = reactive({
+  id: null,
+  name: '',
+  status: '显示',
+  sort: '0',
+  displayType: '客户列表',
+  clickType: '无操作',
+  needLogin: '不需登录',
+  url: '',
+  images: [           // 多语言图片数组
+    {
+      lang: 'en-us',  // 语言代码
+      image: ''       // 图片URL或Base64
+    }
+  ]
+})
+```
+
+**图片上传处理**：
+```javascript
+// 添加新语言图片
+const handleAddImageWithLang = (info) => {
+  const lang = newTitleLang.value || newTitleText.value
+  const file = info.file.originFileObj || info.file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editForm.images.push({
+      lang: lang,
+      image: e.target.result  // Base64
+    })
+  }
+  reader.readAsDataURL(file)
+}
+
+// 更新已有图片
+const handleUpdateImage = (info, index) => {
+  const file = info.file.originFileObj || info.file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    editForm.images[index].image = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+```
+
+---
+
 *本文档由 Claude Code 维护，用于快速了解和开发项目*
-*最后更新: 2025-12-20*
+*最后更新: 2025-12-23*

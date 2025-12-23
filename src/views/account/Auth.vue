@@ -121,18 +121,12 @@
     </div>
 
     <!-- 固定分页 -->
-    <div class="pagination-wrapper">
-      <a-pagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-total="pagination.showTotal"
-        :show-size-changer="pagination.showSizeChanger"
-        :show-quick-jumper="pagination.showQuickJumper"
-        size="small"
-        @change="handlePageChange"
-      />
-    </div>
+    <TablePagination
+      v-model:current="pagination.current"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-quick-jumper="true"
+    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -475,6 +469,7 @@ const handleDensityChange = ({ key }) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   .page-header {
     flex-shrink: 0;
@@ -533,15 +528,6 @@ const handleDensityChange = ({ key }) => {
     flex: 1;
     overflow: hidden;
     padding: 0;
-  }
-
-  .pagination-wrapper {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: #fff;
-    border-radius: 0 0 8px 8px;
   }
 
   .member-cell {
@@ -799,17 +785,6 @@ const handleDensityChange = ({ key }) => {
         justify-content: flex-end;
       }
     }
-
-    .pagination-wrapper {
-      padding: 8px 12px;
-
-      :deep(.ant-pagination) {
-        .ant-pagination-total-text {
-          margin-right: 8px;
-          font-size: 12px;
-        }
-      }
-    }
   }
 }
 
@@ -843,10 +818,6 @@ const handleDensityChange = ({ key }) => {
           padding: 0 8px;
         }
       }
-    }
-
-    .pagination-wrapper {
-      justify-content: center;
     }
   }
 

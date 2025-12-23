@@ -95,17 +95,12 @@
     </div>
 
     <!-- 底部分页 -->
-    <div class="page-footer">
-      <span class="total-text">统计: {{ pagination.total }}/条</span>
-      <a-pagination
-        v-model:current="pagination.current"
-        :total="pagination.total"
-        :page-size="pagination.pageSize"
-        show-quick-jumper
-        :show-size-changer="false"
-        @change="onPageChange"
-      />
-    </div>
+    <TablePagination
+      v-model:current="pagination.current"
+      v-model:page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-quick-jumper="true"
+    />
 
     <!-- 添加/编辑管理员抽屉 -->
     <a-drawer
@@ -751,7 +746,7 @@ const handleDensityChange = ({ key }) => {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
-  height: calc(100vh - 120px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -790,14 +785,23 @@ const handleDensityChange = ({ key }) => {
 
     :deep(.ant-table-wrapper) {
       height: 100%;
+      display: flex;
+      flex-direction: column;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
       .ant-spin-container {
         height: 100%;
+        display: flex;
+        flex-direction: column;
       }
 
       .ant-table {
-        height: 100%;
+        flex: 1;
+        overflow: hidden;
 
         .ant-table-container {
           height: 100%;
@@ -825,19 +829,6 @@ const handleDensityChange = ({ key }) => {
           }
         }
       }
-    }
-  }
-
-  .page-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 16px;
-    flex-shrink: 0;
-
-    .total-text {
-      color: #666;
-      font-size: 14px;
     }
   }
 

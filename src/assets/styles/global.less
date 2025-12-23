@@ -435,3 +435,40 @@ html, body {
     }
   }
 }
+
+// 全局语言选择行样式
+.lang-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+
+  .ant-select {
+    width: 130px;
+    flex-shrink: 0;
+
+    .ant-select-selector {
+      height: 36px !important;
+      border-radius: 6px !important;
+
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: 34px !important;
+      }
+    }
+  }
+
+  .ant-input {
+    width: 160px;
+    height: 36px !important;
+    border-radius: 6px !important;
+    flex-shrink: 0;
+  }
+
+  .ant-btn {
+    height: 36px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+}
