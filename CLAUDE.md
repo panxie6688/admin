@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> 最后更新: 2025-12-20
+> 最后更新: 2025-12-25
 
 ---
 
@@ -810,5 +810,277 @@ const handleUpdateImage = (info, index) => {
 
 ---
 
+## 十六、Order.vue 订单列表
+
+> 更新日期: 2025-12-25
+
+### 16.1 页面功能
+
+订单列表页面，与会员列表中的订单功能相同，区别在于查询范围（全部 vs 特定会员）。
+
+**主要功能**：
+- Tab 切换（全部/已完成/未完成）
+- 订单列表（16列，带分页）
+- 财务日志抽屉
+- 商品详情抽屉
+
+### 16.2 表格列
+
+| 列名 | 数据字段 | 特殊样式 |
+|------|---------|---------|
+| ID | id | 固定左侧 |
+| 订单号 | orderNo | - |
+| 会员 | member | 蓝色，带下拉菜单 |
+| 用户名 | username | 蓝色 |
+| 单数 | orderCount | - |
+| 商品名称 | productName | 左对齐 |
+| 价格 | price | 蓝色 |
+| 利润 | profit | 绿色 |
+| 利率 | rate | 蓝色 |
+| VIP等级 | vipLevel | - |
+| 方式 | method | 标签（设定=粉色，随机=蓝色） |
+| 设定倍数 | multiple | - |
+| 时间 | time | - |
+| 类型 | type | 标签（连单=绿色，单一=蓝色），固定右侧 |
+| 状态 | status | 标签+确认还需金额，固定右侧 |
+| 操作 | action | 财务、详情链接，固定右侧 |
+
+### 16.3 商品详情抽屉
+
+**无标题栏设计**：
+- 自定义 header（关闭按钮 + 标题）
+- 左侧：商品图片（140x140）
+- 右侧：商品名称、价格（红色）、利润（绿色）、利率（蓝色）
+
+### 16.4 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.order-tabs` | 顶部 Tab 切换 |
+| `.tab-item.active` | 激活的 Tab |
+| `.product-detail-content` | 商品详情抽屉 |
+| `.product-image` | 商品图片容器 |
+| `.product-meta` | 商品信息区 |
+
+---
+
+## 十七、Withdraw.vue 提现管理
+
+> 更新日期: 2025-12-25
+
+### 17.1 页面功能
+
+提现管理页面，用于审核会员的提现申请。
+
+**主要功能**：
+- 提现列表（14列，带分页）
+- 更多搜索（筛选抽屉）
+- 操作抽屉（查看详情并审核）
+- 双击编辑提取信息
+
+### 17.2 表格列
+
+| 列名 | 数据字段 | 特殊样式 |
+|------|---------|---------|
+| 会员 | member | 蓝色表头文字，带下拉菜单，固定左侧 |
+| 用户名 | username | 蓝色表头文字，蓝色内容 |
+| 订单号 | orderNo | - |
+| 数量 | amount | - |
+| 手续费 | fee | - |
+| 到账数量 | realAmount | - |
+| 今天订单数 | todayOrderCount | - |
+| 今天提款次数 | todayWithdrawCount | - |
+| 提取信息 | withdrawInfo | 双击可编辑，带链接图标 |
+| 理由 | reason | - |
+| 时间 | time | - |
+| 状态 | status | 标签，固定右侧 |
+| 提取方式 | withdrawType | 标签，固定右侧 |
+| 操作 | action | 通过/驳回按钮，固定右侧 |
+
+### 17.3 状态颜色
+
+| 状态 | 颜色 | Ant Design 标签 |
+|------|------|----------------|
+| 驳回 | 红色 | `error` |
+| 审核通过 | 绿色 | `success` |
+| 待审核 | 蓝色 | `processing` |
+
+### 17.4 提取方式颜色
+
+| 类型 | 颜色 | Ant Design 标签 |
+|------|------|----------------|
+| 加密货币 | 蓝色 | `processing` |
+| 银行卡 | 橙色 | `warning` |
+
+### 17.5 操作按钮状态
+
+- **待审核**：显示可操作的"通过"（绿色）和"驳回"（红色）按钮
+- **已处理**（驳回/审核通过）：显示灰色禁用按钮
+
+### 17.6 双击编辑提取信息
+
+```javascript
+// 编辑状态
+const editingWithdrawInfo = reactive({
+  id: null,
+  value: ''
+})
+
+// 开始编辑
+const startEditWithdrawInfo = (record) => {
+  editingWithdrawInfo.id = record.id
+  editingWithdrawInfo.value = record.withdrawInfo
+  nextTick(() => {
+    withdrawInfoInput.value?.focus()
+  })
+}
+
+// 保存编辑
+const saveWithdrawInfo = (record) => {
+  if (editingWithdrawInfo.value !== record.withdrawInfo) {
+    record.withdrawInfo = editingWithdrawInfo.value
+    message.success('提取信息已更新')
+  }
+  editingWithdrawInfo.id = null
+  editingWithdrawInfo.value = ''
+}
+```
+
+### 17.7 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.member-link` | 会员链接样式 |
+| `.username-text` | 用户名文字（蓝色） |
+| `.withdraw-info` | 提取信息容器 |
+| `.edit-link` | 编辑链接图标 |
+| `.action-btns` | 操作按钮组 |
+| `.btn-success` | 通过按钮（绿色） |
+| `.btn-danger` | 驳回按钮（红色） |
+| `.btn-disabled` | 禁用按钮（灰色） |
+| `.operate-content` | 操作抽屉内容 |
+
+---
+
+## 十八、Recharge.vue 后台充值记录
+
+> 更新日期: 2025-12-25
+
+### 18.1 页面功能
+
+后台充值记录页面，用于管理会员的充值/扣减记录。
+
+**主要功能**：
+- 充值记录列表（带分页和统计）
+- 添加数据（创建充值记录）
+- 继续操作（基于已有记录继续操作）
+- 更多搜索（筛选抽屉）
+- 财务日志查看
+
+### 18.2 表格列
+
+| 列名 | 数据字段 | 说明 |
+|------|---------|------|
+| 订单号 | orderNo | 蓝色可点击，固定左侧 |
+| 会员 | member | 带下拉菜单 |
+| 用户名 | username | - |
+| 数量 | amount | 增加=绿色，扣减=红色 |
+| 类型 | type | 标签样式（success/error） |
+| 时间 | time | - |
+| 理由 | reason | - |
+| 操作 | action | 财务、继续链接，固定右侧 |
+
+### 18.3 添加数据/继续抽屉
+
+创建和继续操作共用同一个抽屉，设计类似上下分弹窗。
+
+**会员信息卡片**：
+```javascript
+// 顶部显示会员信息
+- 会员UID（创建时可输入，继续时只读）
+- 用户名
+- 可用余额（蓝色高亮）
+- 冻结余额
+```
+
+**表单字段**：
+```javascript
+const addDrawer = reactive({
+  visible: false,
+  isEdit: false,        // true=继续操作, false=创建
+  memberUid: '',        // 会员UID
+  username: '',         // 用户名
+  type: 'add',          // 操作类型: add(增加) / sub(扣减)
+  amount: null,         // 数量
+  remark: '',           // 说明
+  availableAmount: 0,   // 可用余额
+  frozenAmount: 0       // 冻结余额
+})
+```
+
+**变动后余额计算**：
+```javascript
+const computedNewBalance = computed(() => {
+  const available = parseFloat(addDrawer.availableAmount) || 0
+  const amount = parseFloat(addDrawer.amount) || 0
+  if (addDrawer.type === 'add') {
+    return available + amount
+  } else {
+    return available - amount
+  }
+})
+```
+
+**操作类型按钮样式**：
+- 增加按钮：选中时绿色背景 `#52c41a`
+- 扣减按钮：选中时红色背景 `#ff4d4f`
+
+### 18.4 更多搜索抽屉
+
+**筛选字段**：
+```javascript
+const filterForm = reactive({
+  status: undefined,     // 状态: 全部/增加/扣减
+  memberId: '',          // 会员ID
+  startTime: null,       // 开始时间
+  endTime: null,         // 结束时间
+  keyword: '',           // 搜索关键词
+  sortField: 'time',     // 排序字段: 全部/数量/时间
+  sortType: 'desc'       // 排序类型: 全部/降序/升序
+})
+```
+
+### 18.5 底部统计
+
+**分页和统计信息**：
+- 左侧：统计数量 + 分页器
+- 右侧：本页统计（累计、有效、无效）、全部统计（累计、有效、无效）
+
+```javascript
+const stats = reactive({
+  pageTotal: '-180170794.13000304',
+  pageValid: '494735458.5000002',
+  pageInvalid: '314564664.3699971',
+  allTotal: '-180170794.13000304',
+  allValid: '494735458.5000002',
+  allInvalid: '314564664.3699971'
+})
+```
+
+### 18.6 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.page-container` | 页面容器 |
+| `.page-header` | 顶部操作栏 |
+| `.page-footer` | 底部分页和统计 |
+| `.add-drawer-content` | 添加数据抽屉内容 |
+| `.member-info-card` | 会员信息卡片 |
+| `.type-radio-group` | 操作类型按钮组 |
+| `.result-balance` | 变动后余额显示 |
+| `.filter-form` | 筛选表单 |
+
+---
+
 *本文档由 Claude Code 维护，用于快速了解和开发项目*
-*最后更新: 2025-12-23*
+*最后更新: 2025-12-25*

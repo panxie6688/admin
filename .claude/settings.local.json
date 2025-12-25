@@ -22,7 +22,8 @@
       "WebFetch(domain:cdn.tiny.cloud)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:www.npmjs.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npx @nestjs/cli new:*)"
     ],
     "deny": [],
     "ask": []
