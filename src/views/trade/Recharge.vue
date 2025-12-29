@@ -101,25 +101,13 @@
           </template>
         </template>
       </a-table>
-    </div>
-
-    <!-- 底部分页和统计 -->
-    <div class="page-footer">
-      <div class="footer-left">
-        <span class="total-text">统计: {{ pagination.total }}/条</span>
-        <a-pagination
-          v-model:current="pagination.current"
-          :total="pagination.total"
-          :page-size="pagination.pageSize"
-          size="small"
-          show-quick-jumper
-          :show-size-changer="false"
-        />
-      </div>
-      <div class="footer-right">
-        <span class="stats-item">本页统计  累计: <span class="stats-value blue">{{ stats.pageTotal }}</span>  有效: <span class="stats-value green">{{ stats.pageValid }}</span>  无效: <span class="stats-value red">{{ stats.pageInvalid }}</span></span>
-        <span class="stats-item">全部统计  累计: <span class="stats-value blue">{{ stats.allTotal }}</span>  有效: <span class="stats-value green">{{ stats.allValid }}</span>  无效: <span class="stats-value red">{{ stats.allInvalid }}</span></span>
-      </div>
+      <!-- 底部分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-quick-jumper="true"
+      />
     </div>
 
     <!-- 更多搜索抽屉 -->
@@ -286,6 +274,7 @@
 
 <script setup>
 import { ref, reactive, inject, computed } from 'vue'
+import TablePagination from '@/components/TablePagination.vue'
 import {
   PlusOutlined,
   MinusOutlined,
@@ -409,16 +398,6 @@ const pagination = reactive({
   total: 7701
 })
 
-// 统计数据
-const stats = reactive({
-  pageTotal: '-180170794.13000304',
-  pageValid: '494735458.5000002',
-  pageInvalid: '314564664.3699971',
-  allTotal: '-180170794.13000304',
-  allValid: '494735458.5000002',
-  allInvalid: '314564664.3699971'
-})
-
 // 更多搜索
 const showMoreSearch = ref(false)
 const filterForm = reactive({
@@ -523,17 +502,23 @@ const handleFinance = (record) => {
 
 <style scoped lang="less">
 .page-container {
-  padding: 20px;
   background: #fff;
-  min-height: calc(100vh - 64px);
+  border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
     flex-shrink: 0;
 
     .header-left {
@@ -543,7 +528,7 @@ const handleFinance = (record) => {
 
       .page-title {
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 500;
         color: #333;
       }
     }
@@ -558,48 +543,41 @@ const handleFinance = (record) => {
   .table-wrapper {
     flex: 1;
     overflow: hidden;
-  }
 
-  .page-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0 0;
-    flex-shrink: 0;
-
-    .footer-left {
+    :deep(.ant-table-wrapper) {
+      height: 100%;
       display: flex;
-      align-items: center;
-      gap: 16px;
+      flex-direction: column;
 
-      .total-text {
-        font-size: 14px;
-        color: #666;
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
       }
-    }
 
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 24px;
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
 
-      .stats-item {
-        font-size: 13px;
-        color: #666;
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
 
-        .stats-value {
-          font-weight: 500;
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
 
-          &.blue {
-            color: #1890ff;
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
           }
 
-          &.green {
-            color: #52c41a;
-          }
-
-          &.red {
-            color: #ff4d4f;
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
           }
         }
       }

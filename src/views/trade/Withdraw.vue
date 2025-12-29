@@ -130,18 +130,12 @@
           </template>
         </template>
       </a-table>
-    </div>
-
-    <!-- 底部分页 -->
-    <div class="page-footer">
-      <span class="total-text">统计: {{ pagination.total }}/条</span>
-      <a-pagination
+      <!-- 底部分页 -->
+      <TablePagination
         v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
         :total="pagination.total"
-        :page-size="pagination.pageSize"
-        size="small"
-        show-quick-jumper
-        :show-size-changer="false"
+        :show-quick-jumper="true"
         @change="handlePageChange"
       />
     </div>
@@ -271,6 +265,7 @@
 <script setup>
 import { ref, reactive, computed, inject, nextTick } from 'vue'
 import { message } from 'ant-design-vue'
+import TablePagination from '@/components/TablePagination.vue'
 import {
   ReloadOutlined,
   ColumnHeightOutlined,
@@ -510,12 +505,15 @@ loadData()
 
 <style scoped lang="less">
 .page-container {
-  padding: 16px;
+  padding: 24px;
+  padding-bottom: 80px;
   background: #fff;
   border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
 
   .page-header {
     display: flex;
@@ -524,6 +522,7 @@ loadData()
     margin-bottom: 16px;
     padding-bottom: 16px;
     border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
 
     .header-left {
       .page-title {
@@ -552,6 +551,45 @@ loadData()
   .table-wrapper {
     flex: 1;
     overflow: hidden;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
 
     :deep(.ant-table) {
       font-size: 14px;
@@ -625,20 +663,6 @@ loadData()
         padding: 0 4px;
         cursor: not-allowed;
       }
-    }
-  }
-
-  .page-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 16px;
-    margin-top: 16px;
-    border-top: 1px solid #f0f0f0;
-
-    .total-text {
-      font-size: 14px;
-      color: #666;
     }
   }
 

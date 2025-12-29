@@ -1,5 +1,5 @@
 <template>
-  <div class="vip-container">
+  <div class="page-container" :class="`size-${tableSize}`">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -40,7 +40,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="default">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -113,14 +113,13 @@
           </template>
         </template>
       </a-table>
+      <!-- 分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+      />
     </div>
-
-    <!-- 分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-    />
 
     <!-- 添加/编辑抽屉 -->
     <a-drawer
@@ -537,8 +536,8 @@ const calcTableHeight = () => {
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
-  const paginationHeight = 56
-  const extra = 20
+  const paginationHeight = 80
+  const extra = 48
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -555,7 +554,7 @@ onUnmounted(() => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('large')
+const tableSize = ref('middle')
 
 // 表格列配置 - 带合并表头
 const columns = [
@@ -1435,20 +1434,23 @@ const handleDeleteLang = (index) => {
 </script>
 
 <style scoped lang="less">
-.vip-container {
+.page-container {
   background: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    margin-bottom: 16px;
 
     .header-left {
       display: flex;
@@ -1478,6 +1480,46 @@ const handleDeleteLang = (index) => {
     flex: 1;
     overflow: hidden;
     padding: 0 16px;
+    min-height: 0;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
   }
 
   .level-logo {
@@ -1546,25 +1588,6 @@ const handleDeleteLang = (index) => {
         margin-right: 8px;
       }
     }
-  }
-}
-
-:deep(.ant-table-wrapper) {
-  height: 100%;
-
-  .ant-spin-nested-loading {
-    height: 100%;
-
-    .ant-spin-container {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  .ant-table {
-    flex: 1;
-    overflow: hidden;
   }
 }
 
@@ -1650,7 +1673,7 @@ const handleDeleteLang = (index) => {
 
 <style lang="less">
 // 表头颜色 - 全局样式
-.vip-container {
+.page-container {
   .ant-table-thead > tr > th {
     // 佣金表头颜色
     &:nth-child(8) {

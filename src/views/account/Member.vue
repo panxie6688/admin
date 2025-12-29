@@ -254,15 +254,14 @@
           </template>
         </template>
       </a-table>
+      <!-- 底部分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-quick-jumper="true"
+      />
     </div>
-
-    <!-- 底部分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-quick-jumper="true"
-    />
 
     <!-- 筛选抽屉 -->
     <a-drawer
@@ -6387,10 +6386,12 @@ const handleCryptoOrder = (record) => {
   background: #fff;
   border-radius: 8px;
   padding: 24px 0;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .page-header {
     display: flex;

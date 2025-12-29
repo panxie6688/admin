@@ -1,5 +1,5 @@
 <template>
-  <div class="grid-container" :class="`size-${tableSize}`">
+  <div class="page-container" :class="`size-${tableSize}`">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -41,7 +41,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="default">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -89,14 +89,13 @@
           </template>
         </template>
       </a-table>
+      <!-- 分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+      />
     </div>
-
-    <!-- 分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -296,13 +295,13 @@
 
             <!-- 添加语言 -->
             <div class="lang-add-row">
-              <a-select v-model:value="newTitleLang" placeholder="选择语言">
+              <a-select v-model:value="newTitleLang" placeholder="选择语言" @change="handleLangSelect">
                 <a-select-option v-for="lang in availableTitleLangs" :key="lang.code" :value="lang.code">
                   {{ lang.name }}
                 </a-select-option>
               </a-select>
               <a-input v-model:value="newTitleText" placeholder="请输入语言标识" />
-              <a-button type="primary" @click="handleAddTitle">添 加</a-button>
+              <a-button type="primary" @click="handleAddLangOption">添 加</a-button>
               <a-button @click="titleRefModalVisible = true">参 考</a-button>
             </div>
 
@@ -385,8 +384,8 @@ const calcTableHeight = () => {
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
-  const paginationHeight = 56
-  const extra = 20
+  const paginationHeight = 80
+  const extra = 48
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -403,7 +402,7 @@ onUnmounted(() => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('large')
+const tableSize = ref('default')
 
 // 表格列配置
 const columns = [
@@ -508,6 +507,7 @@ const newTitleLang = ref(undefined)
 const newTitleText = ref('')
 const titleRefModalVisible = ref(false)
 const titleLangSearchText = ref('')
+const customLangs = ref([]) // 自定义语言列表
 
 // 语言数据
 const langRefData = [
@@ -549,10 +549,11 @@ const langRefColumns = [
   { title: '语言名称', dataIndex: 'name', key: 'name' }
 ]
 
-// 可用标题语言（过滤已添加的）
+// 可用标题语言（过滤已添加的，包含自定义语言）
 const availableTitleLangs = computed(() => {
   const addedCodes = editForm.titles.map(t => t.lang)
-  return langRefData.filter(lang => !addedCodes.includes(lang.code))
+  const allLangs = [...langRefData, ...customLangs.value]
+  return allLangs.filter(lang => !addedCodes.includes(lang.code))
 })
 
 // 过滤后的语言数据
@@ -690,24 +691,41 @@ const handleIconChange = (info) => {
   }
 }
 
-// 添加标题语言
-const handleAddTitle = () => {
-  if (!newTitleLang.value) {
-    message.warning('请选择语言')
-    return
-  }
-  const exists = editForm.titles.some(t => t.lang === newTitleLang.value)
+// 下拉框选择语言后，直接添加标题条目
+const handleLangSelect = (value) => {
+  if (!value) return
+  const exists = editForm.titles.some(t => t.lang === value)
   if (exists) {
     message.warning('该语言已添加')
+    newTitleLang.value = undefined
     return
   }
   editForm.titles.push({
-    lang: newTitleLang.value,
-    text: newTitleText.value || ''
+    lang: value,
+    text: ''
   })
   newTitleLang.value = undefined
-  newTitleText.value = ''
   message.success('添加成功')
+}
+
+// 添加自定义语言到下拉选项
+const handleAddLangOption = () => {
+  if (!newTitleText.value) {
+    message.warning('请输入语言标识')
+    return
+  }
+  const exists = langRefData.some(l => l.code === newTitleText.value) ||
+                 customLangs.value.some(l => l.code === newTitleText.value)
+  if (exists) {
+    message.warning('该语言标识已存在')
+    return
+  }
+  customLangs.value.push({
+    code: newTitleText.value,
+    name: newTitleText.value
+  })
+  message.success('语言标识已添加到下拉选项')
+  newTitleText.value = ''
 }
 
 // 删除标题语言
@@ -718,27 +736,30 @@ const handleDeleteTitle = (index) => {
 
 // 从参考表选择语言
 const handleSelectTitleLangFromRef = (record) => {
-  newTitleLang.value = record.code
   titleRefModalVisible.value = false
-  message.success(`已选择语言: ${record.name} (${record.code})`)
+  // 选择后直接添加
+  handleLangSelect(record.code)
 }
 </script>
 
 <style scoped lang="less">
-.grid-container {
+.page-container {
   background: #fff;
   border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    margin-bottom: 16px;
 
     .header-left {
       display: flex;
@@ -767,7 +788,46 @@ const handleSelectTitleLangFromRef = (record) => {
   .table-wrapper {
     flex: 1;
     overflow: hidden;
-    padding: 0 16px;
+    min-height: 0;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
   }
 
   .action-link {
@@ -788,7 +848,7 @@ const handleSelectTitleLangFromRef = (record) => {
   }
 
   // 密度样式
-  &.size-large :deep(.ant-table) {
+  &.size-default :deep(.ant-table) {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
       padding: 16px 8px;

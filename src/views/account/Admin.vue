@@ -63,7 +63,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ y: 'calc(100vh - 280px)' }"
+        :scroll="{ y: 'calc(100vh - 320px)' }"
         table-layout="fixed"
       >
         <template #bodyCell="{ column, record }">
@@ -92,15 +92,14 @@
           </template>
         </template>
       </a-table>
+      <!-- 底部分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-quick-jumper="true"
+      />
     </div>
-
-    <!-- 底部分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-quick-jumper="true"
-    />
 
     <!-- 添加/编辑管理员抽屉 -->
     <a-drawer
@@ -746,10 +745,12 @@ const handleDensityChange = ({ key }) => {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .page-header {
     display: flex;

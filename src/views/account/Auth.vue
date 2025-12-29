@@ -1,5 +1,5 @@
 <template>
-  <div class="auth-container" :class="`size-${tableSize}`">
+  <div class="page-container" :class="`size-${tableSize}`">
     <!-- 页面头部：Tab + 按钮 + 搜索 + 工具 -->
     <div class="page-header">
       <div class="header-left">
@@ -47,7 +47,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="default">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -118,15 +118,14 @@
           </template>
         </template>
       </a-table>
+      <!-- 固定分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-quick-jumper="true"
+      />
     </div>
-
-    <!-- 固定分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-quick-jumper="true"
-    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -280,8 +279,8 @@ const calcTableHeight = () => {
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
-  const paginationHeight = 56
-  const extra = 20
+  const paginationHeight = 80
+  const extra = 48
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -336,7 +335,7 @@ const handleSubmitSearch = () => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('large')
+const tableSize = ref('default')
 
 // 表格列配置
 const columns = [
@@ -463,20 +462,23 @@ const handleDensityChange = ({ key }) => {
 </script>
 
 <style scoped lang="less">
-.auth-container {
+.page-container {
   background: #fff;
   border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 16px;
+    margin-bottom: 16px;
 
     .header-left {
       display: flex;
@@ -527,7 +529,45 @@ const handleDensityChange = ({ key }) => {
   .table-wrapper {
     flex: 1;
     overflow: hidden;
-    padding: 0;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
   }
 
   .member-cell {
@@ -710,8 +750,8 @@ const handleDensityChange = ({ key }) => {
 }
 
 // 密度样式
-.auth-container {
-  &.size-large :deep(.ant-table) {
+.page-container {
+  &.size-default :deep(.ant-table) {
     .ant-table-thead > tr > th {
       padding: 16px 16px;
     }

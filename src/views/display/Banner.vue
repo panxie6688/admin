@@ -1,5 +1,5 @@
 <template>
-  <div class="banner-container" :class="`size-${tableSize}`">
+  <div class="page-container" :class="`size-${tableSize}`">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -41,7 +41,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="default">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -89,14 +89,13 @@
           </template>
         </template>
       </a-table>
+      <!-- 分页 -->
+      <TablePagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+      />
     </div>
-
-    <!-- 分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -237,21 +236,15 @@
 
           <!-- 右侧：图片上传 -->
           <div class="edit-right-panel">
-            <!-- 添加语言和上传图片 -->
+            <!-- 添加语言 -->
             <div class="lang-add-row">
-              <a-select v-model:value="newTitleLang" placeholder="选择语言">
+              <a-select v-model:value="newTitleLang" placeholder="选择语言" @change="handleLangSelect">
                 <a-select-option v-for="lang in availableTitleLangs" :key="lang.code" :value="lang.code">
                   {{ lang.name }}
                 </a-select-option>
               </a-select>
               <a-input v-model:value="newTitleText" placeholder="请输入语言标识" />
-              <a-upload
-                :show-upload-list="false"
-                accept="image/*"
-                @change="handleAddImageWithLang"
-              >
-                <a-button type="primary">上传图片</a-button>
-              </a-upload>
+              <a-button type="primary" @click="handleAddLangOption">添 加</a-button>
               <a-button @click="titleRefModalVisible = true">参 考</a-button>
             </div>
 
@@ -279,6 +272,15 @@
                 </div>
               </div>
             </div>
+
+            <!-- 隐藏的上传input -->
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleFileSelect"
+            />
           </div>
         </div>
       </div>
@@ -349,8 +351,8 @@ const calcTableHeight = () => {
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
-  const paginationHeight = 56
-  const extra = 24
+  const paginationHeight = 80
+  const extra = 48
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -367,7 +369,7 @@ onUnmounted(() => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('large')
+const tableSize = ref('default')
 
 // 表格列配置
 const columns = [
@@ -472,6 +474,7 @@ const newTitleLang = ref(undefined)
 const newTitleText = ref('')
 const titleRefModalVisible = ref(false)
 const titleLangSearchText = ref('')
+const customLangs = ref([]) // 自定义语言列表
 
 // 语言数据
 const langRefData = [
@@ -498,10 +501,11 @@ const langRefColumns = [
   { title: '语言名称', dataIndex: 'name', key: 'name' }
 ]
 
-// 可用标题语言（过滤已添加的）
+// 可用标题语言（过滤已添加的，包含自定义语言）
 const availableTitleLangs = computed(() => {
   const addedCodes = editForm.images.map(t => t.lang)
-  return langRefData.filter(lang => !addedCodes.includes(lang.code))
+  const allLangs = [...langRefData, ...customLangs.value]
+  return allLangs.filter(lang => !addedCodes.includes(lang.code))
 })
 
 // 过滤后的语言数据
@@ -619,32 +623,66 @@ const handleEditSubmit = () => {
   editDrawerVisible.value = false
 }
 
-// 上传图片并添加语言
-const handleAddImageWithLang = (info) => {
-  if (info.file.status === 'done' || info.file.originFileObj) {
-    const lang = newTitleLang.value || newTitleText.value
-    if (!lang) {
-      message.warning('请选择或输入语言标识')
-      return
-    }
-    const exists = editForm.images.some(t => t.lang === lang)
-    if (exists) {
-      message.warning('该语言已添加')
-      return
-    }
-    const file = info.file.originFileObj || info.file
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      editForm.images.push({
-        lang: lang,
-        image: e.target.result
-      })
-      newTitleLang.value = undefined
-      newTitleText.value = ''
-      message.success('添加成功')
-    }
-    reader.readAsDataURL(file)
+// 文件上传input引用
+const fileInputRef = ref(null)
+// 当前选择的语言（用于上传）
+const pendingLang = ref('')
+
+// 下拉框选择语言后，直接弹出文件选择
+const handleLangSelect = (value) => {
+  if (!value) return
+  const exists = editForm.images.some(t => t.lang === value)
+  if (exists) {
+    message.warning('该语言已添加')
+    newTitleLang.value = undefined
+    return
   }
+  pendingLang.value = value
+  // 触发文件选择
+  fileInputRef.value?.click()
+}
+
+// 文件选择后处理
+const handleFileSelect = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) {
+    newTitleLang.value = undefined
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    editForm.images.push({
+      lang: pendingLang.value,
+      image: ev.target.result
+    })
+    message.success('添加成功')
+    // 重置
+    newTitleLang.value = undefined
+    pendingLang.value = ''
+  }
+  reader.readAsDataURL(file)
+  // 清空input，以便下次能再选同一文件
+  e.target.value = ''
+}
+
+// 添加自定义语言到下拉选项
+const handleAddLangOption = () => {
+  if (!newTitleText.value) {
+    message.warning('请输入语言标识')
+    return
+  }
+  const exists = langRefData.some(l => l.code === newTitleText.value) ||
+                 customLangs.value.some(l => l.code === newTitleText.value)
+  if (exists) {
+    message.warning('该语言标识已存在')
+    return
+  }
+  customLangs.value.push({
+    code: newTitleText.value,
+    name: newTitleText.value
+  })
+  message.success('语言标识已添加到下拉选项')
+  newTitleText.value = ''
 }
 
 // 删除图片
@@ -669,26 +707,30 @@ const handleUpdateImage = (info, index) => {
 const handleSelectTitleLangFromRef = (record) => {
   newTitleLang.value = record.code
   titleRefModalVisible.value = false
-  message.success(`已选择语言: ${record.name} (${record.code})`)
+  // 选择后直接触发上传
+  handleLangSelect(record.code)
 }
 </script>
 
 <style scoped lang="less">
-.banner-container {
+.page-container {
   background: #fff;
   border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    margin-bottom: 16px;
 
     .header-left {
       display: flex;
@@ -717,8 +759,46 @@ const handleSelectTitleLangFromRef = (record) => {
   .table-wrapper {
     flex: 1;
     overflow: hidden;
-    padding: 0 16px;
     min-height: 0;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
   }
 
   .status-tag {
@@ -744,7 +824,7 @@ const handleSelectTitleLangFromRef = (record) => {
   }
 
   // 密度样式
-  &.size-large :deep(.ant-table) {
+  &.size-default :deep(.ant-table) {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
       padding: 16px 8px;
@@ -829,33 +909,24 @@ const handleSelectTitleLangFromRef = (record) => {
   }
 
   .edit-left-panel {
-    width: 420px;
-    flex-shrink: 0;
-    padding: 16px 24px;
-    border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    background: #fff;
+    flex: 1;
+    padding-right: 24px;
+    border-right: 1px solid #f0f0f0;
   }
 
   .edit-right-panel {
     flex: 1;
-    min-width: 0;
-    padding: 16px 24px;
-    border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    background: #fff;
-    overflow: hidden;
   }
 
   .section-title {
     font-size: 16px;
     font-weight: 600;
     color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .form-item {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
     label {
       display: block;
@@ -871,18 +942,18 @@ const handleSelectTitleLangFromRef = (record) => {
 
     :deep(.ant-input),
     :deep(.ant-select-selector) {
-      height: 40px !important;
+      height: 36px !important;
       border-radius: 6px;
 
       .ant-select-selection-item,
       .ant-select-selection-placeholder {
-        line-height: 38px !important;
+        line-height: 34px !important;
       }
     }
   }
 
   .ant-row {
-    margin-bottom: 0;
+    margin-bottom: 8px;
   }
 
   .image-list {
@@ -909,14 +980,16 @@ const handleSelectTitleLangFromRef = (record) => {
       .image-preview {
         .upload-preview-with-actions {
           width: 100%;
-          max-width: 100%;
+          max-height: 200px;
           border-radius: 8px;
           overflow: hidden;
           position: relative;
           border: 1px solid #e8e8e8;
+          background: #f5f5f5;
 
           > img {
             width: 100%;
+            max-height: 200px;
             display: block;
             object-fit: contain;
           }
@@ -929,10 +1002,10 @@ const handleSelectTitleLangFromRef = (record) => {
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             opacity: 0;
             transition: opacity 0.3s;
 
@@ -944,6 +1017,41 @@ const handleSelectTitleLangFromRef = (record) => {
 
           &:hover .preview-overlay {
             opacity: 1;
+          }
+        }
+
+        .upload-box {
+          width: 100%;
+          height: 120px;
+          border: 1px dashed #d9d9d9;
+          border-radius: 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #fafafa;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: #1890ff;
+            background: #f0f7ff;
+
+            .upload-icon,
+            .upload-text {
+              color: #1890ff;
+            }
+          }
+
+          .upload-icon {
+            font-size: 24px;
+            color: #bfbfbf;
+            margin-bottom: 8px;
+          }
+
+          .upload-text {
+            font-size: 14px;
+            color: #bfbfbf;
           }
         }
       }

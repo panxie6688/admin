@@ -59,14 +59,18 @@ const pageSizeValue = computed({
 
 <style scoped lang="less">
 .pagination-wrapper {
-  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  height: 56px;
+  height: 48px;
   border-top: 1px solid #f0f0f0;
   background: #fff;
   box-sizing: border-box;
+  z-index: 10;
 
   .total-text {
     margin-right: 16px;

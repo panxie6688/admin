@@ -1,5 +1,5 @@
 <template>
-  <div class="online-container" :class="`size-${tableSize}`">
+  <div class="page-container" :class="`size-${tableSize}`">
     <!-- 页面标题和搜索区域 -->
     <div class="page-header">
       <div class="header-left">
@@ -38,7 +38,7 @@
           </a-tooltip>
           <template #overlay>
             <a-menu @click="handleDensityChange" :selectedKeys="[tableSize]">
-              <a-menu-item key="large">宽松</a-menu-item>
+              <a-menu-item key="default">宽松</a-menu-item>
               <a-menu-item key="middle">中等</a-menu-item>
               <a-menu-item key="small">紧凑</a-menu-item>
             </a-menu>
@@ -87,15 +87,20 @@
           </template>
         </template>
       </a-table>
+      <!-- 底部分页 -->
+      <div class="page-footer">
+        <span class="stats-text">统计: {{ pagination.total }}/条</span>
+        <a-pagination
+          v-model:current="pagination.current"
+          v-model:page-size="pagination.pageSize"
+          :total="pagination.total"
+          :show-size-changer="true"
+          :show-quick-jumper="true"
+          :page-size-options="['10', '20', '50', '100']"
+          size="small"
+        />
+      </div>
     </div>
-
-    <!-- 固定分页 -->
-    <TablePagination
-      v-model:current="pagination.current"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-quick-jumper="true"
-    />
 
     <!-- 更多搜索抽屉 -->
     <a-drawer
@@ -229,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, inject, onMounted, onUnmounted, watch } from 'vue'
 import {
   SearchOutlined,
   FullscreenOutlined,
@@ -252,8 +257,8 @@ const calcTableHeight = () => {
   const headerHeight = 64
   const contentMargin = 32
   const pageHeader = 56
-  const paginationHeight = 56
-  const extra = 24
+  const paginationHeight = 80  // 增加分页区域的预留高度
+  const extra = 48  // 增加额外边距
   tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
 }
 
@@ -328,7 +333,7 @@ const handleSearchUid = () => {
 const loading = ref(false)
 
 // 表格密度
-const tableSize = ref('large')
+const tableSize = ref('default')
 
 // 表格列配置
 const columns = [
@@ -418,6 +423,19 @@ const pagination = reactive({
   total: 1855
 })
 
+// 监听分页变化
+watch(
+  () => [pagination.current, pagination.pageSize],
+  ([newPage, newPageSize], [oldPage, oldPageSize]) => {
+    // 如果是 pageSize 变化，重置到第一页
+    if (newPageSize !== oldPageSize) {
+      pagination.current = 1
+    }
+    // 重新加载数据
+    handleRefresh()
+  }
+)
+
 // 刷新
 const handleRefresh = () => {
   loading.value = true
@@ -448,21 +466,23 @@ const handleForceLogout = (record) => {
 </script>
 
 <style scoped lang="less">
-.online-container {
+.page-container {
   background: #fff;
   border-radius: 8px;
+  padding: 24px;
+  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;
+  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    margin-bottom: 16px;
 
     .header-left {
       display: flex;
@@ -472,7 +492,7 @@ const handleForceLogout = (record) => {
       .page-title {
         margin: 0;
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 500;
         color: #333;
       }
     }
@@ -484,11 +504,74 @@ const handleForceLogout = (record) => {
     }
   }
 
+  :deep(.pagination-wrapper) {
+    flex-shrink: 0;
+  }
+
+  .page-footer {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+    background: #fff;
+    height: 48px;
+    z-index: 10;
+
+    .stats-text {
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+
   .table-wrapper {
     flex: 1;
-    overflow: hidden;
-    padding: 0 16px;
     min-height: 0;
+    overflow: hidden;
+
+    :deep(.ant-table-wrapper) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .ant-spin-nested-loading {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ant-spin-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ant-table {
+        flex: 1;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .ant-table-header {
+            flex-shrink: 0;
+            overflow: hidden !important;
+          }
+
+          .ant-table-body {
+            flex: 1;
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+          }
+        }
+      }
+    }
   }
 
   .member-cell {
@@ -528,7 +611,7 @@ const handleForceLogout = (record) => {
   }
 
   // 密度样式
-  &.size-large :deep(.ant-table) {
+  &.size-default :deep(.ant-table) {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
       padding: 16px 8px;
@@ -547,25 +630,6 @@ const handleForceLogout = (record) => {
     .ant-table-tbody > tr > td {
       padding: 8px 4px;
     }
-  }
-}
-
-:deep(.ant-table-wrapper) {
-  height: 100%;
-
-  .ant-spin-nested-loading {
-    height: 100%;
-
-    .ant-spin-container {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-  }
-
-  .ant-table {
-    flex: 1;
-    overflow: hidden;
   }
 }
 
