@@ -57,7 +57,7 @@
         :loading="loading"
         :pagination="false"
         :size="tableSize"
-        :scroll="{ y: tableScrollY }"
+        :scroll="{ x: 1200, y: 'calc(100vh - 220px)' }"
         row-key="id"
         bordered
       >
@@ -113,11 +113,19 @@
           </template>
         </template>
       </a-table>
-      <!-- 分页 -->
-      <TablePagination
+    </div>
+
+    <!-- 固定分页 -->
+    <div class="page-footer">
+      <span class="total-text">统计: {{ pagination.total }}/条</span>
+      <a-pagination
         v-model:current="pagination.current"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
+        :show-size-changer="false"
+        :show-quick-jumper="true"
+        size="small"
+        @change="handlePageChange"
       />
     </div>
 
@@ -508,7 +516,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, inject, computed } from 'vue'
 import {
   PlusOutlined,
   SearchOutlined,
@@ -521,6 +529,12 @@ import {
 import { message, Modal } from 'ant-design-vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 
+// 分页变化处理
+const handlePageChange = (page) => {
+  pagination.current = page
+  // TODO: 加载数据
+}
+
 // 注入布局状态
 const topMenuMode = inject('topMenuMode')
 const contentFullscreen = inject('contentFullscreen')
@@ -528,27 +542,6 @@ const toggleContentFullscreen = inject('toggleContentFullscreen')
 
 // 搜索
 const searchText = ref('')
-
-// 表格滚动高度
-const tableScrollY = ref(400)
-
-const calcTableHeight = () => {
-  const headerHeight = 64
-  const contentMargin = 32
-  const pageHeader = 56
-  const paginationHeight = 80
-  const extra = 48
-  tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
-}
-
-onMounted(() => {
-  calcTableHeight()
-  window.addEventListener('resize', calcTableHeight)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calcTableHeight)
-})
 
 // 加载状态
 const loading = ref(false)
@@ -1435,22 +1428,21 @@ const handleDeleteLang = (index) => {
 
 <style scoped lang="less">
 .page-container {
+  padding: 16px 0 0 0;
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
-  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 0 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
 
     .header-left {
       display: flex;
@@ -1478,29 +1470,20 @@ const handleDeleteLang = (index) => {
 
   .table-wrapper {
     flex: 1;
-    overflow: hidden;
-    padding: 0 16px;
     min-height: 0;
+    overflow: hidden;
+    padding: 0 24px;
 
     :deep(.ant-table-wrapper) {
       height: 100%;
-      display: flex;
-      flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
 
       .ant-table {
-        flex: 1;
-        overflow: hidden;
+        height: 100%;
 
         .ant-table-container {
           height: 100%;
@@ -1509,16 +1492,30 @@ const handleDeleteLang = (index) => {
 
           .ant-table-header {
             flex-shrink: 0;
-            overflow: hidden !important;
           }
 
           .ant-table-body {
             flex: 1;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
+            overflow: auto !important;
           }
         }
       }
+    }
+  }
+
+  .page-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    height: 48px;
+    border-top: 1px solid #f0f0f0;
+    background: #fff;
+
+    .total-text {
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
     }
   }
 

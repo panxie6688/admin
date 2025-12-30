@@ -63,7 +63,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 3500, y: 'calc(100vh - 280px)' }"
+        :scroll="{ x: 3500, y: 'calc(100vh - 220px)' }"
       >
         <template #bodyCell="{ column, record }">
           <!-- 备注带编辑图标 -->
@@ -254,12 +254,17 @@
           </template>
         </template>
       </a-table>
-      <!-- 底部分页 -->
-      <TablePagination
+    </div>
+
+    <!-- 底部分页 -->
+    <div class="page-footer">
+      <span class="total-text">统计: {{ pagination.total }}/条</span>
+      <a-pagination
         v-model:current="pagination.current"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
         :show-quick-jumper="true"
+        size="small"
       />
     </div>
 
@@ -6383,25 +6388,23 @@ const handleCryptoOrder = (record) => {
 
 <style scoped lang="less">
 .page-container {
+  padding: 16px 0 0 0;
   background: #fff;
   border-radius: 8px;
-  padding: 24px 0;
-  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    padding: 0 24px;
+    padding: 0 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
     flex-wrap: wrap;
     gap: 12px;
-    flex-shrink: 0;
 
     .header-left {
       display: flex;
@@ -6424,27 +6427,20 @@ const handleCryptoOrder = (record) => {
 
   .table-wrapper {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    padding: 0 24px;
 
     :deep(.ant-table-wrapper) {
       height: 100%;
-      display: flex;
-      flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
 
       .ant-table {
-        flex: 1;
-        overflow: hidden;
+        height: 100%;
 
         .ant-table-container {
           height: 100%;
@@ -6453,7 +6449,6 @@ const handleCryptoOrder = (record) => {
 
           .ant-table-header {
             flex-shrink: 0;
-            overflow: hidden !important;
           }
 
           .ant-table-body {
@@ -6462,6 +6457,22 @@ const handleCryptoOrder = (record) => {
           }
         }
       }
+    }
+  }
+
+  .page-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    height: 48px;
+    border-top: 1px solid #f0f0f0;
+    background: #fff;
+
+    .total-text {
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
     }
   }
 

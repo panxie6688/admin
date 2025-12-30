@@ -64,7 +64,7 @@
         :loading="loading"
         :pagination="false"
         :size="tableSize"
-        :scroll="{ x: 1200, y: tableScrollY }"
+        :scroll="{ x: 1200, y: 'calc(100vh - 220px)' }"
         row-key="id"
         bordered
       >
@@ -118,12 +118,17 @@
           </template>
         </template>
       </a-table>
-      <!-- 固定分页 -->
-      <TablePagination
+    </div>
+
+    <!-- 固定分页 -->
+    <div class="page-footer">
+      <span class="total-text">统计: {{ pagination.total }}/条</span>
+      <a-pagination
         v-model:current="pagination.current"
         v-model:page-size="pagination.pageSize"
         :total="pagination.total"
         :show-quick-jumper="true"
+        size="small"
       />
     </div>
 
@@ -252,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, inject } from 'vue'
 import {
   SearchOutlined,
   DownOutlined,
@@ -271,27 +276,6 @@ const toggleContentFullscreen = inject('toggleContentFullscreen')
 
 // Tab 切换
 const activeTab = ref('pending')
-
-// 表格滚动高度
-const tableScrollY = ref(400)
-
-const calcTableHeight = () => {
-  const headerHeight = 64
-  const contentMargin = 32
-  const pageHeader = 56
-  const paginationHeight = 80
-  const extra = 48
-  tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
-}
-
-onMounted(() => {
-  calcTableHeight()
-  window.addEventListener('resize', calcTableHeight)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calcTableHeight)
-})
 
 // 搜索表单
 const searchForm = reactive({
@@ -463,22 +447,21 @@ const handleDensityChange = ({ key }) => {
 
 <style scoped lang="less">
 .page-container {
+  padding: 16px 0 0 0;
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
-  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 0 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
 
     .header-left {
       display: flex;
@@ -528,27 +511,20 @@ const handleDensityChange = ({ key }) => {
 
   .table-wrapper {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    padding: 0 24px;
 
     :deep(.ant-table-wrapper) {
       height: 100%;
-      display: flex;
-      flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
 
       .ant-table {
-        flex: 1;
-        overflow: hidden;
+        height: 100%;
 
         .ant-table-container {
           height: 100%;
@@ -557,16 +533,30 @@ const handleDensityChange = ({ key }) => {
 
           .ant-table-header {
             flex-shrink: 0;
-            overflow: hidden !important;
           }
 
           .ant-table-body {
             flex: 1;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
+            overflow: auto !important;
           }
         }
       }
+    }
+  }
+
+  .page-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    height: 48px;
+    border-top: 1px solid #f0f0f0;
+    background: #fff;
+
+    .total-text {
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
     }
   }
 

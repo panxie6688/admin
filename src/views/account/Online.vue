@@ -55,7 +55,7 @@
         :loading="loading"
         :pagination="false"
         :size="tableSize"
-        :scroll="{ x: 980, y: tableScrollY }"
+        :scroll="{ x: 980, y: 'calc(100vh - 220px)' }"
         row-key="id"
         bordered
       >
@@ -87,19 +87,20 @@
           </template>
         </template>
       </a-table>
-      <!-- 底部分页 -->
-      <div class="page-footer">
-        <span class="stats-text">统计: {{ pagination.total }}/条</span>
-        <a-pagination
-          v-model:current="pagination.current"
-          v-model:page-size="pagination.pageSize"
-          :total="pagination.total"
-          :show-size-changer="true"
-          :show-quick-jumper="true"
-          :page-size-options="['10', '20', '50', '100']"
-          size="small"
-        />
-      </div>
+    </div>
+
+    <!-- 固定分页 -->
+    <div class="page-footer">
+      <span class="stats-text">统计: {{ pagination.total }}/条</span>
+      <a-pagination
+        v-model:current="pagination.current"
+        v-model:page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-size-changer="true"
+        :show-quick-jumper="true"
+        :page-size-options="['10', '20', '50', '100']"
+        size="small"
+      />
     </div>
 
     <!-- 更多搜索抽屉 -->
@@ -234,7 +235,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, inject, watch } from 'vue'
 import {
   SearchOutlined,
   FullscreenOutlined,
@@ -249,27 +250,6 @@ import { message, Modal } from 'ant-design-vue'
 const topMenuMode = inject('topMenuMode')
 const contentFullscreen = inject('contentFullscreen')
 const toggleContentFullscreen = inject('toggleContentFullscreen')
-
-// 表格滚动高度
-const tableScrollY = ref(400)
-
-const calcTableHeight = () => {
-  const headerHeight = 64
-  const contentMargin = 32
-  const pageHeader = 56
-  const paginationHeight = 80  // 增加分页区域的预留高度
-  const extra = 48  // 增加额外边距
-  tableScrollY.value = window.innerHeight - headerHeight - contentMargin - pageHeader - paginationHeight - extra
-}
-
-onMounted(() => {
-  calcTableHeight()
-  window.addEventListener('resize', calcTableHeight)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', calcTableHeight)
-})
 
 // 搜索表单
 const searchForm = reactive({
@@ -467,22 +447,21 @@ const handleForceLogout = (record) => {
 
 <style scoped lang="less">
 .page-container {
+  padding: 16px 0 0 0;
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
-  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 0 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
 
     .header-left {
       display: flex;
@@ -504,55 +483,22 @@ const handleForceLogout = (record) => {
     }
   }
 
-  :deep(.pagination-wrapper) {
-    flex-shrink: 0;
-  }
-
-  .page-footer {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 12px 16px;
-    border-top: 1px solid #f0f0f0;
-    background: #fff;
-    height: 48px;
-    z-index: 10;
-
-    .stats-text {
-      margin-right: 16px;
-      color: #666;
-      font-size: 14px;
-    }
-  }
-
   .table-wrapper {
     flex: 1;
     min-height: 0;
     overflow: hidden;
+    padding: 0 24px;
 
     :deep(.ant-table-wrapper) {
       height: 100%;
-      display: flex;
-      flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
         height: 100%;
-        display: flex;
-        flex-direction: column;
       }
 
       .ant-table {
-        flex: 1;
-        overflow: hidden;
+        height: 100%;
 
         .ant-table-container {
           height: 100%;
@@ -561,16 +507,30 @@ const handleForceLogout = (record) => {
 
           .ant-table-header {
             flex-shrink: 0;
-            overflow: hidden !important;
           }
 
           .ant-table-body {
             flex: 1;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
+            overflow: auto !important;
           }
         }
       }
+    }
+  }
+
+  .page-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    height: 48px;
+    border-top: 1px solid #f0f0f0;
+    background: #fff;
+
+    .stats-text {
+      margin-right: 16px;
+      color: #666;
+      font-size: 14px;
     }
   }
 
