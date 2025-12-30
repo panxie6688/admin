@@ -63,7 +63,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 1200, y: 'calc(100vh - 280px)' }"
+        :scroll="{ x: 1200 }"
       >
         <template #bodyCell="{ column, record }">
           <!-- 订单号 - 蓝色可点击 -->
@@ -102,12 +102,18 @@
         </template>
       </a-table>
       <!-- 底部分页 -->
-      <TablePagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-quick-jumper="true"
-      />
+      <div class="page-footer">
+        <span class="total-text">统计: {{ pagination.total }}/条</span>
+        <a-pagination
+          v-model:current="pagination.current"
+          v-model:page-size="pagination.pageSize"
+          :total="pagination.total"
+          :show-size-changer="false"
+          :show-quick-jumper="true"
+          size="small"
+          @change="handlePageChange"
+        />
+      </div>
     </div>
 
     <!-- 更多搜索抽屉 -->
@@ -274,7 +280,6 @@
 
 <script setup>
 import { ref, reactive, inject, computed } from 'vue'
-import TablePagination from '@/components/TablePagination.vue'
 import {
   PlusOutlined,
   MinusOutlined,
@@ -294,6 +299,12 @@ const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
 const tableSize = ref('small')
 const handleDensityChange = ({ key }) => {
   tableSize.value = key
+}
+
+// 分页切换
+const handlePageChange = (page) => {
+  pagination.current = page
+  handleRefresh()
 }
 
 // 搜索
@@ -502,23 +513,23 @@ const handleFinance = (record) => {
 
 <style scoped lang="less">
 .page-container {
+  padding: 24px 0;
+  padding-bottom: 0;
   background: #fff;
   border-radius: 8px;
-  padding: 24px;
-  padding-bottom: 80px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 12px;
+    padding: 0 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
     flex-shrink: 0;
 
     .header-left {
@@ -527,8 +538,8 @@ const handleFinance = (record) => {
       gap: 16px;
 
       .page-title {
-        font-size: 18px;
-        font-weight: 500;
+        font-size: 16px;
+        font-weight: 600;
         color: #333;
       }
     }
@@ -537,49 +548,77 @@ const handleFinance = (record) => {
       display: flex;
       align-items: center;
       gap: 8px;
+
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
   }
 
   .table-wrapper {
     flex: 1;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
 
     :deep(.ant-table-wrapper) {
-      height: 100%;
+      flex: 1;
       display: flex;
       flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
-        height: 100%;
+        flex: 1;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        overflow: hidden;
+        display: flex;
+        flex-direction: column;
 
         .ant-table-container {
-          height: 100%;
+          flex: 1;
           display: flex;
           flex-direction: column;
 
-          .ant-table-header {
-            flex-shrink: 0;
-            overflow: hidden !important;
-          }
-
-          .ant-table-body {
+          .ant-table-content {
             flex: 1;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
+            overflow: auto !important;
           }
         }
+      }
+    }
+
+    // 分页固定在底部 - 使用 sticky
+    .page-footer {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      height: 48px;
+      border-top: 1px solid #f0f0f0;
+      background: #fff;
+      box-sizing: border-box;
+      z-index: 10;
+      flex-shrink: 0;
+
+      .total-text {
+        margin-right: 16px;
+        color: #666;
+        font-size: 14px;
+        white-space: nowrap;
       }
     }
   }

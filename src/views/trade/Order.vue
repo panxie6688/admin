@@ -73,7 +73,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 1800, y: tableHeight }"
+        :scroll="{ x: 1800 }"
         :row-class-name="() => 'order-table-row'"
       >
         <template #bodyCell="{ column, record }">
@@ -143,13 +143,18 @@
         </template>
       </a-table>
       <!-- 底部分页 -->
-      <TablePagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-quick-jumper="true"
-        @change="handlePageChange"
-      />
+      <div class="page-footer">
+        <span class="total-text">统计: {{ pagination.total }}/条</span>
+        <a-pagination
+          v-model:current="pagination.current"
+          v-model:page-size="pagination.pageSize"
+          :total="pagination.total"
+          :show-size-changer="false"
+          :show-quick-jumper="true"
+          size="small"
+          @change="handlePageChange"
+        />
+      </div>
     </div>
 
     <!-- 搜索抽屉 -->
@@ -314,9 +319,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, inject } from 'vue'
+import { ref, reactive, inject } from 'vue'
 import { message } from 'ant-design-vue'
-import TablePagination from '@/components/TablePagination.vue'
 import {
   ReloadOutlined,
   ColumnHeightOutlined,
@@ -346,11 +350,6 @@ const pagination = reactive({
 
 // 表格数据
 const tableData = ref([])
-
-// 表格高度
-const tableHeight = computed(() => {
-  return 'calc(100vh - 280px)'
-})
 
 // 列配置
 const columns = [
@@ -538,21 +537,21 @@ loadData()
 
 <style scoped lang="less">
 .page-container {
-  padding: 24px;
-  padding-bottom: 80px;
+  padding: 24px 0;
+  padding-bottom: 0;
   background: #fff;
   border-radius: 8px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    padding: 0 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid #f0f0f0;
     flex-shrink: 0;
@@ -605,42 +604,37 @@ loadData()
 
   .table-wrapper {
     flex: 1;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 0 24px;
+    display: flex;
+    flex-direction: column;
 
     :deep(.ant-table-wrapper) {
-      height: 100%;
+      flex: 1;
       display: flex;
       flex-direction: column;
 
-      .ant-spin-nested-loading {
-        flex: 1;
-        overflow: hidden;
-      }
-
+      .ant-spin-nested-loading,
       .ant-spin-container {
-        height: 100%;
+        flex: 1;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        overflow: hidden;
+        display: flex;
+        flex-direction: column;
 
         .ant-table-container {
-          height: 100%;
+          flex: 1;
           display: flex;
           flex-direction: column;
 
-          .ant-table-header {
-            flex-shrink: 0;
-            overflow: hidden !important;
-          }
-
-          .ant-table-body {
+          .ant-table-content {
             flex: 1;
-            overflow-y: auto !important;
-            overflow-x: auto !important;
+            overflow: auto !important;
           }
         }
       }
@@ -661,6 +655,30 @@ loadData()
       .ant-table-tbody > tr > td {
         font-size: 14px;
         vertical-align: middle;
+      }
+    }
+
+    // 分页固定在底部 - 使用 sticky
+    .page-footer {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      height: 48px;
+      border-top: 1px solid #f0f0f0;
+      background: #fff;
+      box-sizing: border-box;
+      z-index: 10;
+      flex-shrink: 0;
+
+      .total-text {
+        margin-right: 16px;
+        color: #666;
+        font-size: 14px;
+        white-space: nowrap;
       }
     }
   }

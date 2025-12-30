@@ -310,7 +310,118 @@ const apiKey = 'gi9o0q815ws4m9zlu3e37k1txaet5yi5u9r6a47bticec4zl'
 
 **新增表格页面时**: 必须在表格外层容器添加 `:class="`size-${tableSize}`"` 并添加对应 CSS 样式。
 
-### 7.2 路径别名
+### 7.2 页面标准布局（重要）
+
+**所有带表格的页面必须使用此标准布局**，确保：
+- 页面撑满整个内容区域
+- 表格区域可滚动（横向和纵向）
+- 分页固定在底部
+
+**HTML 结构**：
+```vue
+<template>
+  <div class="page-container" :class="`size-${tableSize}`">
+    <!-- 顶部操作栏 -->
+    <div class="page-header">
+      <div class="header-left">
+        <span class="page-title">页面标题</span>
+      </div>
+      <div class="header-right">
+        <!-- 搜索框、按钮、工具栏图标 -->
+      </div>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="table-wrapper">
+      <a-table
+        :columns="columns"
+        :data-source="tableData"
+        :pagination="false"
+        :size="tableSize"
+        bordered
+        :scroll="{ x: 1400 }"
+      >
+        <!-- 表格内容 -->
+      </a-table>
+
+      <!-- 分页固定在底部 -->
+      <div class="page-footer">
+        <span class="total-text">统计: {{ pagination.total }}/条</span>
+        <a-pagination ... />
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+**全局样式已定义** (`src/assets/styles/global.less`)：
+
+```less
+// 页面容器
+.page-container {
+  padding: 24px 0;
+  padding-bottom: 0;
+  background: #fff;
+  border-radius: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// 页面头部
+.page-header { ... }
+
+// 表格区域（含分页）
+.table-wrapper {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+
+  // Ant Design 表格撑满
+  .ant-table-wrapper { ... }
+
+  // 分页固定在底部
+  .page-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    ...
+  }
+}
+
+// 表格密度样式
+.page-container.size-default { ... }
+.page-container.size-middle { ... }
+.page-container.size-small { ... }
+```
+
+**关键点**：
+1. `.page-container` 使用 `flex` 布局，`height: 100%` 撑满父容器
+2. `.table-wrapper` 使用 `flex: 1` 占满剩余空间，`overflow: auto` 允许滚动
+3. `.page-footer` 使用 `position: sticky; bottom: 0` 固定在滚动区域底部
+4. 表格的 `:scroll="{ x: 宽度 }"` 只设置横向滚动，不设置 `y`
+
+**MainLayout 内容区样式**（已配置）：
+```less
+.content {
+  margin: 16px;
+  border-radius: 8px;
+  height: calc(100vh - 64px - 32px);
+  overflow: hidden;
+
+  // 确保高度传递到子组件
+  :deep(.ant-spin-nested-loading),
+  :deep(.ant-spin-container) {
+    height: 100%;
+  }
+}
+```
+
+### 7.3 路径别名
 
 `@` 别名指向 `src/` 目录
 

@@ -664,6 +664,11 @@ document.addEventListener('fullscreenchange', () => {
     height: calc(100vh - 64px - 32px);
     overflow: hidden;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    :deep(.ant-spin-nested-loading),
+    :deep(.ant-spin-container) {
+      height: 100%;
+    }
   }
 }
 
