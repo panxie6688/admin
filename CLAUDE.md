@@ -1193,5 +1193,294 @@ const stats = reactive({
 
 ---
 
+## 十九、AdminLog.vue 管理员日志
+
+> 更新日期: 2026-01-02
+
+### 19.1 页面功能
+
+管理员日志页面，用于记录和查看所有管理员的操作日志。
+
+**权限控制**：
+- 超级管理员：可查看所有管理员的日志
+- 子管理员：只能查看自己的日志
+
+**主要功能**：
+- 操作日志列表（9列，固定高度滚动）
+- 快捷日期筛选（今天/昨天/近7天/近30天/自定义）
+- 多条件筛选（管理员/模块/类型）
+- 关键词搜索
+- 详情抽屉（查看请求/响应数据）
+- 导出日志（仅超级管理员）
+
+### 19.2 表格列
+
+| 列名 | 数据字段 | 宽度 | 特殊样式 |
+|------|---------|------|---------|
+| ID | id | 80px | 固定左侧 |
+| 管理员 | adminName | 140px | 双行显示（名称+账号） |
+| 模块 | module | 100px | 彩色标签 |
+| 类型 | action | 100px | 彩色标签 |
+| 操作内容 | content | 300px | 省略+tooltip |
+| 结果 | result | 70px | 成功=绿色，失败=红色 |
+| IP地址 | ip | 130px | - |
+| 操作时间 | time | 160px | - |
+| 详情 | detail | 70px | 链接，固定右侧 |
+
+### 19.3 模块类型与颜色
+
+**操作模块**：
+| 模块 | 中文名 | 标签颜色 |
+|------|-------|---------|
+| member | 会员 | blue |
+| order | 订单 | cyan |
+| withdraw | 提现 | orange |
+| recharge | 充值 | green |
+| goods | 商品 | purple |
+| system | 系统 | red |
+| auth | 认证 | magenta |
+| login | 登录 | default |
+
+**操作类型**：
+| 类型 | 中文名 | 标签颜色 |
+|------|-------|---------|
+| login | 登录 | processing |
+| logout | 登出 | default |
+| add | 新增 | success |
+| edit | 编辑 | warning |
+| delete | 删除 | error |
+| approve | 通过 | success |
+| reject | 驳回 | error |
+| export | 导出 | cyan |
+
+### 19.4 数据结构
+
+**日志数据**：
+```javascript
+{
+  id: 1001,
+  adminId: 1,                    // 管理员ID
+  adminName: '超级管理员',        // 管理员名称
+  adminAccount: 'admin',         // 管理员账号
+  module: 'login',               // 操作模块
+  action: 'login',               // 操作类型
+  content: '管理员登录系统',      // 操作内容
+  result: 'success',             // 结果: success/fail
+  ip: '192.168.1.100',           // IP地址
+  browser: 'Chrome 120.0',       // 浏览器
+  os: 'Windows 10',              // 操作系统
+  time: '2025-01-02 09:15:23',   // 操作时间
+  requestData: { ... },          // 请求数据
+  responseData: { ... }          // 响应数据
+}
+```
+
+**筛选状态**：
+```javascript
+const searchText = ref('')           // 搜索关键词
+const dateRange = ref(null)          // 日期范围
+const quickDateFilter = ref('today') // 快捷日期: today/yesterday/week/month/custom
+const filterAdmin = ref('')          // 管理员ID
+const filterModule = ref('')         // 模块
+const filterAction = ref('')         // 操作类型
+```
+
+### 19.5 关键实现
+
+**权限过滤**：
+```javascript
+const filteredData = computed(() => {
+  let data = [...logData.value]
+
+  // 非超级管理员只能看自己的日志
+  if (!isSuperAdmin.value) {
+    data = data.filter(item => item.adminId === currentAdminId.value)
+  }
+
+  // 其他筛选条件...
+  return data
+})
+```
+
+**表格固定高度滚动**：
+```vue
+<a-table
+  :data-source="filteredData"
+  :pagination="false"
+  :scroll="{ x: 1400, y: 'calc(100vh - 280px)' }"
+/>
+```
+
+**关键点**：
+- 表格显示所有数据，通过 `scroll.y` 设置固定高度实现滚动
+- 分页组件仅用于显示统计和未来 API 分页
+- `pageSize` 设为 20
+
+### 19.6 详情抽屉
+
+**抽屉内容**：
+- 基本信息（Descriptions 组件）：日志ID、管理员、模块、类型、结果、内容、IP、浏览器、操作系统、时间
+- 请求数据（JSON 格式化显示）
+- 响应数据（JSON 格式化显示）
+
+### 19.7 相关样式类
+
+| 样式类 | 用途 |
+|-------|------|
+| `.page-container` | 页面容器（flex布局） |
+| `.page-header` | 顶部操作栏 |
+| `.table-wrapper` | 表格区域（flex: 1） |
+| `.page-footer` | 底部分页（sticky） |
+| `.admin-info` | 管理员信息（双行） |
+| `.detail-link` | 详情链接 |
+| `.detail-content` | 详情抽屉内容 |
+| `.code-block` | JSON 代码块 |
+
+---
+
+## 二十、后端对接技术建议
+
+> 更新日期: 2026-01-02
+
+### 20.1 推荐方案：Node.js + NestJS
+
+**推荐理由**：
+
+| 优势 | 说明 |
+|------|------|
+| 语言统一 | 前后端都使用 TypeScript/JavaScript，降低学习成本 |
+| 生态丰富 | NPM 包生态庞大，各种功能库齐全 |
+| 开发效率 | NestJS 提供完善的模块化架构，开箱即用 |
+| 类型安全 | TypeScript 支持，与前端共享类型定义 |
+| 部署简单 | 单一运行时环境，Docker 部署方便 |
+
+**NestJS 特点**：
+- 模块化架构（Module/Controller/Service）
+- 内置依赖注入
+- 装饰器语法，类似 Angular
+- 支持 TypeORM/Prisma 等 ORM
+- 内置验证、认证、日志等功能
+
+### 20.2 备选方案对比
+
+| 方案 | 优点 | 缺点 | 适用场景 |
+|------|------|------|---------|
+| **NestJS** | 架构完善、TS支持、文档丰富 | 学习曲线稍陡 | 中大型项目 |
+| **Express/Koa** | 轻量灵活、上手快 | 需自己搭架构 | 小型项目/API |
+| **Go (Gin/Fiber)** | 性能极高、编译型 | 需学新语言 | 高并发场景 |
+| **Python (FastAPI)** | 开发快、AI友好 | 性能一般 | AI相关项目 |
+| **Java (Spring Boot)** | 企业级、稳定 | 重量级、启动慢 | 大型企业项目 |
+
+### 20.3 推荐技术栈
+
+```
+后端：NestJS + TypeScript
+数据库：MySQL 或 PostgreSQL
+ORM：Prisma（类型安全）或 TypeORM
+缓存：Redis
+认证：JWT + Passport
+文档：Swagger（NestJS 内置支持）
+```
+
+### 20.4 项目结构建议
+
+```
+backend/
+├── src/
+│   ├── main.ts                 # 入口文件
+│   ├── app.module.ts           # 根模块
+│   ├── common/                 # 公共模块
+│   │   ├── decorators/         # 自定义装饰器
+│   │   ├── filters/            # 异常过滤器
+│   │   ├── guards/             # 认证守卫
+│   │   ├── interceptors/       # 拦截器
+│   │   └── pipes/              # 管道（验证）
+│   ├── modules/                # 业务模块
+│   │   ├── auth/               # 认证模块
+│   │   ├── admin/              # 管理员模块
+│   │   ├── member/             # 会员模块
+│   │   ├── order/              # 订单模块
+│   │   ├── trade/              # 交易模块
+│   │   └── system/             # 系统模块
+│   └── prisma/                 # Prisma ORM
+│       └── schema.prisma       # 数据库模型
+├── test/                       # 测试文件
+├── .env                        # 环境变量
+└── package.json
+```
+
+### 20.5 快速开始
+
+```bash
+# 创建 NestJS 项目
+npm i -g @nestjs/cli
+nest new backend
+
+# 安装常用依赖
+npm install @nestjs/config @nestjs/jwt @nestjs/passport
+npm install passport passport-jwt bcrypt
+npm install prisma @prisma/client
+npm install class-validator class-transformer
+
+# 开发
+npm run start:dev
+```
+
+### 20.6 API 对接示例
+
+**前端 API 封装** (`src/api/index.js`)：
+```javascript
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: '/api',
+  timeout: 10000
+})
+
+// 请求拦截器
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// 响应拦截器
+api.interceptors.response.use(
+  response => response.data,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+export default api
+```
+
+**API 模块** (`src/api/admin.js`)：
+```javascript
+import api from './index'
+
+export const adminApi = {
+  // 获取管理员日志
+  getLogs: (params) => api.get('/admin/logs', { params }),
+
+  // 导出日志
+  exportLogs: (params) => api.get('/admin/logs/export', {
+    params,
+    responseType: 'blob'
+  }),
+
+  // 获取管理员列表
+  getAdminList: () => api.get('/admin/list')
+}
+```
+
+---
+
 *本文档由 Claude Code 维护，用于快速了解和开发项目*
-*最后更新: 2025-12-25*
+*最后更新: 2026-01-02*

@@ -127,6 +127,12 @@ const routes = [
         component: () => import('@/views/system/Log.vue'),
         meta: { title: '发送日志' }
       },
+      {
+        path: 'system/admin-log',
+        name: 'AdminLog',
+        component: () => import('@/views/system/AdminLog.vue'),
+        meta: { title: '管理员日志' }
+      },
       // 消息
       {
         path: 'message/notice',

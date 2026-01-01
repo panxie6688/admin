@@ -316,7 +316,8 @@ const menuItems = [
       { key: 'system-setting', label: '系统设置', path: '/system/setting' },
       { key: 'system-level', label: '层级设置', path: '/system/level' },
       { key: 'system-service', label: '在线客服', path: '/system/service' },
-      { key: 'system-log', label: '发送日志', path: '/system/log' }
+      { key: 'system-log', label: '发送日志', path: '/system/log' },
+      { key: 'system-admin-log', label: '管理员日志', path: '/system/admin-log' }
     ]
   },
   {

@@ -21,6 +21,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <div class="form-grid">
           <!-- 左列 -->
           <div class="form-col">
@@ -185,6 +186,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- 网站样式 -->
@@ -194,6 +196,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <!-- 第一行 -->
         <div class="form-row-4">
           <div class="form-item">
@@ -365,6 +368,7 @@
             <a-input v-model:value="styleForm.maxWidth" placeholder="请输入" />
           </div>
         </div>
+        </div>
       </div>
 
       <!-- 网页模版 -->
@@ -374,6 +378,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <!-- 第一行 -->
         <div class="form-row-4">
           <div class="form-item">
@@ -415,6 +420,7 @@
           <div class="form-item"></div>
           <div class="form-item"></div>
         </div>
+        </div>
       </div>
 
       <!-- 会员设置 -->
@@ -424,6 +430,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <!-- 第一行 -->
         <div class="form-row-4">
           <div class="form-item">
@@ -472,8 +479,8 @@
           <div class="form-item">
             <div class="form-label">连单模式</div>
             <a-select v-model:value="memberForm.multiOrderMode" placeholder="请选择" style="width: 100%;">
+              <a-select-option value="整单确认">整单确认</a-select-option>
               <a-select-option value="分单确认">分单确认</a-select-option>
-              <a-select-option value="合并确认">合并确认</a-select-option>
             </a-select>
           </div>
           <div class="form-item">
@@ -483,15 +490,18 @@
           <div class="form-item">
             <div class="form-label">利润重置方式</div>
             <a-select v-model:value="memberForm.profitResetMode" placeholder="请选择" style="width: 100%;">
+              <a-select-option value="不重置">不重置</a-select-option>
               <a-select-option value="每天重置">每天重置</a-select-option>
-              <a-select-option value="每周重置">每周重置</a-select-option>
+              <a-select-option value="每周一重置">每周一重置</a-select-option>
+              <a-select-option value="每周日重置">每周日重置</a-select-option>
+              <a-select-option value="每月1号">每月1号</a-select-option>
+              <a-select-option value="完成任务重置">完成任务重置</a-select-option>
             </a-select>
           </div>
           <div class="form-item">
             <div class="form-label">时区</div>
-            <a-select v-model:value="memberForm.timezone" placeholder="请选择" style="width: 100%;">
-              <a-select-option value="America/Belize">America/Belize</a-select-option>
-              <a-select-option value="Asia/Shanghai">Asia/Shanghai</a-select-option>
+            <a-select v-model:value="memberForm.timezone" placeholder="请选择" style="width: 100%;" show-search :filter-option="filterTimezone">
+              <a-select-option v-for="tz in timezoneList" :key="tz.value" :value="tz.value" :label="tz.label">{{ tz.label }}</a-select-option>
             </a-select>
           </div>
         </div>
@@ -525,6 +535,7 @@
           <div class="form-item">
             <div class="form-label">分享码字母格式</div>
             <a-select v-model:value="memberForm.shareCodeFormat" placeholder="请选择" style="width: 100%;">
+              <a-select-option value="大小写">大小写</a-select-option>
               <a-select-option value="大写">大写</a-select-option>
               <a-select-option value="小写">小写</a-select-option>
             </a-select>
@@ -532,15 +543,17 @@
           <div class="form-item">
             <div class="form-label">分享码</div>
             <a-select v-model:value="memberForm.shareCodeRequired" placeholder="请选择" style="width: 100%;">
-              <a-select-option value="必填">必填</a-select-option>
               <a-select-option value="选填">选填</a-select-option>
+              <a-select-option value="必填">必填</a-select-option>
+              <a-select-option value="隐藏用默认">隐藏用默认</a-select-option>
             </a-select>
           </div>
           <div class="form-item">
             <div class="form-label">分享码字符</div>
             <a-select v-model:value="memberForm.shareCodeChar" placeholder="请选择" style="width: 100%;">
-              <a-select-option value="数字+字母">数字+字母</a-select-option>
               <a-select-option value="纯数字">纯数字</a-select-option>
+              <a-select-option value="纯字母">纯字母</a-select-option>
+              <a-select-option value="数字+字母">数字+字母</a-select-option>
             </a-select>
           </div>
         </div>
@@ -564,6 +577,7 @@
             <a-select v-model:value="memberForm.vipTimes" placeholder="请选择" style="width: 100%;">
               <a-select-option value="不重置">不重置</a-select-option>
               <a-select-option value="每天重置">每天重置</a-select-option>
+              <a-select-option value="累计次数">累计次数</a-select-option>
             </a-select>
           </div>
         </div>
@@ -581,6 +595,7 @@
           <div class="form-item"></div>
           <div class="form-item"></div>
         </div>
+        </div>
       </div>
 
       <!-- 发送验证 -->
@@ -590,6 +605,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <!-- 第一行 -->
         <div class="form-row-4">
           <div class="form-item">
@@ -620,6 +636,7 @@
           <div class="form-item"></div>
           <div class="form-item"></div>
         </div>
+        </div>
       </div>
 
       <!-- 提现 -->
@@ -629,6 +646,7 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <!-- 第一行 -->
         <div class="form-row-4">
           <div class="form-item">
@@ -658,7 +676,7 @@
             <div class="form-label">提现模式</div>
             <a-select v-model:value="withdrawForm.mode" placeholder="请选择" style="width: 100%;">
               <a-select-option value="只能全部">只能全部</a-select-option>
-              <a-select-option value="自由输入">自由输入</a-select-option>
+              <a-select-option value="随意资产">随意资产</a-select-option>
             </a-select>
           </div>
           <div class="form-item">
@@ -674,8 +692,10 @@
             <a-select v-model:value="withdrawForm.memberInfo" placeholder="请选择" style="width: 100%;">
               <a-select-option value="加密货币">加密货币</a-select-option>
               <a-select-option value="银行卡">银行卡</a-select-option>
+              <a-select-option value="都支持">都支持</a-select-option>
             </a-select>
           </div>
+        </div>
         </div>
       </div>
 
@@ -686,12 +706,15 @@
           <a-button type="primary" @click="handleSave">创建&保存</a-button>
         </div>
 
+        <div class="section-body">
         <div class="form-row-4">
           <div class="form-item">
             <div class="form-label required-label">模式</div>
             <a-select v-model:value="goodsForm.mode" placeholder="请选择" style="width: 100%;">
+              <a-select-option value="低于余额全部">低于余额全部</a-select-option>
               <a-select-option value="按余额百分比调节">按余额百分比调节</a-select-option>
-              <a-select-option value="固定价格">固定价格</a-select-option>
+              <a-select-option value="按概率">按概率</a-select-option>
+              <a-select-option value="接近余额N条">接近余额N条</a-select-option>
             </a-select>
           </div>
           <div class="form-item"></div>
@@ -712,6 +735,7 @@
             <div class="slider-tip">当前区间：{{ goodsForm.percentRange[0] }}-{{ goodsForm.percentRange[1] }}%</div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -721,6 +745,255 @@
 import { ref, reactive } from 'vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
+
+// 时区列表（按GMT偏移排序）
+const timezoneList = [
+  // GMT-11:00
+  { value: 'Pacific/Midway', label: 'Pacific/Midway (GMT-11:00)' },
+  { value: 'Pacific/Niue', label: 'Pacific/Niue (GMT-11:00)' },
+  { value: 'Pacific/Pago_Pago', label: 'Pacific/Pago_Pago (GMT-11:00)' },
+  // GMT-10:00
+  { value: 'Pacific/Honolulu', label: 'Pacific/Honolulu (GMT-10:00)' },
+  { value: 'Pacific/Rarotonga', label: 'Pacific/Rarotonga (GMT-10:00)' },
+  { value: 'Pacific/Tahiti', label: 'Pacific/Tahiti (GMT-10:00)' },
+  // GMT-09:30
+  { value: 'Pacific/Marquesas', label: 'Pacific/Marquesas (GMT-09:30)' },
+  // GMT-09:00
+  { value: 'America/Anchorage', label: 'America/Anchorage (GMT-09:00)' },
+  { value: 'America/Juneau', label: 'America/Juneau (GMT-09:00)' },
+  { value: 'Pacific/Gambier', label: 'Pacific/Gambier (GMT-09:00)' },
+  // GMT-08:00
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (GMT-08:00)' },
+  { value: 'America/Tijuana', label: 'America/Tijuana (GMT-08:00)' },
+  { value: 'America/Vancouver', label: 'America/Vancouver (GMT-08:00)' },
+  { value: 'Pacific/Pitcairn', label: 'Pacific/Pitcairn (GMT-08:00)' },
+  // GMT-07:00
+  { value: 'America/Denver', label: 'America/Denver (GMT-07:00)' },
+  { value: 'America/Phoenix', label: 'America/Phoenix (GMT-07:00)' },
+  { value: 'America/Chihuahua', label: 'America/Chihuahua (GMT-07:00)' },
+  { value: 'America/Edmonton', label: 'America/Edmonton (GMT-07:00)' },
+  // GMT-06:00
+  { value: 'America/Chicago', label: 'America/Chicago (GMT-06:00)' },
+  { value: 'America/Mexico_City', label: 'America/Mexico_City (GMT-06:00)' },
+  { value: 'America/Belize', label: 'America/Belize (GMT-06:00)' },
+  { value: 'America/Costa_Rica', label: 'America/Costa_Rica (GMT-06:00)' },
+  { value: 'America/Guatemala', label: 'America/Guatemala (GMT-06:00)' },
+  { value: 'America/Managua', label: 'America/Managua (GMT-06:00)' },
+  { value: 'America/Regina', label: 'America/Regina (GMT-06:00)' },
+  { value: 'America/Tegucigalpa', label: 'America/Tegucigalpa (GMT-06:00)' },
+  { value: 'America/Winnipeg', label: 'America/Winnipeg (GMT-06:00)' },
+  { value: 'Pacific/Galapagos', label: 'Pacific/Galapagos (GMT-06:00)' },
+  // GMT-05:00
+  { value: 'America/New_York', label: 'America/New_York (GMT-05:00)' },
+  { value: 'America/Toronto', label: 'America/Toronto (GMT-05:00)' },
+  { value: 'America/Bogota', label: 'America/Bogota (GMT-05:00)' },
+  { value: 'America/Havana', label: 'America/Havana (GMT-05:00)' },
+  { value: 'America/Lima', label: 'America/Lima (GMT-05:00)' },
+  { value: 'America/Panama', label: 'America/Panama (GMT-05:00)' },
+  { value: 'America/Detroit', label: 'America/Detroit (GMT-05:00)' },
+  { value: 'America/Jamaica', label: 'America/Jamaica (GMT-05:00)' },
+  { value: 'America/Guayaquil', label: 'America/Guayaquil (GMT-05:00)' },
+  { value: 'Pacific/Easter', label: 'Pacific/Easter (GMT-05:00)' },
+  // GMT-04:00
+  { value: 'America/Halifax', label: 'America/Halifax (GMT-04:00)' },
+  { value: 'America/Caracas', label: 'America/Caracas (GMT-04:00)' },
+  { value: 'America/La_Paz', label: 'America/La_Paz (GMT-04:00)' },
+  { value: 'America/Santiago', label: 'America/Santiago (GMT-04:00)' },
+  { value: 'America/Santo_Domingo', label: 'America/Santo_Domingo (GMT-04:00)' },
+  { value: 'America/Asuncion', label: 'America/Asuncion (GMT-04:00)' },
+  { value: 'America/Cuiaba', label: 'America/Cuiaba (GMT-04:00)' },
+  { value: 'America/Guyana', label: 'America/Guyana (GMT-04:00)' },
+  { value: 'America/Manaus', label: 'America/Manaus (GMT-04:00)' },
+  { value: 'America/Puerto_Rico', label: 'America/Puerto_Rico (GMT-04:00)' },
+  { value: 'Atlantic/Bermuda', label: 'Atlantic/Bermuda (GMT-04:00)' },
+  // GMT-03:30
+  { value: 'America/St_Johns', label: 'America/St_Johns (GMT-03:30)' },
+  // GMT-03:00
+  { value: 'America/Sao_Paulo', label: 'America/Sao_Paulo (GMT-03:00)' },
+  { value: 'America/Argentina/Buenos_Aires', label: 'America/Argentina/Buenos_Aires (GMT-03:00)' },
+  { value: 'America/Montevideo', label: 'America/Montevideo (GMT-03:00)' },
+  { value: 'America/Cayenne', label: 'America/Cayenne (GMT-03:00)' },
+  { value: 'America/Fortaleza', label: 'America/Fortaleza (GMT-03:00)' },
+  { value: 'America/Recife', label: 'America/Recife (GMT-03:00)' },
+  { value: 'America/Paramaribo', label: 'America/Paramaribo (GMT-03:00)' },
+  { value: 'Atlantic/Stanley', label: 'Atlantic/Stanley (GMT-03:00)' },
+  // GMT-02:00
+  { value: 'America/Noronha', label: 'America/Noronha (GMT-02:00)' },
+  { value: 'Atlantic/South_Georgia', label: 'Atlantic/South_Georgia (GMT-02:00)' },
+  // GMT-01:00
+  { value: 'Atlantic/Azores', label: 'Atlantic/Azores (GMT-01:00)' },
+  { value: 'Atlantic/Cape_Verde', label: 'Atlantic/Cape_Verde (GMT-01:00)' },
+  // GMT+00:00
+  { value: 'UTC', label: 'UTC (GMT+00:00)' },
+  { value: 'Europe/London', label: 'Europe/London (GMT+00:00)' },
+  { value: 'Europe/Dublin', label: 'Europe/Dublin (GMT+00:00)' },
+  { value: 'Europe/Lisbon', label: 'Europe/Lisbon (GMT+00:00)' },
+  { value: 'Africa/Abidjan', label: 'Africa/Abidjan (GMT+00:00)' },
+  { value: 'Africa/Accra', label: 'Africa/Accra (GMT+00:00)' },
+  { value: 'Africa/Casablanca', label: 'Africa/Casablanca (GMT+00:00)' },
+  { value: 'Africa/Dakar', label: 'Africa/Dakar (GMT+00:00)' },
+  { value: 'Africa/Monrovia', label: 'Africa/Monrovia (GMT+00:00)' },
+  { value: 'Atlantic/Reykjavik', label: 'Atlantic/Reykjavik (GMT+00:00)' },
+  // GMT+01:00
+  { value: 'Europe/Paris', label: 'Europe/Paris (GMT+01:00)' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin (GMT+01:00)' },
+  { value: 'Europe/Amsterdam', label: 'Europe/Amsterdam (GMT+01:00)' },
+  { value: 'Europe/Brussels', label: 'Europe/Brussels (GMT+01:00)' },
+  { value: 'Europe/Madrid', label: 'Europe/Madrid (GMT+01:00)' },
+  { value: 'Europe/Rome', label: 'Europe/Rome (GMT+01:00)' },
+  { value: 'Europe/Vienna', label: 'Europe/Vienna (GMT+01:00)' },
+  { value: 'Europe/Warsaw', label: 'Europe/Warsaw (GMT+01:00)' },
+  { value: 'Europe/Zurich', label: 'Europe/Zurich (GMT+01:00)' },
+  { value: 'Europe/Prague', label: 'Europe/Prague (GMT+01:00)' },
+  { value: 'Europe/Budapest', label: 'Europe/Budapest (GMT+01:00)' },
+  { value: 'Europe/Copenhagen', label: 'Europe/Copenhagen (GMT+01:00)' },
+  { value: 'Europe/Oslo', label: 'Europe/Oslo (GMT+01:00)' },
+  { value: 'Europe/Stockholm', label: 'Europe/Stockholm (GMT+01:00)' },
+  { value: 'Africa/Algiers', label: 'Africa/Algiers (GMT+01:00)' },
+  { value: 'Africa/Lagos', label: 'Africa/Lagos (GMT+01:00)' },
+  { value: 'Africa/Tunis', label: 'Africa/Tunis (GMT+01:00)' },
+  // GMT+02:00
+  { value: 'Europe/Athens', label: 'Europe/Athens (GMT+02:00)' },
+  { value: 'Europe/Bucharest', label: 'Europe/Bucharest (GMT+02:00)' },
+  { value: 'Europe/Helsinki', label: 'Europe/Helsinki (GMT+02:00)' },
+  { value: 'Europe/Kiev', label: 'Europe/Kiev (GMT+02:00)' },
+  { value: 'Europe/Sofia', label: 'Europe/Sofia (GMT+02:00)' },
+  { value: 'Europe/Riga', label: 'Europe/Riga (GMT+02:00)' },
+  { value: 'Europe/Tallinn', label: 'Europe/Tallinn (GMT+02:00)' },
+  { value: 'Europe/Vilnius', label: 'Europe/Vilnius (GMT+02:00)' },
+  { value: 'Africa/Cairo', label: 'Africa/Cairo (GMT+02:00)' },
+  { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (GMT+02:00)' },
+  { value: 'Africa/Tripoli', label: 'Africa/Tripoli (GMT+02:00)' },
+  { value: 'Asia/Beirut', label: 'Asia/Beirut (GMT+02:00)' },
+  { value: 'Asia/Jerusalem', label: 'Asia/Jerusalem (GMT+02:00)' },
+  { value: 'Asia/Amman', label: 'Asia/Amman (GMT+02:00)' },
+  { value: 'Asia/Damascus', label: 'Asia/Damascus (GMT+02:00)' },
+  // GMT+03:00
+  { value: 'Europe/Moscow', label: 'Europe/Moscow (GMT+03:00)' },
+  { value: 'Europe/Istanbul', label: 'Europe/Istanbul (GMT+03:00)' },
+  { value: 'Europe/Minsk', label: 'Europe/Minsk (GMT+03:00)' },
+  { value: 'Asia/Baghdad', label: 'Asia/Baghdad (GMT+03:00)' },
+  { value: 'Asia/Kuwait', label: 'Asia/Kuwait (GMT+03:00)' },
+  { value: 'Asia/Riyadh', label: 'Asia/Riyadh (GMT+03:00)' },
+  { value: 'Asia/Qatar', label: 'Asia/Qatar (GMT+03:00)' },
+  { value: 'Asia/Bahrain', label: 'Asia/Bahrain (GMT+03:00)' },
+  { value: 'Africa/Addis_Ababa', label: 'Africa/Addis_Ababa (GMT+03:00)' },
+  { value: 'Africa/Nairobi', label: 'Africa/Nairobi (GMT+03:00)' },
+  // GMT+03:30
+  { value: 'Asia/Tehran', label: 'Asia/Tehran (GMT+03:30)' },
+  // GMT+04:00
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GMT+04:00)' },
+  { value: 'Asia/Muscat', label: 'Asia/Muscat (GMT+04:00)' },
+  { value: 'Asia/Baku', label: 'Asia/Baku (GMT+04:00)' },
+  { value: 'Asia/Tbilisi', label: 'Asia/Tbilisi (GMT+04:00)' },
+  { value: 'Asia/Yerevan', label: 'Asia/Yerevan (GMT+04:00)' },
+  { value: 'Europe/Samara', label: 'Europe/Samara (GMT+04:00)' },
+  { value: 'Indian/Mauritius', label: 'Indian/Mauritius (GMT+04:00)' },
+  { value: 'Indian/Reunion', label: 'Indian/Reunion (GMT+04:00)' },
+  // GMT+04:30
+  { value: 'Asia/Kabul', label: 'Asia/Kabul (GMT+04:30)' },
+  // GMT+05:00
+  { value: 'Asia/Karachi', label: 'Asia/Karachi (GMT+05:00)' },
+  { value: 'Asia/Tashkent', label: 'Asia/Tashkent (GMT+05:00)' },
+  { value: 'Asia/Yekaterinburg', label: 'Asia/Yekaterinburg (GMT+05:00)' },
+  { value: 'Asia/Dushanbe', label: 'Asia/Dushanbe (GMT+05:00)' },
+  { value: 'Asia/Ashgabat', label: 'Asia/Ashgabat (GMT+05:00)' },
+  { value: 'Indian/Maldives', label: 'Indian/Maldives (GMT+05:00)' },
+  // GMT+05:30
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (GMT+05:30)' },
+  { value: 'Asia/Colombo', label: 'Asia/Colombo (GMT+05:30)' },
+  // GMT+05:45
+  { value: 'Asia/Kathmandu', label: 'Asia/Kathmandu (GMT+05:45)' },
+  // GMT+06:00
+  { value: 'Asia/Dhaka', label: 'Asia/Dhaka (GMT+06:00)' },
+  { value: 'Asia/Almaty', label: 'Asia/Almaty (GMT+06:00)' },
+  { value: 'Asia/Bishkek', label: 'Asia/Bishkek (GMT+06:00)' },
+  { value: 'Asia/Omsk', label: 'Asia/Omsk (GMT+06:00)' },
+  { value: 'Indian/Chagos', label: 'Indian/Chagos (GMT+06:00)' },
+  // GMT+06:30
+  { value: 'Asia/Yangon', label: 'Asia/Yangon (GMT+06:30)' },
+  { value: 'Indian/Cocos', label: 'Indian/Cocos (GMT+06:30)' },
+  // GMT+07:00
+  { value: 'Asia/Bangkok', label: 'Asia/Bangkok (GMT+07:00)' },
+  { value: 'Asia/Ho_Chi_Minh', label: 'Asia/Ho_Chi_Minh (GMT+07:00)' },
+  { value: 'Asia/Jakarta', label: 'Asia/Jakarta (GMT+07:00)' },
+  { value: 'Asia/Phnom_Penh', label: 'Asia/Phnom_Penh (GMT+07:00)' },
+  { value: 'Asia/Vientiane', label: 'Asia/Vientiane (GMT+07:00)' },
+  { value: 'Asia/Krasnoyarsk', label: 'Asia/Krasnoyarsk (GMT+07:00)' },
+  { value: 'Asia/Novosibirsk', label: 'Asia/Novosibirsk (GMT+07:00)' },
+  { value: 'Indian/Christmas', label: 'Indian/Christmas (GMT+07:00)' },
+  // GMT+08:00
+  { value: 'Asia/Shanghai', label: 'Asia/Shanghai (GMT+08:00)' },
+  { value: 'Asia/Hong_Kong', label: 'Asia/Hong_Kong (GMT+08:00)' },
+  { value: 'Asia/Taipei', label: 'Asia/Taipei (GMT+08:00)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (GMT+08:00)' },
+  { value: 'Asia/Kuala_Lumpur', label: 'Asia/Kuala_Lumpur (GMT+08:00)' },
+  { value: 'Asia/Manila', label: 'Asia/Manila (GMT+08:00)' },
+  { value: 'Asia/Makassar', label: 'Asia/Makassar (GMT+08:00)' },
+  { value: 'Asia/Brunei', label: 'Asia/Brunei (GMT+08:00)' },
+  { value: 'Asia/Macau', label: 'Asia/Macau (GMT+08:00)' },
+  { value: 'Asia/Irkutsk', label: 'Asia/Irkutsk (GMT+08:00)' },
+  { value: 'Australia/Perth', label: 'Australia/Perth (GMT+08:00)' },
+  // GMT+08:45
+  { value: 'Australia/Eucla', label: 'Australia/Eucla (GMT+08:45)' },
+  // GMT+09:00
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo (GMT+09:00)' },
+  { value: 'Asia/Seoul', label: 'Asia/Seoul (GMT+09:00)' },
+  { value: 'Asia/Pyongyang', label: 'Asia/Pyongyang (GMT+09:00)' },
+  { value: 'Asia/Jayapura', label: 'Asia/Jayapura (GMT+09:00)' },
+  { value: 'Asia/Yakutsk', label: 'Asia/Yakutsk (GMT+09:00)' },
+  { value: 'Asia/Chita', label: 'Asia/Chita (GMT+09:00)' },
+  { value: 'Pacific/Palau', label: 'Pacific/Palau (GMT+09:00)' },
+  // GMT+09:30
+  { value: 'Australia/Adelaide', label: 'Australia/Adelaide (GMT+09:30)' },
+  { value: 'Australia/Darwin', label: 'Australia/Darwin (GMT+09:30)' },
+  { value: 'Australia/Broken_Hill', label: 'Australia/Broken_Hill (GMT+09:30)' },
+  // GMT+10:00
+  { value: 'Australia/Sydney', label: 'Australia/Sydney (GMT+10:00)' },
+  { value: 'Australia/Melbourne', label: 'Australia/Melbourne (GMT+10:00)' },
+  { value: 'Australia/Brisbane', label: 'Australia/Brisbane (GMT+10:00)' },
+  { value: 'Australia/Hobart', label: 'Australia/Hobart (GMT+10:00)' },
+  { value: 'Asia/Vladivostok', label: 'Asia/Vladivostok (GMT+10:00)' },
+  { value: 'Pacific/Guam', label: 'Pacific/Guam (GMT+10:00)' },
+  { value: 'Pacific/Port_Moresby', label: 'Pacific/Port_Moresby (GMT+10:00)' },
+  { value: 'Pacific/Saipan', label: 'Pacific/Saipan (GMT+10:00)' },
+  { value: 'Pacific/Chuuk', label: 'Pacific/Chuuk (GMT+10:00)' },
+  // GMT+10:30
+  { value: 'Australia/Lord_Howe', label: 'Australia/Lord_Howe (GMT+10:30)' },
+  // GMT+11:00
+  { value: 'Asia/Magadan', label: 'Asia/Magadan (GMT+11:00)' },
+  { value: 'Asia/Sakhalin', label: 'Asia/Sakhalin (GMT+11:00)' },
+  { value: 'Pacific/Guadalcanal', label: 'Pacific/Guadalcanal (GMT+11:00)' },
+  { value: 'Pacific/Noumea', label: 'Pacific/Noumea (GMT+11:00)' },
+  { value: 'Pacific/Pohnpei', label: 'Pacific/Pohnpei (GMT+11:00)' },
+  { value: 'Pacific/Kosrae', label: 'Pacific/Kosrae (GMT+11:00)' },
+  { value: 'Pacific/Efate', label: 'Pacific/Efate (GMT+11:00)' },
+  // GMT+12:00
+  { value: 'Pacific/Auckland', label: 'Pacific/Auckland (GMT+12:00)' },
+  { value: 'Pacific/Fiji', label: 'Pacific/Fiji (GMT+12:00)' },
+  { value: 'Asia/Kamchatka', label: 'Asia/Kamchatka (GMT+12:00)' },
+  { value: 'Asia/Anadyr', label: 'Asia/Anadyr (GMT+12:00)' },
+  { value: 'Pacific/Funafuti', label: 'Pacific/Funafuti (GMT+12:00)' },
+  { value: 'Pacific/Majuro', label: 'Pacific/Majuro (GMT+12:00)' },
+  { value: 'Pacific/Nauru', label: 'Pacific/Nauru (GMT+12:00)' },
+  { value: 'Pacific/Tarawa', label: 'Pacific/Tarawa (GMT+12:00)' },
+  { value: 'Pacific/Wake', label: 'Pacific/Wake (GMT+12:00)' },
+  { value: 'Pacific/Wallis', label: 'Pacific/Wallis (GMT+12:00)' },
+  // GMT+12:45
+  { value: 'Pacific/Chatham', label: 'Pacific/Chatham (GMT+12:45)' },
+  // GMT+13:00
+  { value: 'Pacific/Tongatapu', label: 'Pacific/Tongatapu (GMT+13:00)' },
+  { value: 'Pacific/Apia', label: 'Pacific/Apia (GMT+13:00)' },
+  { value: 'Pacific/Enderbury', label: 'Pacific/Enderbury (GMT+13:00)' },
+  { value: 'Pacific/Fakaofo', label: 'Pacific/Fakaofo (GMT+13:00)' },
+  // GMT+14:00
+  { value: 'Pacific/Kiritimati', label: 'Pacific/Kiritimati (GMT+14:00)' }
+]
+
+// 时区过滤函数
+const filterTimezone = (input, option) => {
+  return option.label.toLowerCase().includes(input.toLowerCase())
+}
 
 // 左侧菜单
 const menuList = [
@@ -935,18 +1208,29 @@ const handleSave = () => {
   padding: 24px;
 
   .content-section {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    background: #fff;
+
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e8e8e8;
+      background: #fafafa;
+      border-radius: 8px 8px 0 0;
 
       .section-title {
         margin: 0;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         color: #333;
       }
+    }
+
+    .section-body {
+      padding: 24px;
     }
 
     .empty-content {
