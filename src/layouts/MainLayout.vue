@@ -6,8 +6,8 @@
         <div class="header-left">
           <!-- Logo -->
           <div class="header-logo">
-            <img src="@/assets/logo.svg" alt="logo" class="logo-img" />
-            <span class="logo-text">Kinex Media</span>
+            <img :src="siteSettings.logo || defaultLogo" alt="logo" class="logo-img" />
+            <span class="logo-text">{{ siteSettings.siteName || 'Kinex Media' }}</span>
           </div>
 
           <!-- 折叠按钮 -->
@@ -136,7 +136,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, watch, provide } from 'vue'
+import { ref, reactive, h, watch, provide, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { theme } from 'ant-design-vue'
 import {
@@ -164,6 +164,7 @@ import {
   BulbFilled,
   MoreOutlined
 } from '@ant-design/icons-vue'
+import defaultLogo from '@/assets/logo.svg'
 
 const router = useRouter()
 const route = useRoute()
@@ -178,6 +179,39 @@ const isFullscreen = ref(false)
 const pageLoading = ref(false)
 
 const userInfo = reactive(JSON.parse(localStorage.getItem('userInfo') || '{}'))
+
+// 网站设置
+const siteSettings = reactive({
+  logo: '',
+  siteName: ''
+})
+
+// 加载网站设置
+const loadSiteSettings = () => {
+  const saved = localStorage.getItem('siteSettings')
+  if (saved) {
+    const data = JSON.parse(saved)
+    siteSettings.logo = data.logo || ''
+    siteSettings.siteName = data.siteName || ''
+  }
+}
+
+// 监听网站设置更新事件
+const handleSiteSettingsUpdate = (event) => {
+  if (event.detail) {
+    siteSettings.logo = event.detail.logo || ''
+    siteSettings.siteName = event.detail.siteName || ''
+  }
+}
+
+onMounted(() => {
+  loadSiteSettings()
+  window.addEventListener('siteSettingsUpdate', handleSiteSettingsUpdate)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('siteSettingsUpdate', handleSiteSettingsUpdate)
+})
 
 // 切换菜单模式
 const toggleMenuMode = () => {
@@ -412,17 +446,18 @@ document.addEventListener('fullscreenchange', () => {
       display: flex;
       align-items: center;
       margin-right: 32px;
+      margin-left: -8px;
 
       .logo-img {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
       }
 
       .logo-text {
         margin-left: 10px;
         font-size: 18px;
         font-weight: 600;
-        color: #7c4dff;
+        color: #333;
         white-space: nowrap;
       }
     }

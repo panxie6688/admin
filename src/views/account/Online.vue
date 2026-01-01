@@ -83,7 +83,16 @@
 
           <!-- 操作列 -->
           <template v-else-if="column.key === 'action'">
-            <a class="action-link" @click="handleForceLogout(record)">强制退出</a>
+            <a-popconfirm
+              :title="getForceLogoutTitle(record)"
+              ok-text="确定"
+              cancel-text="取消"
+              placement="topRight"
+              overlay-class-name="force-logout-popconfirm"
+              @confirm="handleForceLogout(record)"
+            >
+              <a class="action-link">强制退出</a>
+            </a-popconfirm>
           </template>
         </template>
       </a-table>
@@ -244,7 +253,8 @@ import {
   ColumnHeightOutlined,
   DownOutlined
 } from '@ant-design/icons-vue'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
+import { h } from 'vue'
 
 // 注入布局状态
 const topMenuMode = inject('topMenuMode')
@@ -430,18 +440,17 @@ const handleDensityChange = ({ key }) => {
   tableSize.value = key
 }
 
+// 强制退出确认标题
+const getForceLogoutTitle = (record) => {
+  return h('div', { class: 'popconfirm-title-with-icon' }, [
+    h('i', { class: 'warning-icon' }, '!'),
+    h('span', null, `确认要强制退出用户 "${record.username}" 吗？`)
+  ])
+}
+
 // 强制退出
 const handleForceLogout = (record) => {
-  Modal.confirm({
-    title: '确认强制退出',
-    content: `确认要强制退出用户 "${record.username}" 登录信息吗？退出后需要重新登录`,
-    okText: '确定',
-    cancelText: '取消',
-    class: 'warning-modal',
-    onOk() {
-      message.success(`已强制退出用户: ${record.username}`)
-    }
-  })
+  message.success(`已强制退出用户: ${record.username}`)
 }
 </script>
 
@@ -627,6 +636,19 @@ const handleForceLogout = (record) => {
 
 :deep(.ant-btn-primary) {
   border-radius: 4px;
+}
+
+// 搜索表单样式
+.search-form {
+  .form-item {
+    margin-bottom: 16px;
+
+    .form-label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+  }
 }
 
 // 搜索抽屉样式

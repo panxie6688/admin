@@ -60,7 +60,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 1600 }"
+        :scroll="{ x: 1600, y: 'calc(100vh - 260px)' }"
       >
         <template #bodyCell="{ column, record }">
           <!-- 会员 - 下拉菜单 -->
@@ -105,8 +105,14 @@
           <template v-if="column.key === 'action'">
             <div class="action-btns">
               <a class="action-link" @click="handleView(record)">查看</a>
-              <a class="action-link" @click="handleConfirm(record)" v-if="record.status === '待确认'">确认</a>
-              <a class="action-link danger" @click="handleReject(record)" v-if="record.status === '待确认'">驳回</a>
+              <template v-if="record.status === '待确认'">
+                <a class="action-link success" @click="handleConfirm(record)">确认</a>
+                <a class="action-link danger" @click="handleReject(record)">驳回</a>
+              </template>
+              <template v-else>
+                <a class="action-link disabled">确认</a>
+                <a class="action-link disabled">驳回</a>
+              </template>
             </div>
           </template>
         </template>
@@ -237,15 +243,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject } from 'vue'
+import { ref, reactive, inject, createVNode } from 'vue'
 import {
   FullscreenOutlined,
   FullscreenExitOutlined,
   ReloadOutlined,
   ColumnHeightOutlined,
-  CaretDownOutlined
+  CaretDownOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons-vue'
-import { message, Modal } from 'ant-design-vue'
+import { message, Modal, Input } from 'ant-design-vue'
 
 // 注入布局状态
 const topMenuMode = inject('topMenuMode', ref(false))
@@ -271,9 +278,13 @@ const loading = ref(false)
 const handleRefresh = () => {
   loading.value = true
   setTimeout(() => {
+    tableData.value = [...mockData]
     loading.value = false
   }, 500)
 }
+
+// 初始加载
+handleRefresh()
 
 // 表格列配置 - 双层表头
 const columns = [
@@ -379,11 +390,33 @@ const columns = [
 // 模拟表格数据
 const tableData = ref([])
 
+// 模拟数据
+const mockData = [
+  { id: 1, member: '1-4707174248', username: 'Shaneikque1', coin: 'USDT', amount: 500.00, fiatStatus: '已兑换', fiatAmount: 500.00, chain: 'TRC20', hash: '0x9824Aa02a43282F1E7B38a3597dcfe2F279814a7B3c5d6e', time: '2025-12-30 17:44:22', status: '已确认' },
+  { id: 2, member: '1-8609927282', username: '8609927282', coin: 'USDT', amount: 1000.00, fiatStatus: '已兑换', fiatAmount: 1000.00, chain: 'ERC20', hash: '0x3DxKinCNCnjKxaVB7hnufAsRBH8P5vuAMS9d2c1b4a', time: '2025-12-30 14:46:32', status: '已确认' },
+  { id: 3, member: '1-2162889383', username: 'Millie', coin: 'BTC', amount: 0.05, fiatStatus: '未兑换', fiatAmount: null, chain: 'BTC', hash: 'bc1qewd3040acw00k0q3xvdmkch6etnn8gyOar8g7h9i', time: '2025-12-30 15:07:23', status: '待确认' },
+  { id: 4, member: '1-6052154537', username: '2girlsD43', coin: 'ETH', amount: 0.5, fiatStatus: '兑换中', fiatAmount: 1250.00, chain: 'ERC20', hash: '0x484b5e166605172331E169cFC18C49eb4fCc097B93a2', time: '2025-12-30 15:16:30', status: '待确认' },
+  { id: 5, member: '1-6052154537', username: '2girlsD43', coin: 'USDT', amount: 2500.00, fiatStatus: '已兑换', fiatAmount: 2500.00, chain: 'TRC20', hash: '0x484b5e166605172331E169cFC18C49eb4fCc097B93b3', time: '2025-12-29 10:09:01', status: '已确认' },
+  { id: 6, member: '1-248755982', username: 'TomE', coin: 'USDT', amount: 800.00, fiatStatus: '已兑换', fiatAmount: 800.00, chain: 'BEP20', hash: '0xc49E97d699cE379dfF88F1e811A812d2ABc7be19d4e5', time: '2025-12-29 18:46:53', status: '已驳回' },
+  { id: 7, member: '1-8179195152', username: 'Star12', coin: 'TRX', amount: 5000.00, fiatStatus: '未兑换', fiatAmount: null, chain: 'TRC20', hash: 'TXyzABC123def456GHI789jkl012MNO345pqr', time: '2025-12-29 18:42:46', status: '待确认' },
+  { id: 8, member: '1-8179195152', username: 'Star12', coin: 'USDT', amount: 1500.00, fiatStatus: '已兑换', fiatAmount: 1500.00, chain: 'TRC20', hash: 'TQrs678stu901VWX234yza567BCD890efg123', time: '2025-12-29 18:34:58', status: '已确认' },
+  { id: 9, member: '1-4014501096', username: 'CriszSanti', coin: 'USDT', amount: 350.00, fiatStatus: '兑换中', fiatAmount: 350.00, chain: 'ERC20', hash: '0xc49E97d699cE379dfF88F1e811A812d2ABc7be19f6g7', time: '2025-12-28 19:41:05', status: '待确认' },
+  { id: 10, member: '1-7132583745', username: 'Bolouis33', coin: 'BTC', amount: 0.1, fiatStatus: '已兑换', fiatAmount: 4500.00, chain: 'BTC', hash: 'bc1pk6h3yub8cfunp05qdw7q34054cmhhjjqcxje4h8i9', time: '2025-12-28 16:54:53', status: '已确认' },
+  { id: 11, member: '1-6624188841', username: 'Calcal', coin: 'ETH', amount: 1.2, fiatStatus: '已兑换', fiatAmount: 3000.00, chain: 'ERC20', hash: '0xABC123def456GHI789jkl012MNO345pqr678stu901VWX', time: '2025-12-28 14:24:09', status: '已驳回' },
+  { id: 12, member: '1-6052154537', username: '2girlsD43', coin: 'USDT', amount: 200.00, fiatStatus: '已兑换', fiatAmount: 200.00, chain: 'TRC20', hash: 'TMno789pqr012STU345vwx678YZA901bcd234EFG', time: '2025-12-28 10:34:23', status: '已确认' },
+  { id: 13, member: '1-7018407768', username: 'rlw120', coin: 'USDT', amount: 5000.00, fiatStatus: '未兑换', fiatAmount: null, chain: 'BEP20', hash: '0xDEF456ghi789JKL012mno345PQR678stu901VWX234yza', time: '2025-12-27 17:49:53', status: '待确认' },
+  { id: 14, member: '1-2065659108', username: 'smehdi2025', coin: 'TRX', amount: 10000.00, fiatStatus: '已兑换', fiatAmount: 800.00, chain: 'TRC20', hash: 'THij567klm890NOP123qrs456TUV789wxy012ZAB', time: '2025-12-27 18:28:58', status: '已确认' },
+  { id: 15, member: '1-7045770269', username: 'doomguy0269', coin: 'USDT', amount: 750.00, fiatStatus: '已兑换', fiatAmount: 750.00, chain: 'ERC20', hash: '0x3be88F71159EcE0BF3b51961be108984A4bE48eE5f6g', time: '2025-12-27 12:58:08', status: '已驳回' },
+  { id: 16, member: '1-8173666490', username: 'Jluytinck1979', coin: 'BTC', amount: 0.02, fiatStatus: '兑换中', fiatAmount: 900.00, chain: 'BTC', hash: 'bc1qpke9vnn6lqtmnczxaqku30yg8nzscf5m3an5j7k8', time: '2025-12-26 10:43:47', status: '待确认' },
+  { id: 17, member: '1-8173666490', username: 'Jluytinck1979', coin: 'USDT', amount: 1200.00, fiatStatus: '已兑换', fiatAmount: 1200.00, chain: 'TRC20', hash: 'TCde345fgh678IJK901lmn234OPQ567rst890UVW', time: '2025-12-26 20:39:56', status: '已确认' },
+  { id: 18, member: '1-9374750912', username: 'Michael1212', coin: 'ETH', amount: 0.3, fiatStatus: '已兑换', fiatAmount: 750.00, chain: 'ERC20', hash: '0x8cD22634E4F7DDEE2F7408FF8aE82464c2fBe68a9b0', time: '2025-12-25 16:32:41', status: '已确认' }
+]
+
 // 分页配置
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 0
+  total: 18
 })
 
 // 更多搜索
@@ -435,12 +468,51 @@ const handleView = (record) => {
 
 // 确认操作
 const handleConfirm = (record) => {
+  let reasonValue = ''
   Modal.confirm({
-    title: '确认操作',
-    content: `确定要确认订单 ${record.member} 的充币请求吗？`,
-    okText: '确认',
-    cancelText: '取消',
+    title: '确认充币',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '币种'),
+            createVNode('div', { class: 'cell-value' }, record.coin)
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '数量'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '链'),
+            createVNode('div', { class: 'cell-value' }, record.chain)
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '法币金额'),
+            createVNode('div', { class: 'cell-value' }, record.fiatAmount ? String(record.fiatAmount) : '-')
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, 'Hash'),
+            createVNode('div', { class: 'cell-value' }, record.hash)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
     onOk() {
+      record.status = '已确认'
       message.success('确认成功')
     }
   })
@@ -448,13 +520,52 @@ const handleConfirm = (record) => {
 
 // 驳回操作
 const handleReject = (record) => {
+  let reasonValue = ''
   Modal.confirm({
-    title: '驳回操作',
-    content: `确定要驳回订单 ${record.member} 的充币请求吗？`,
-    okText: '驳回',
-    okType: 'danger',
-    cancelText: '取消',
+    title: '驳回充币',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '币种'),
+            createVNode('div', { class: 'cell-value' }, record.coin)
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '数量'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '链'),
+            createVNode('div', { class: 'cell-value' }, record.chain)
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '法币金额'),
+            createVNode('div', { class: 'cell-value' }, record.fiatAmount ? String(record.fiatAmount) : '-')
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, 'Hash'),
+            createVNode('div', { class: 'cell-value' }, record.hash)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '拒绝理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
+    okType: 'primary',
     onOk() {
+      record.status = '已驳回'
       message.success('已驳回')
     }
   })
@@ -532,35 +643,39 @@ const getFiatStatusColor = (status) => {
 
   .table-wrapper {
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0 24px;
     display: flex;
     flex-direction: column;
 
     :deep(.ant-table-wrapper) {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        height: 100%;
+      }
+
       .ant-spin-container {
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
 
         .ant-table-container {
-          flex: 1;
+          height: 100%;
           display: flex;
           flex-direction: column;
 
-          .ant-table-content {
+          .ant-table-header {
+            flex-shrink: 0;
+          }
+
+          .ant-table-body {
             flex: 1;
             overflow: auto !important;
           }
@@ -638,11 +753,28 @@ const getFiatStatusColor = (status) => {
           color: #40a9ff;
         }
 
+        &.success {
+          color: #52c41a;
+
+          &:hover {
+            color: #73d13d;
+          }
+        }
+
         &.danger {
           color: #ff4d4f;
 
           &:hover {
             color: #ff7875;
+          }
+        }
+
+        &.disabled {
+          color: #d9d9d9;
+          cursor: not-allowed;
+
+          &:hover {
+            color: #d9d9d9;
           }
         }
       }

@@ -480,3 +480,123 @@ html, body {
   color: #1890ff;
   background: rgba(24, 144, 255, 0.1);
 }
+
+// 提现确认弹窗内容样式
+.withdraw-confirm-content {
+  margin-top: 16px;
+
+  .confirm-table {
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    .confirm-row {
+      display: flex;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.single {
+        .confirm-cell {
+          border-right: none;
+        }
+      }
+
+      .confirm-cell {
+        flex: 1;
+        border-right: 1px solid #f0f0f0;
+
+        &:last-child {
+          border-right: none;
+        }
+
+        &.full {
+          width: 100%;
+        }
+
+        .cell-label {
+          padding: 12px 16px;
+          background: #fafafa;
+          font-size: 14px;
+          color: #666;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cell-value {
+          padding: 12px 16px;
+          font-size: 14px;
+          color: #333;
+          background: #fff;
+          min-height: 44px;
+          word-break: break-all;
+        }
+      }
+    }
+  }
+
+  .reason-label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .ant-input {
+    border-radius: 6px;
+  }
+}
+
+// 强制退出气泡确认框样式
+.force-logout-popconfirm {
+  .ant-popover-inner {
+    border-radius: 8px;
+    padding: 16px 20px;
+  }
+
+  .ant-popconfirm-message {
+    margin-bottom: 12px;
+
+    .ant-popconfirm-message-icon {
+      display: none;
+    }
+
+    .ant-popconfirm-message-title {
+      padding-inline-start: 0;
+    }
+  }
+
+  .ant-popconfirm-buttons {
+    .ant-btn {
+      height: 32px;
+      min-width: 64px;
+      border-radius: 6px;
+    }
+  }
+}
+
+// 气泡确认框标题带感叹号
+.popconfirm-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+
+  .warning-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    background: #faad14;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    font-style: normal;
+  }
+}

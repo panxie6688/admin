@@ -60,7 +60,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 1400 }"
+        :scroll="{ x: 1400, y: 'calc(100vh - 260px)' }"
       >
         <template #bodyCell="{ column, record }">
           <!-- 会员 -->
@@ -81,6 +81,10 @@
           <template v-if="column.dataIndex === 'username'">
             <span class="username-text">{{ record.username }}</span>
           </template>
+          <!-- 数量 -->
+          <template v-if="column.dataIndex === 'amount'">
+            <span class="amount-text">{{ record.amount }}</span>
+          </template>
           <!-- 上传的凭证 -->
           <template v-if="column.dataIndex === 'voucher'">
             <a-image
@@ -92,10 +96,21 @@
             />
             <span v-else class="no-data">-</span>
           </template>
+          <!-- 状态 -->
+          <template v-if="column.dataIndex === 'status'">
+            <a-tag :color="getStatusColor(record.status)">{{ record.status }}</a-tag>
+          </template>
           <!-- 操作 -->
           <template v-if="column.key === 'action'">
             <div class="action-btns">
-              <a-button type="link" size="small" class="btn-primary" @click="handleOperate(record)">操作</a-button>
+              <template v-if="record.status === '待审核'">
+                <a class="action-link success" @click="handlePass(record)">通过</a>
+                <a class="action-link danger" @click="handleReject(record)">驳回</a>
+              </template>
+              <template v-else>
+                <a class="action-link disabled">通过</a>
+                <a class="action-link disabled">驳回</a>
+              </template>
             </div>
           </template>
         </template>
@@ -135,27 +150,22 @@
       </template>
       <div class="search-form">
         <div class="form-item">
-          <div class="form-label">会员UID</div>
-          <div style="display: flex; gap: 8px;">
-            <a-input v-model:value="searchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
-            <a-button type="primary" @click="handleSearchMemberUid">搜 索</a-button>
-          </div>
+          <div class="form-label">状态</div>
+          <a-select
+            v-model:value="searchDrawer.status"
+            placeholder="全部"
+            style="width: 100%;"
+            allow-clear
+          >
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="pending">待审核</a-select-option>
+            <a-select-option value="approved">审核通过</a-select-option>
+            <a-select-option value="rejected">驳回</a-select-option>
+          </a-select>
         </div>
         <div class="form-item">
-          <div class="form-label">最低数量</div>
-          <a-input v-model:value="searchDrawer.minAmount" placeholder="输入" />
-        </div>
-        <div class="form-item">
-          <div class="form-label">最高数量</div>
-          <a-input v-model:value="searchDrawer.maxAmount" placeholder="输入" />
-        </div>
-        <div class="form-item">
-          <div class="form-label">订单号</div>
-          <a-input v-model:value="searchDrawer.orderNo" placeholder="输入" />
-        </div>
-        <div class="form-item">
-          <div class="form-label">搜索</div>
-          <a-input v-model:value="searchDrawer.keyword" placeholder="输入" />
+          <div class="form-label">会员ID</div>
+          <a-input v-model:value="searchDrawer.memberId" placeholder="输入" />
         </div>
         <div class="form-item">
           <div class="form-label">开始时间</div>
@@ -174,10 +184,18 @@
           />
         </div>
         <div class="form-item">
+          <div class="form-label">搜索(全称)</div>
+          <a-input-search
+            v-model:value="searchDrawer.keyword"
+            placeholder="搜索内容"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="form-item">
           <div class="form-label">排序字段</div>
           <a-select
             v-model:value="searchDrawer.sortField"
-            placeholder="创建时间"
+            placeholder="时间"
             style="width: 100%;"
             :options="sortFieldOptions"
           />
@@ -246,15 +264,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject } from 'vue'
-import { message } from 'ant-design-vue'
+import { ref, reactive, inject, createVNode } from 'vue'
+import { message, Modal, Input } from 'ant-design-vue'
 import {
   ReloadOutlined,
   ColumnHeightOutlined,
   FullscreenOutlined,
   FullscreenExitOutlined,
   CloseOutlined,
-  CaretDownOutlined
+  CaretDownOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons-vue'
 
 // 注入布局相关
@@ -271,11 +290,33 @@ const tableSize = ref('small')
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 0
+  total: 18
 })
 
 // 表格数据
 const tableData = ref([])
+
+// 模拟数据
+const mockData = [
+  { id: 1, member: '1-4707174248', username: 'Shaneikque1', amount: 500.00, voucher: 'https://picsum.photos/200/200?random=1', orderNo: '20251230176400045613505263', time: '2025-12-30 17:44:22', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 2, member: '1-8609927282', username: '8609927282', amount: 1000.00, voucher: 'https://picsum.photos/200/200?random=2', orderNo: '20251230176385625388523422', time: '2025-12-30 14:46:32', reason: '-', remark: '支付宝', status: '审核通过' },
+  { id: 3, member: '1-2162889383', username: 'Millie', amount: 300.00, voucher: 'https://picsum.photos/200/200?random=3', orderNo: '20251230175892084304018942', time: '2025-12-30 15:07:23', reason: '-', remark: '微信转账', status: '待审核' },
+  { id: 4, member: '1-6052154537', username: '2girlsD43', amount: 2500.00, voucher: 'https://picsum.photos/200/200?random=4', orderNo: '20251229175814379016721138', time: '2025-12-29 15:16:30', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 5, member: '1-6052154537', username: '2girlsD43', amount: 800.00, voucher: 'https://picsum.photos/200/200?random=5', orderNo: '20251229175803894095223311', time: '2025-12-29 10:09:01', reason: '-', remark: '现金存款', status: '审核通过' },
+  { id: 6, member: '1-248755982', username: 'TomE', amount: 150.00, voucher: null, orderNo: '20251229175798361269348832', time: '2025-12-29 18:46:53', reason: '凭证模糊', remark: '-', status: '驳回' },
+  { id: 7, member: '1-8179195152', username: 'Star12', amount: 3000.00, voucher: 'https://picsum.photos/200/200?random=7', orderNo: '20251228175686016635500091', time: '2025-12-28 18:42:46', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 8, member: '1-8179195152', username: 'Star12', amount: 600.00, voucher: 'https://picsum.photos/200/200?random=8', orderNo: '20251228175685969782765533', time: '2025-12-28 18:34:58', reason: '-', remark: '支付宝', status: '审核通过' },
+  { id: 9, member: '1-4014501096', username: 'CriszSanti', amount: 1200.00, voucher: 'https://picsum.photos/200/200?random=9', orderNo: '20251228175643166848456638', time: '2025-12-28 19:41:05', reason: '-', remark: '微信转账', status: '待审核' },
+  { id: 10, member: '1-7132583745', username: 'Bolouis33', amount: 5000.00, voucher: 'https://picsum.photos/200/200?random=10', orderNo: '20251227175633529327311889', time: '2025-12-27 16:54:53', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 11, member: '1-6624188841', username: 'Calcal', amount: 450.00, voucher: null, orderNo: '20251227175632649478978', time: '2025-12-27 14:24:09', reason: '金额不符', remark: '-', status: '驳回' },
+  { id: 12, member: '1-6052154537', username: '2girlsD43', amount: 200.00, voucher: 'https://picsum.photos/200/200?random=12', orderNo: '20251227175622606314312944', time: '2025-12-27 10:34:23', reason: '-', remark: '现金存款', status: '审核通过' },
+  { id: 13, member: '1-7018407768', username: 'rlw120', amount: 1800.00, voucher: 'https://picsum.photos/200/200?random=13', orderNo: '20251226175616579322588914', time: '2025-12-26 17:49:53', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 14, member: '1-2065659108', username: 'smehdi2025', amount: 750.00, voucher: 'https://picsum.photos/200/200?random=14', orderNo: '20251226175582253766550259', time: '2025-12-26 18:28:58', reason: '-', remark: '支付宝', status: '审核通过' },
+  { id: 15, member: '1-7045770269', username: 'doomguy0269', amount: 100.00, voucher: null, orderNo: '20251226175580268482666661', time: '2025-12-26 12:58:08', reason: '信息不完整', remark: '-', status: '驳回' },
+  { id: 16, member: '1-8173666490', username: 'Jluytinck1979', amount: 2200.00, voucher: 'https://picsum.photos/200/200?random=16', orderNo: '20251225175553542712877242', time: '2025-12-25 10:43:47', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 17, member: '1-8173666490', username: 'Jluytinck1979', amount: 900.00, voucher: 'https://picsum.photos/200/200?random=17', orderNo: '20251225175531199581733348', time: '2025-12-25 20:39:56', reason: '-', remark: '微信转账', status: '审核通过' },
+  { id: 18, member: '1-9374750912', username: 'Michael1212', amount: 400.00, voucher: 'https://picsum.photos/200/200?random=18', orderNo: '20251224175520123456789012', time: '2025-12-24 16:32:41', reason: '-', remark: '现金存款', status: '审核通过' }
+]
 
 // 列配置
 const columns = [
@@ -287,21 +328,20 @@ const columns = [
   { title: '时间', dataIndex: 'time', key: 'time', width: 160, align: 'center' },
   { title: '理由', dataIndex: 'reason', key: 'reason', width: 120, align: 'center' },
   { title: '备注', dataIndex: 'remark', key: 'remark', width: 150, align: 'center' },
-  { title: '操作', key: 'action', width: 80, align: 'center', fixed: 'right' }
+  { title: '状态', dataIndex: 'status', key: 'status', width: 100, align: 'center', fixed: 'right' },
+  { title: '操作', key: 'action', width: 100, align: 'center', fixed: 'right' }
 ]
 
 // 搜索抽屉
 const searchDrawer = reactive({
   visible: false,
-  memberUid: '',
-  minAmount: '',
-  maxAmount: '',
-  orderNo: '',
-  keyword: '',
+  status: undefined,
+  memberId: '',
   startTime: null,
   endTime: null,
-  sortField: undefined,
-  sortType: undefined
+  keyword: '',
+  sortField: 'time',
+  sortType: 'desc'
 })
 
 // 操作抽屉
@@ -313,8 +353,8 @@ const operateDrawer = reactive({
 // 排序选项
 const sortFieldOptions = [
   { label: '全部', value: '' },
-  { label: '创建时间', value: 'createTime' },
-  { label: '数量', value: 'amount' }
+  { label: '数量', value: 'amount' },
+  { label: '时间', value: 'time' }
 ]
 
 const sortTypeOptions = [
@@ -327,9 +367,109 @@ const sortTypeOptions = [
 const loadData = () => {
   loading.value = true
   setTimeout(() => {
-    tableData.value = []
+    tableData.value = [...mockData]
     loading.value = false
   }, 300)
+}
+
+// 初始加载
+loadData()
+
+// 获取状态颜色
+const getStatusColor = (status) => {
+  const colorMap = {
+    '驳回': 'error',
+    '审核通过': 'success',
+    '待审核': 'processing'
+  }
+  return colorMap[status] || 'default'
+}
+
+// 通过操作
+const handlePass = (record) => {
+  let reasonValue = ''
+  Modal.confirm({
+    title: '通过充值',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '充值金额(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '备注'),
+            createVNode('div', { class: 'cell-value' }, record.remark || '-')
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '订单号'),
+            createVNode('div', { class: 'cell-value' }, record.orderNo)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
+    onOk() {
+      record.status = '审核通过'
+      record.reason = reasonValue || '-'
+      message.success('已通过')
+    }
+  })
+}
+
+// 驳回操作
+const handleReject = (record) => {
+  let reasonValue = ''
+  Modal.confirm({
+    title: '驳回充值',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '充值金额(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '备注'),
+            createVNode('div', { class: 'cell-value' }, record.remark || '-')
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '订单号'),
+            createVNode('div', { class: 'cell-value' }, record.orderNo)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '拒绝理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
+    okType: 'primary',
+    onOk() {
+      record.status = '驳回'
+      record.reason = reasonValue || '-'
+      message.success('已驳回')
+    }
+  })
 }
 
 // 搜索
@@ -338,22 +478,15 @@ const onSearch = (value) => {
   loadData()
 }
 
-// 搜索会员UID
-const handleSearchMemberUid = () => {
-  message.info('搜索会员: ' + searchDrawer.memberUid)
-}
-
 // 重置搜索
 const handleResetSearch = () => {
-  searchDrawer.memberUid = ''
-  searchDrawer.minAmount = ''
-  searchDrawer.maxAmount = ''
-  searchDrawer.orderNo = ''
-  searchDrawer.keyword = ''
+  searchDrawer.status = undefined
+  searchDrawer.memberId = ''
   searchDrawer.startTime = null
   searchDrawer.endTime = null
-  searchDrawer.sortField = undefined
-  searchDrawer.sortType = undefined
+  searchDrawer.keyword = ''
+  searchDrawer.sortField = 'time'
+  searchDrawer.sortType = 'desc'
 }
 
 // 提交搜索
@@ -392,9 +525,6 @@ const handleConfirmReject = () => {
   operateDrawer.visible = false
   loadData()
 }
-
-// 初始加载
-loadData()
 </script>
 
 <style scoped lang="less">
@@ -444,35 +574,39 @@ loadData()
 
   .table-wrapper {
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0 24px;
     display: flex;
     flex-direction: column;
 
     :deep(.ant-table-wrapper) {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        height: 100%;
+      }
+
       .ant-spin-container {
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
 
         .ant-table-container {
-          flex: 1;
+          height: 100%;
           display: flex;
           flex-direction: column;
 
-          .ant-table-content {
+          .ant-table-header {
+            flex-shrink: 0;
+          }
+
+          .ant-table-body {
             flex: 1;
             overflow: auto !important;
           }
@@ -521,15 +655,50 @@ loadData()
       color: #999;
     }
 
+    .amount-text {
+      color: #333;
+      font-weight: 500;
+    }
+
     .action-btns {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 12px;
 
-      .btn-primary {
+      .action-link {
         color: #1890ff;
-        padding: 0 4px;
+        font-size: 13px;
+        cursor: pointer;
+
+        &:hover {
+          color: #40a9ff;
+        }
+
+        &.success {
+          color: #52c41a;
+
+          &:hover {
+            color: #73d13d;
+          }
+        }
+
+        &.danger {
+          color: #ff4d4f;
+
+          &:hover {
+            color: #ff7875;
+          }
+        }
+
+        &.disabled {
+          color: #d9d9d9;
+          cursor: not-allowed;
+
+          &:hover {
+            color: #d9d9d9;
+          }
+        }
       }
     }
 

@@ -91,35 +91,40 @@
       v-model:open="editDrawerVisible"
       :title="isEdit ? '编辑分类' : '添加分类'"
       placement="right"
-      :width="500"
+      :width="720"
+      :closable="true"
       :rootClassName="'rounded-drawer'"
       @close="handleEditClose"
     >
+      <template #closeIcon>
+        <close-outlined style="font-size: 16px;" />
+      </template>
       <template #extra>
-        <a-button type="primary" @click="handleEditSubmit">保存</a-button>
+        <a-button type="primary" @click="handleEditSubmit">保存&创建</a-button>
       </template>
 
-      <a-form layout="vertical">
-        <a-form-item label="分类名称">
-          <a-input v-model:value="editForm.name" placeholder="请输入分类名称" />
-        </a-form-item>
-
-        <a-form-item label="指定VIP">
-          <a-select v-model:value="editForm.vip" placeholder="请选择" allow-clear>
-            <a-select-option value="">无</a-select-option>
-            <a-select-option value="VIP1">VIP1</a-select-option>
-            <a-select-option value="VIP2">VIP2</a-select-option>
-            <a-select-option value="VIP3">VIP3</a-select-option>
+      <div class="add-form-row">
+        <div class="form-col">
+          <div class="form-label required">名称</div>
+          <a-input v-model:value="editForm.name" placeholder="输入" />
+        </div>
+        <div class="form-col">
+          <div class="form-label">指定VIP等级</div>
+          <a-select v-model:value="editForm.vip" placeholder="全部" style="width: 100%;">
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option v-for="vip in vipLevelList" :key="vip.level" :value="vip.level">
+              VIP{{ vip.level }}
+            </a-select-option>
           </a-select>
-        </a-form-item>
-
-        <a-form-item label="状态">
-          <a-select v-model:value="editForm.status">
-            <a-select-option value="开启">开启</a-select-option>
-            <a-select-option value="关闭">关闭</a-select-option>
-          </a-select>
-        </a-form-item>
-      </a-form>
+        </div>
+        <div class="form-col">
+          <div class="form-label required">状态</div>
+          <div class="status-switch">
+            <span>开关</span>
+            <a-switch v-model:checked="editForm.statusEnabled" />
+          </div>
+        </div>
+      </div>
     </a-drawer>
   </div>
 </template>
@@ -132,7 +137,8 @@ import {
   FullscreenOutlined,
   FullscreenExitOutlined,
   ReloadOutlined,
-  ColumnHeightOutlined
+  ColumnHeightOutlined,
+  CloseOutlined
 } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 
@@ -221,6 +227,14 @@ const tableData = ref([
   { id: 2, name: 'Default-2', vip: '无', status: '开启', time: '09/04 01:51' }
 ])
 
+// VIP等级列表（模拟从VIP设置获取）
+const vipLevelList = ref([
+  { level: 1, name: 'Junior-level employee' },
+  { level: 2, name: 'Mid-level employees' },
+  { level: 3, name: 'Senior-level employee' },
+  { level: 4, name: 'Mentor-level employee' }
+])
+
 // 分页
 const pagination = reactive({
   current: 1,
@@ -235,7 +249,7 @@ const editForm = reactive({
   id: null,
   name: '',
   vip: '',
-  status: '开启'
+  statusEnabled: true
 })
 
 // 刷新
@@ -266,7 +280,7 @@ const handleEdit = (record) => {
     id: record.id,
     name: record.name,
     vip: record.vip === '无' ? '' : record.vip,
-    status: record.status
+    statusEnabled: record.status === '开启'
   })
   editDrawerVisible.value = true
 }
@@ -290,7 +304,7 @@ const resetEditForm = () => {
   editForm.id = null
   editForm.name = ''
   editForm.vip = ''
-  editForm.status = '开启'
+  editForm.statusEnabled = true
 }
 
 // 编辑抽屉关闭
@@ -466,5 +480,60 @@ const handleEditSubmit = () => {
 
 :deep(.ant-btn-primary) {
   border-radius: 4px;
+}
+
+// 添加分类表单行样式
+.add-form-row {
+  display: flex;
+  gap: 16px;
+
+  .form-col {
+    flex: 1;
+
+    .form-label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+
+      &.required::before {
+        content: '*';
+        color: #ff4d4f;
+        margin-right: 4px;
+      }
+    }
+
+    :deep(.ant-input) {
+      height: 40px;
+    }
+
+    :deep(.ant-select) {
+      height: 40px;
+
+      .ant-select-selector {
+        height: 40px !important;
+
+        .ant-select-selection-item,
+        .ant-select-selection-placeholder {
+          line-height: 38px !important;
+        }
+      }
+    }
+
+    .status-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 40px;
+      padding: 0 11px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+
+      span {
+        color: #333;
+        font-size: 14px;
+      }
+    }
+  }
 }
 </style>

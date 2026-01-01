@@ -60,7 +60,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 2200 }"
+        :scroll="{ x: 2200, y: 'calc(100vh - 260px)' }"
       >
         <template #bodyCell="{ column, record }">
           <!-- 会员 -->
@@ -166,27 +166,42 @@
       </template>
       <div class="search-form">
         <div class="form-item">
-          <div class="form-label">会员UID</div>
-          <div style="display: flex; gap: 8px;">
-            <a-input v-model:value="searchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
-            <a-button type="primary" @click="handleSearchMemberUid">搜 索</a-button>
-          </div>
+          <div class="form-label">状态</div>
+          <a-select
+            v-model:value="searchDrawer.status"
+            placeholder="全部"
+            style="width: 100%;"
+            allow-clear
+          >
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="pending">待审核</a-select-option>
+            <a-select-option value="approved">审核通过</a-select-option>
+            <a-select-option value="rejected">驳回</a-select-option>
+          </a-select>
         </div>
         <div class="form-item">
-          <div class="form-label">最低数量</div>
-          <a-input v-model:value="searchDrawer.minAmount" placeholder="输入" />
+          <div class="form-label">会员-ID</div>
+          <a-input v-model:value="searchDrawer.memberId" placeholder="输入" />
         </div>
         <div class="form-item">
-          <div class="form-label">最高数量</div>
-          <a-input v-model:value="searchDrawer.maxAmount" placeholder="输入" />
+          <div class="form-label">会员-用户名</div>
+          <a-input v-model:value="searchDrawer.memberUsername" placeholder="输入" />
+        </div>
+        <div class="form-item">
+          <div class="form-label">会员-手机号</div>
+          <a-input v-model:value="searchDrawer.memberPhone" placeholder="输入" />
+        </div>
+        <div class="form-item">
+          <div class="form-label">会员-邮箱</div>
+          <a-input v-model:value="searchDrawer.memberEmail" placeholder="输入" />
+        </div>
+        <div class="form-item">
+          <div class="form-label">会员邀请码</div>
+          <a-input v-model:value="searchDrawer.inviteCode" placeholder="输入" />
         </div>
         <div class="form-item">
           <div class="form-label">订单号</div>
           <a-input v-model:value="searchDrawer.orderNo" placeholder="输入" />
-        </div>
-        <div class="form-item">
-          <div class="form-label">搜索</div>
-          <a-input v-model:value="searchDrawer.keyword" placeholder="输入" />
         </div>
         <div class="form-item">
           <div class="form-label">开始时间</div>
@@ -205,10 +220,18 @@
           />
         </div>
         <div class="form-item">
+          <div class="form-label">搜索(全称)</div>
+          <a-input-search
+            v-model:value="searchDrawer.keyword"
+            placeholder="搜索内容"
+            style="width: 100%;"
+          />
+        </div>
+        <div class="form-item">
           <div class="form-label">排序字段</div>
           <a-select
             v-model:value="searchDrawer.sortField"
-            placeholder="创建时间"
+            placeholder="时间"
             style="width: 100%;"
             :options="sortFieldOptions"
           />
@@ -268,8 +291,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, nextTick } from 'vue'
-import { message } from 'ant-design-vue'
+import { ref, reactive, inject, nextTick, createVNode } from 'vue'
+import { message, Modal, Input } from 'ant-design-vue'
 import {
   ReloadOutlined,
   ColumnHeightOutlined,
@@ -277,7 +300,8 @@ import {
   FullscreenExitOutlined,
   CloseOutlined,
   CaretDownOutlined,
-  LinkOutlined
+  LinkOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons-vue'
 
 // 注入布局相关
@@ -321,15 +345,18 @@ const columns = [
 // 搜索抽屉
 const searchDrawer = reactive({
   visible: false,
-  memberUid: '',
-  minAmount: '',
-  maxAmount: '',
+  status: undefined,
+  memberId: '',
+  memberUsername: '',
+  memberPhone: '',
+  memberEmail: '',
+  inviteCode: '',
   orderNo: '',
-  keyword: '',
   startTime: null,
   endTime: null,
-  sortField: undefined,
-  sortType: undefined
+  keyword: '',
+  sortField: 'time',
+  sortType: 'desc'
 })
 
 // 操作抽屉
@@ -348,9 +375,8 @@ const withdrawInfoInput = ref(null)
 // 排序选项
 const sortFieldOptions = [
   { label: '全部', value: '' },
-  { label: '创建时间', value: 'createTime' },
   { label: '数量', value: 'amount' },
-  { label: '手续费', value: 'fee' }
+  { label: '时间', value: 'time' }
 ]
 
 const sortTypeOptions = [
@@ -405,22 +431,20 @@ const onSearch = (value) => {
   loadData()
 }
 
-// 搜索会员UID
-const handleSearchMemberUid = () => {
-  message.info('搜索会员: ' + searchDrawer.memberUid)
-}
-
 // 重置搜索
 const handleResetSearch = () => {
-  searchDrawer.memberUid = ''
-  searchDrawer.minAmount = ''
-  searchDrawer.maxAmount = ''
+  searchDrawer.status = undefined
+  searchDrawer.memberId = ''
+  searchDrawer.memberUsername = ''
+  searchDrawer.memberPhone = ''
+  searchDrawer.memberEmail = ''
+  searchDrawer.inviteCode = ''
   searchDrawer.orderNo = ''
-  searchDrawer.keyword = ''
   searchDrawer.startTime = null
   searchDrawer.endTime = null
-  searchDrawer.sortField = undefined
-  searchDrawer.sortType = undefined
+  searchDrawer.keyword = ''
+  searchDrawer.sortField = 'time'
+  searchDrawer.sortType = 'desc'
 }
 
 // 提交搜索
@@ -470,12 +494,101 @@ const saveWithdrawInfo = (record) => {
 
 // 通过
 const handlePass = (record) => {
-  message.info('驳回: ' + record.orderNo)
+  let reasonValue = ''
+  Modal.confirm({
+    title: '通过提现',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '提现金额(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '手续费(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.fee))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '应到账(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.realAmount))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '订单号'),
+            createVNode('div', { class: 'cell-value' }, record.orderNo)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
+    onOk() {
+      record.status = '审核通过'
+      record.reason = reasonValue || '-'
+      message.success('已通过')
+    }
+  })
 }
 
 // 驳回
 const handleReject = (record) => {
-  message.info('通过: ' + record.orderNo)
+  let reasonValue = ''
+  Modal.confirm({
+    title: '驳回提现',
+    icon: createVNode(ExclamationCircleOutlined, { style: { color: '#faad14' } }),
+    width: 520,
+    content: createVNode('div', { class: 'withdraw-confirm-content' }, [
+      createVNode('div', { class: 'confirm-table' }, [
+        createVNode('div', { class: 'confirm-row' }, [
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '提现金额(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.amount))
+          ]),
+          createVNode('div', { class: 'confirm-cell' }, [
+            createVNode('div', { class: 'cell-label' }, '手续费(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.fee))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '应到账(美元)'),
+            createVNode('div', { class: 'cell-value' }, String(record.realAmount))
+          ])
+        ]),
+        createVNode('div', { class: 'confirm-row single' }, [
+          createVNode('div', { class: 'confirm-cell full' }, [
+            createVNode('div', { class: 'cell-label' }, '订单号'),
+            createVNode('div', { class: 'cell-value' }, record.orderNo)
+          ])
+        ])
+      ]),
+      createVNode('div', { class: 'reason-label' }, '拒绝理由(选填)'),
+      createVNode(Input.TextArea, {
+        placeholder: '请输入',
+        rows: 3,
+        onChange: (e) => { reasonValue = e.target.value }
+      })
+    ]),
+    okText: '确 定',
+    cancelText: '取 消',
+    okType: 'primary',
+    onOk() {
+      record.status = '驳回'
+      record.reason = reasonValue || '-'
+      message.success('已驳回')
+    }
+  })
 }
 
 // 操作
@@ -549,35 +662,39 @@ loadData()
 
   .table-wrapper {
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0 24px;
     display: flex;
     flex-direction: column;
 
     :deep(.ant-table-wrapper) {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        height: 100%;
+      }
+
       .ant-spin-container {
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
 
         .ant-table-container {
-          flex: 1;
+          height: 100%;
           display: flex;
           flex-direction: column;
 
-          .ant-table-content {
+          .ant-table-header {
+            flex-shrink: 0;
+          }
+
+          .ant-table-body {
             flex: 1;
             overflow: auto !important;
           }

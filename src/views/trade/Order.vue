@@ -73,7 +73,7 @@
         :loading="loading"
         :size="tableSize"
         bordered
-        :scroll="{ x: 1800 }"
+        :scroll="{ x: 1800, y: 'calc(100vh - 260px)' }"
         :row-class-name="() => 'order-table-row'"
       >
         <template #bodyCell="{ column, record }">
@@ -604,35 +604,39 @@ loadData()
 
   .table-wrapper {
     flex: 1;
-    overflow-x: auto;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0 24px;
     display: flex;
     flex-direction: column;
 
     :deep(.ant-table-wrapper) {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
 
-      .ant-spin-nested-loading,
+      .ant-spin-nested-loading {
+        height: 100%;
+      }
+
       .ant-spin-container {
-        flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
       }
 
       .ant-table {
         flex: 1;
-        display: flex;
-        flex-direction: column;
+        overflow: hidden;
 
         .ant-table-container {
-          flex: 1;
+          height: 100%;
           display: flex;
           flex-direction: column;
 
-          .ant-table-content {
+          .ant-table-header {
+            flex-shrink: 0;
+          }
+
+          .ant-table-body {
             flex: 1;
             overflow: auto !important;
           }
