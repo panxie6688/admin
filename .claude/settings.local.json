@@ -25,7 +25,8 @@
       "WebFetch(domain:github.com)",
       "Bash(npx @nestjs/cli new:*)",
       "Bash(grep:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(npm run start:dev:*)"
     ],
     "deny": [],
     "ask": []

@@ -290,7 +290,7 @@ const tableSize = ref('small')
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 18
+  total: 40
 })
 
 // 表格数据
@@ -315,7 +315,29 @@ const mockData = [
   { id: 15, member: '1-7045770269', username: 'doomguy0269', amount: 100.00, voucher: null, orderNo: '20251226175580268482666661', time: '2025-12-26 12:58:08', reason: '信息不完整', remark: '-', status: '驳回' },
   { id: 16, member: '1-8173666490', username: 'Jluytinck1979', amount: 2200.00, voucher: 'https://picsum.photos/200/200?random=16', orderNo: '20251225175553542712877242', time: '2025-12-25 10:43:47', reason: '-', remark: '银行转账', status: '待审核' },
   { id: 17, member: '1-8173666490', username: 'Jluytinck1979', amount: 900.00, voucher: 'https://picsum.photos/200/200?random=17', orderNo: '20251225175531199581733348', time: '2025-12-25 20:39:56', reason: '-', remark: '微信转账', status: '审核通过' },
-  { id: 18, member: '1-9374750912', username: 'Michael1212', amount: 400.00, voucher: 'https://picsum.photos/200/200?random=18', orderNo: '20251224175520123456789012', time: '2025-12-24 16:32:41', reason: '-', remark: '现金存款', status: '审核通过' }
+  { id: 18, member: '1-9374750912', username: 'Michael1212', amount: 400.00, voucher: 'https://picsum.photos/200/200?random=18', orderNo: '20251224175520123456789012', time: '2025-12-24 16:32:41', reason: '-', remark: '现金存款', status: '审核通过' },
+  { id: 19, member: '1-5432198765', username: 'JohnDoe', amount: 1500.00, voucher: 'https://picsum.photos/200/200?random=19', orderNo: '20251224175519234567890123', time: '2025-12-24 14:25:33', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 20, member: '1-6543209876', username: 'JaneSmith', amount: 680.00, voucher: 'https://picsum.photos/200/200?random=20', orderNo: '20251223175518345678901234', time: '2025-12-23 11:18:45', reason: '-', remark: '支付宝', status: '待审核' },
+  { id: 21, member: '1-7654320987', username: 'BobWilson', amount: 2100.00, voucher: 'https://picsum.photos/200/200?random=21', orderNo: '20251223175517456789012345', time: '2025-12-23 09:42:12', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 22, member: '1-8765432098', username: 'AliceJones', amount: 350.00, voucher: null, orderNo: '20251222175516567890123456', time: '2025-12-22 16:33:28', reason: '凭证过期', remark: '-', status: '驳回' },
+  { id: 23, member: '1-9876543109', username: 'CharlieB', amount: 920.00, voucher: 'https://picsum.photos/200/200?random=23', orderNo: '20251222175515678901234567', time: '2025-12-22 14:55:19', reason: '-', remark: '微信转账', status: '审核通过' },
+  { id: 24, member: '1-0987654210', username: 'DianaK', amount: 1750.00, voucher: 'https://picsum.photos/200/200?random=24', orderNo: '20251221175514789012345678', time: '2025-12-21 12:08:47', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 25, member: '1-1098765321', username: 'EvanM', amount: 450.00, voucher: 'https://picsum.photos/200/200?random=25', orderNo: '20251221175513890123456789', time: '2025-12-21 10:25:38', reason: '-', remark: '现金存款', status: '审核通过' },
+  { id: 26, member: '1-2109876432', username: 'FionaL', amount: 3200.00, voucher: 'https://picsum.photos/200/200?random=26', orderNo: '20251220175512901234567890', time: '2025-12-20 18:42:55', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 27, member: '1-3210987543', username: 'GeorgeN', amount: 180.00, voucher: null, orderNo: '20251220175511012345678901', time: '2025-12-20 15:18:22', reason: '金额错误', remark: '-', status: '驳回' },
+  { id: 28, member: '1-4321098654', username: 'HelenR', amount: 1100.00, voucher: 'https://picsum.photos/200/200?random=28', orderNo: '20251219175510123456789012', time: '2025-12-19 11:35:08', reason: '-', remark: '支付宝', status: '待审核' },
+  { id: 29, member: '1-5432109765', username: 'IvanT', amount: 2800.00, voucher: 'https://picsum.photos/200/200?random=29', orderNo: '20251219175509234567890123', time: '2025-12-19 09:48:33', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 30, member: '1-6543210876', username: 'JuliaW', amount: 550.00, voucher: 'https://picsum.photos/200/200?random=30', orderNo: '20251218175508345678901234', time: '2025-12-18 17:22:45', reason: '-', remark: '微信转账', status: '审核通过' },
+  { id: 31, member: '1-7654321987', username: 'KevinX', amount: 1650.00, voucher: 'https://picsum.photos/200/200?random=31', orderNo: '20251218175507456789012345', time: '2025-12-18 14:15:27', reason: '-', remark: '银行转账', status: '待审核' },
+  { id: 32, member: '1-8765432098', username: 'LindaY', amount: 720.00, voucher: 'https://picsum.photos/200/200?random=32', orderNo: '20251217175506567890123456', time: '2025-12-17 12:08:15', reason: '-', remark: '现金存款', status: '审核通过' },
+  { id: 33, member: '1-9876543109', username: 'MikeZ', amount: 4500.00, voucher: 'https://picsum.photos/200/200?random=33', orderNo: '20251217175505678901234567', time: '2025-12-17 10:45:38', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 34, member: '1-0987654210', username: 'NancyA', amount: 280.00, voucher: null, orderNo: '20251216175504789012345678', time: '2025-12-16 18:32:52', reason: '资料不全', remark: '-', status: '驳回' },
+  { id: 35, member: '1-1098765321', username: 'OscarB', amount: 1350.00, voucher: 'https://picsum.photos/200/200?random=35', orderNo: '20251216175503890123456789', time: '2025-12-16 15:25:18', reason: '-', remark: '支付宝', status: '待审核' },
+  { id: 36, member: '1-2109876432', username: 'PattyC', amount: 890.00, voucher: 'https://picsum.photos/200/200?random=36', orderNo: '20251215175502901234567890', time: '2025-12-15 13:18:45', reason: '-', remark: '微信转账', status: '审核通过' },
+  { id: 37, member: '1-3210987543', username: 'QuincyD', amount: 2350.00, voucher: 'https://picsum.photos/200/200?random=37', orderNo: '20251215175501012345678901', time: '2025-12-15 11:42:33', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 38, member: '1-4321098654', username: 'RachelE', amount: 650.00, voucher: 'https://picsum.photos/200/200?random=38', orderNo: '20251214175500123456789012', time: '2025-12-14 16:55:28', reason: '-', remark: '现金存款', status: '待审核' },
+  { id: 39, member: '1-5432109765', username: 'SteveF', amount: 1980.00, voucher: 'https://picsum.photos/200/200?random=39', orderNo: '20251214175499234567890123', time: '2025-12-14 14:28:15', reason: '-', remark: '银行转账', status: '审核通过' },
+  { id: 40, member: '1-6543210876', username: 'TinaG', amount: 420.00, voucher: 'https://picsum.photos/200/200?random=40', orderNo: '20251213175498345678901234', time: '2025-12-13 12:35:42', reason: '-', remark: '支付宝', status: '审核通过' }
 ]
 
 // 列配置

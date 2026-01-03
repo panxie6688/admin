@@ -79,11 +79,17 @@
       </a-table>
 
       <!-- 分页 -->
-      <TablePagination
-        v-model:current="pagination.current"
-        v-model:page-size="pagination.pageSize"
-        :total="pagination.total"
-      />
+      <div class="page-footer">
+        <span class="total-text">统计: {{ pagination.total }}/条</span>
+        <a-pagination
+          v-model:current="pagination.current"
+          v-model:page-size="pagination.pageSize"
+          :total="pagination.total"
+          :show-size-changer="false"
+          :show-quick-jumper="true"
+          size="small"
+        />
+      </div>
     </div>
 
     <!-- 添加/编辑抽屉 -->
@@ -224,8 +230,25 @@ const columns = [
 
 // 模拟数据
 const tableData = ref([
-  { id: 2, name: 'Default-2', vip: '无', status: '开启', time: '09/04 01:51' }
+  { id: 1, name: '电子产品', vip: '无', status: '开启', time: '09/04 01:51' },
+  { id: 2, name: '服装配饰', vip: '无', status: '开启', time: '09/04 01:51' },
+  { id: 3, name: '家居用品', vip: '无', status: '开启', time: '09/04 01:52' },
+  { id: 4, name: '美妆护肤', vip: '无', status: '开启', time: '09/04 01:52' },
+  { id: 5, name: '运动户外', vip: '无', status: '开启', time: '09/04 01:53' }
 ])
+
+// 保存分类到 localStorage
+const saveCategoryToStorage = () => {
+  const categories = tableData.value
+    .filter(item => item.status === '开启')
+    .map(item => ({ id: item.id, name: item.name }))
+  localStorage.setItem('goodsCategories', JSON.stringify(categories))
+  // 触发事件通知其他页面
+  window.dispatchEvent(new CustomEvent('categoriesUpdate', { detail: categories }))
+}
+
+// 初始化时保存一次
+saveCategoryToStorage()
 
 // VIP等级列表（模拟从VIP设置获取）
 const vipLevelList = ref([
@@ -239,7 +262,7 @@ const vipLevelList = ref([
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 1
+  total: 5
 })
 
 // 编辑抽屉
@@ -294,6 +317,12 @@ const handleDelete = (record) => {
     cancelText: '取消',
     okType: 'danger',
     onOk() {
+      const index = tableData.value.findIndex(item => item.id === record.id)
+      if (index > -1) {
+        tableData.value.splice(index, 1)
+        pagination.total = tableData.value.length
+        saveCategoryToStorage()
+      }
       message.success('删除成功')
     }
   })
@@ -318,6 +347,36 @@ const handleEditSubmit = () => {
     message.warning('请输入分类名称')
     return
   }
+
+  if (isEdit.value) {
+    // 编辑模式：更新现有分类
+    const index = tableData.value.findIndex(item => item.id === editForm.id)
+    if (index > -1) {
+      tableData.value[index].name = editForm.name
+      tableData.value[index].vip = editForm.vip || '无'
+      tableData.value[index].status = editForm.statusEnabled ? '开启' : '关闭'
+    }
+  } else {
+    // 添加模式：创建新分类
+    const maxId = tableData.value.length > 0
+      ? Math.max(...tableData.value.map(item => item.id))
+      : 0
+    const now = new Date()
+    const timeStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+    tableData.value.push({
+      id: maxId + 1,
+      name: editForm.name,
+      vip: editForm.vip || '无',
+      status: editForm.statusEnabled ? '开启' : '关闭',
+      time: timeStr
+    })
+    pagination.total = tableData.value.length
+  }
+
+  // 同步到 localStorage
+  saveCategoryToStorage()
+
   message.success(isEdit.value ? '编辑成功' : '添加成功')
   editDrawerVisible.value = false
 }
@@ -328,6 +387,7 @@ const handleEditSubmit = () => {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
+  padding-bottom: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -406,6 +466,23 @@ const handleEditSubmit = () => {
             overflow-x: auto !important;
           }
         }
+      }
+    }
+
+    .page-footer {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid #f0f0f0;
+      background: #fff;
+      flex-shrink: 0;
+
+      .total-text {
+        margin-right: 16px;
+        color: #666;
+        font-size: 14px;
       }
     }
   }

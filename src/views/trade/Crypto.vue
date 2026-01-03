@@ -409,14 +409,36 @@ const mockData = [
   { id: 15, member: '1-7045770269', username: 'doomguy0269', coin: 'USDT', amount: 750.00, fiatStatus: '已兑换', fiatAmount: 750.00, chain: 'ERC20', hash: '0x3be88F71159EcE0BF3b51961be108984A4bE48eE5f6g', time: '2025-12-27 12:58:08', status: '已驳回' },
   { id: 16, member: '1-8173666490', username: 'Jluytinck1979', coin: 'BTC', amount: 0.02, fiatStatus: '兑换中', fiatAmount: 900.00, chain: 'BTC', hash: 'bc1qpke9vnn6lqtmnczxaqku30yg8nzscf5m3an5j7k8', time: '2025-12-26 10:43:47', status: '待确认' },
   { id: 17, member: '1-8173666490', username: 'Jluytinck1979', coin: 'USDT', amount: 1200.00, fiatStatus: '已兑换', fiatAmount: 1200.00, chain: 'TRC20', hash: 'TCde345fgh678IJK901lmn234OPQ567rst890UVW', time: '2025-12-26 20:39:56', status: '已确认' },
-  { id: 18, member: '1-9374750912', username: 'Michael1212', coin: 'ETH', amount: 0.3, fiatStatus: '已兑换', fiatAmount: 750.00, chain: 'ERC20', hash: '0x8cD22634E4F7DDEE2F7408FF8aE82464c2fBe68a9b0', time: '2025-12-25 16:32:41', status: '已确认' }
+  { id: 18, member: '1-9374750912', username: 'Michael1212', coin: 'ETH', amount: 0.3, fiatStatus: '已兑换', fiatAmount: 750.00, chain: 'ERC20', hash: '0x8cD22634E4F7DDEE2F7408FF8aE82464c2fBe68a9b0', time: '2025-12-25 16:32:41', status: '已确认' },
+  { id: 19, member: '1-5432198765', username: 'JohnDoe', coin: 'USDT', amount: 3500.00, fiatStatus: '已兑换', fiatAmount: 3500.00, chain: 'TRC20', hash: '0xFGH123ijk456LMN789opq012RST345uvw678XYZ', time: '2025-12-25 14:25:33', status: '已确认' },
+  { id: 20, member: '1-6543209876', username: 'JaneSmith', coin: 'BTC', amount: 0.08, fiatStatus: '未兑换', fiatAmount: null, chain: 'BTC', hash: 'bc1qABC123def456GHI789jkl012MNO345pqr678stu', time: '2025-12-24 11:18:45', status: '待确认' },
+  { id: 21, member: '1-7654320987', username: 'BobWilson', coin: 'ETH', amount: 2.5, fiatStatus: '已兑换', fiatAmount: 6250.00, chain: 'ERC20', hash: '0xKLM456nop789QRS012tuv345WXY678zab901CDE', time: '2025-12-24 09:42:12', status: '已确认' },
+  { id: 22, member: '1-8765432098', username: 'AliceJones', coin: 'USDT', amount: 450.00, fiatStatus: '已兑换', fiatAmount: 450.00, chain: 'BEP20', hash: '0xFGH234ijk567LMN890opq123RST456uvw789XYZ', time: '2025-12-23 16:33:28', status: '已驳回' },
+  { id: 23, member: '1-9876543109', username: 'CharlieB', coin: 'TRX', amount: 8000.00, fiatStatus: '已兑换', fiatAmount: 640.00, chain: 'TRC20', hash: 'TXyz567ABC890def123GHI456jkl789MNO012pqr', time: '2025-12-23 14:55:19', status: '已确认' },
+  { id: 24, member: '1-0987654210', username: 'DianaK', coin: 'USDT', amount: 1850.00, fiatStatus: '兑换中', fiatAmount: 1850.00, chain: 'ERC20', hash: '0xSTU678vwx901YZA234bcd567EFG890hij123KLM', time: '2025-12-22 12:08:47', status: '待确认' },
+  { id: 25, member: '1-1098765321', username: 'EvanM', coin: 'BTC', amount: 0.15, fiatStatus: '已兑换', fiatAmount: 6750.00, chain: 'BTC', hash: 'bc1qNOP345qrs678TUV901wxy234ZAB567cde890FGH', time: '2025-12-22 10:25:38', status: '已确认' },
+  { id: 26, member: '1-2109876432', username: 'FionaL', coin: 'ETH', amount: 1.8, fiatStatus: '已兑换', fiatAmount: 4500.00, chain: 'ERC20', hash: '0xIJK789lmn012OPQ345rst678UVW901xyz234ABC', time: '2025-12-21 18:42:55', status: '已确认' },
+  { id: 27, member: '1-3210987543', username: 'GeorgeN', coin: 'USDT', amount: 620.00, fiatStatus: '未兑换', fiatAmount: null, chain: 'TRC20', hash: 'TDEF567ghi890JKL123mno456PQR789stu012VWX', time: '2025-12-21 15:18:22', status: '待确认' },
+  { id: 28, member: '1-4321098654', username: 'HelenR', coin: 'USDT', amount: 2200.00, fiatStatus: '已兑换', fiatAmount: 2200.00, chain: 'BEP20', hash: '0xYZA345bcd678EFG901hij234KLM567nop890QRS', time: '2025-12-20 11:35:08', status: '已确认' },
+  { id: 29, member: '1-5432109765', username: 'IvanT', coin: 'BTC', amount: 0.25, fiatStatus: '已兑换', fiatAmount: 11250.00, chain: 'BTC', hash: 'bc1qTUV678wxy901ZAB234cde567FGH890ijk123LMN', time: '2025-12-20 09:48:33', status: '已确认' },
+  { id: 30, member: '1-6543210876', username: 'JuliaW', coin: 'TRX', amount: 15000.00, fiatStatus: '已兑换', fiatAmount: 1200.00, chain: 'TRC20', hash: 'TGHI890jkl123MNO456pqr789STU012vwx345YZA', time: '2025-12-19 17:22:45', status: '已确认' },
+  { id: 31, member: '1-7654321987', username: 'KevinX', coin: 'ETH', amount: 0.75, fiatStatus: '兑换中', fiatAmount: 1875.00, chain: 'ERC20', hash: '0xBCD567efg890HIJ123klm456NOP789qrs012TUV', time: '2025-12-19 14:15:27', status: '待确认' },
+  { id: 32, member: '1-8765432098', username: 'LindaY', coin: 'USDT', amount: 980.00, fiatStatus: '已兑换', fiatAmount: 980.00, chain: 'TRC20', hash: 'TWXY678zab901CDE234fgh567IJK890lmn123OPQ', time: '2025-12-18 12:08:15', status: '已确认' },
+  { id: 33, member: '1-9876543109', username: 'MikeZ', coin: 'BTC', amount: 0.12, fiatStatus: '已兑换', fiatAmount: 5400.00, chain: 'BTC', hash: 'bc1qRST901uvw234XYZ567abc890DEF123ghi456JKL', time: '2025-12-18 10:45:38', status: '已确认' },
+  { id: 34, member: '1-0987654210', username: 'NancyA', coin: 'USDT', amount: 380.00, fiatStatus: '未兑换', fiatAmount: null, chain: 'ERC20', hash: '0xMNO234pqr567STU890vwx123YZA456bcd789EFG', time: '2025-12-17 18:32:52', status: '已驳回' },
+  { id: 35, member: '1-1098765321', username: 'OscarB', coin: 'ETH', amount: 1.5, fiatStatus: '已兑换', fiatAmount: 3750.00, chain: 'ERC20', hash: '0xHIJ567klm890NOP123qrs456TUV789wxy012ZAB', time: '2025-12-17 15:25:18', status: '已确认' },
+  { id: 36, member: '1-2109876432', username: 'PattyC', coin: 'TRX', amount: 12000.00, fiatStatus: '已兑换', fiatAmount: 960.00, chain: 'TRC20', hash: 'TCDE345fgh678IJK901lmn234OPQ567rst890UVW', time: '2025-12-16 13:18:45', status: '已确认' },
+  { id: 37, member: '1-3210987543', username: 'QuincyD', coin: 'USDT', amount: 4200.00, fiatStatus: '已兑换', fiatAmount: 4200.00, chain: 'BEP20', hash: '0xXYZ012abc345DEF678ghi901JKL234mno567PQR', time: '2025-12-16 11:42:33', status: '已确认' },
+  { id: 38, member: '1-4321098654', username: 'RachelE', coin: 'BTC', amount: 0.03, fiatStatus: '兑换中', fiatAmount: 1350.00, chain: 'BTC', hash: 'bc1qVWX567yza890BCD123efg456HIJ789klm012NOP', time: '2025-12-15 16:55:28', status: '待确认' },
+  { id: 39, member: '1-5432109765', username: 'SteveF', coin: 'ETH', amount: 2.0, fiatStatus: '已兑换', fiatAmount: 5000.00, chain: 'ERC20', hash: '0xQRS890tuv123WXY456zab789CDE012fgh345IJK', time: '2025-12-15 14:28:15', status: '已确认' },
+  { id: 40, member: '1-6543210876', username: 'TinaG', coin: 'USDT', amount: 1650.00, fiatStatus: '已兑换', fiatAmount: 1650.00, chain: 'TRC20', hash: 'TLMN678opq901RST234uvw567XYZ890abc123DEF', time: '2025-12-14 12:35:42', status: '已确认' }
 ]
 
 // 分页配置
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 18
+  total: 40
 })
 
 // 更多搜索

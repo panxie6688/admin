@@ -1,6 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 
+// 预加载大型组件的 Promise
+let memberPreload = null
+let adminPreload = null
+
+// 预加载大型组件（在空闲时加载）
+const preloadComponents = () => {
+  const doPreload = () => {
+    // 预加载 Member.vue（最大的文件）
+    memberPreload = import('@/views/account/Member.vue')
+    // 预加载 Admin.vue
+    adminPreload = import('@/views/account/Admin.vue')
+  }
+
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(doPreload, { timeout: 3000 })
+  } else {
+    setTimeout(doPreload, 1000)
+  }
+}
+
 const routes = [
   {
     path: '/login',
@@ -24,13 +44,13 @@ const routes = [
       {
         path: 'account/admin',
         name: 'AccountAdmin',
-        component: () => import('@/views/account/Admin.vue'),
+        component: () => adminPreload || import('@/views/account/Admin.vue'),
         meta: { title: '管理员' }
       },
       {
         path: 'account/member',
         name: 'AccountMember',
-        component: () => import('@/views/account/Member.vue'),
+        component: () => memberPreload || import('@/views/account/Member.vue'),
         meta: { title: '会员列表' }
       },
       {
@@ -202,6 +222,11 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
+})
+
+// 首次路由完成后预加载大型组件
+router.isReady().then(() => {
+  preloadComponents()
 })
 
 export default router

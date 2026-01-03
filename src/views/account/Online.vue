@@ -403,14 +403,34 @@ const tableData = ref([
   { id: 17, memberId: '1-15498745612', username: '白泽', loginAccount: '白泽', ip: '98.98.93.68', client: 'h5', device: 'Chrome v 142.0.0.0(Windows v 10.0)' },
   { id: 18, memberId: '1-7602299834', username: 'Smithjane', loginAccount: '1-7602299834', ip: '102.88.112.242', client: 'h5', device: 'Safari v 15.6.7(iOS v 15.8.4)' },
   { id: 19, memberId: '1-4076634901', username: 'Bcabre', loginAccount: 'Bcabre', ip: '174.227.237.246', client: 'h5', device: 'Chrome v 141.0.0.0(Android v 10)' },
-  { id: 20, memberId: '1-9804280512', username: 'Sylenam', loginAccount: 'Sylenam', ip: '166.194.204.13', client: 'h5', device: 'Chrome v 141.0.0.0(Android v 10)' }
+  { id: 20, memberId: '1-9804280512', username: 'Sylenam', loginAccount: 'Sylenam', ip: '166.194.204.13', client: 'h5', device: 'Chrome v 141.0.0.0(Android v 10)' },
+  { id: 21, memberId: '1-5109783313', username: 'TechMaster', loginAccount: 'TechMaster', ip: '99.92.94.175', client: 'h5', device: 'Safari v 18.6(iOS v 18.6.2)' },
+  { id: 22, memberId: '1-8324347342', username: 'CryptoKing', loginAccount: 'CryptoKing', ip: '104.2.53.119', client: 'h5', device: 'Chrome v 140.0.0.0(Windows v 10.0)' },
+  { id: 23, memberId: '1-248.755.9829', username: 'GoldenEagle', loginAccount: 'GoldenEagle', ip: '174.245.17.78', client: 'h5', device: 'Chrome v 138.0.0.0(Android v 10)' },
+  { id: 24, memberId: '1-7892345671', username: 'StarTrader', loginAccount: 'StarTrader', ip: '45.67.89.123', client: 'h5', device: 'Safari v 17.0(macOS v 14.0)' },
+  { id: 25, memberId: '1-5678901234', username: 'DiamondHand', loginAccount: 'DiamondHand', ip: '123.45.67.89', client: 'h5', device: 'Chrome v 141.0.0.0(Android v 13)' },
+  { id: 26, memberId: '1-4567890123', username: 'MoonWalker', loginAccount: 'MoonWalker', ip: '89.12.34.56', client: 'h5', device: 'Chrome v 140.0.0.0(iOS v 17.5)' },
+  { id: 27, memberId: '1-3456789012', username: 'SunRiser', loginAccount: 'SunRiser', ip: '67.89.01.23', client: 'h5', device: 'Chrome v 139.0.0.0(Android v 12)' },
+  { id: 28, memberId: '1-2345678901', username: 'NightOwl', loginAccount: 'NightOwl', ip: '90.12.34.56', client: 'h5', device: 'Firefox v 119.0(Android v 11)' },
+  { id: 29, memberId: '1-1234567890', username: 'EarlyBird', loginAccount: 'EarlyBird', ip: '45.67.89.01', client: 'h5', device: 'Safari v 16.0(macOS v 13.0)' },
+  { id: 30, memberId: '1-9876543210', username: 'LateNight', loginAccount: 'LateNight', ip: '23.45.67.89', client: 'h5', device: 'Chrome v 137.0.0.0(Android v 14)' },
+  { id: 31, memberId: '1-8765432109', username: 'FastRunner', loginAccount: 'FastRunner', ip: '89.01.23.45', client: 'h5', device: 'Chrome v 136.0.0.0(iOS v 17.0)' },
+  { id: 32, memberId: '1-7654321098', username: 'SlowSteady', loginAccount: 'SlowSteady', ip: '67.89.01.23', client: 'h5', device: 'Chrome v 135.0.0.0(Android v 13)' },
+  { id: 33, memberId: '1-6543210987', username: 'QuickSilver', loginAccount: 'QuickSilver', ip: '12.34.56.78', client: 'h5', device: 'Firefox v 117.0(Windows v 11)' },
+  { id: 34, memberId: '1-5432109876', username: 'IronMan', loginAccount: 'IronMan', ip: '78.90.12.34', client: 'h5', device: 'Safari v 17.0(iOS v 17.0)' },
+  { id: 35, memberId: '1-4321098765', username: 'CaptainAce', loginAccount: 'CaptainAce', ip: '56.78.90.12', client: 'h5', device: 'Chrome v 133.0.0.0(Windows v 10.0)' },
+  { id: 36, memberId: '1-3210987654', username: 'ThorHammer', loginAccount: 'ThorHammer', ip: '89.01.23.45', client: 'h5', device: 'Edge v 137.0.0.0(Windows v 11)' },
+  { id: 37, memberId: '1-2109876543', username: 'SpiderWeb', loginAccount: 'SpiderWeb', ip: '34.56.78.90', client: 'h5', device: 'Safari v 15.5(iOS v 15.5)' },
+  { id: 38, memberId: '1-1098765432', username: 'BatWing', loginAccount: 'BatWing', ip: '67.89.01.23', client: 'h5', device: 'Chrome v 134.0.0.0(macOS v 14.0)' },
+  { id: 39, memberId: '1-9870123456', username: 'FlashSpeed', loginAccount: 'FlashSpeed', ip: '90.12.34.56', client: 'h5', device: 'Chrome v 132.0.0.0(Android v 12)' },
+  { id: 40, memberId: '1-8769012345', username: 'AquaMan', loginAccount: 'AquaMan', ip: '23.45.67.89', client: 'h5', device: 'Safari v 16.5(macOS v 13.5)' }
 ])
 
 // 分页配置
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 1855
+  total: 40
 })
 
 // 监听分页变化

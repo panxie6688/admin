@@ -7,6 +7,9 @@
         <a-button type="primary" class="add-btn" @click="handleAdd">
           <plus-outlined /> 添加数据
         </a-button>
+        <a-button type="primary" ghost @click="openCollectDrawer">
+          <cloud-download-outlined /> 采集商品
+        </a-button>
       </div>
       <div class="header-right">
         <a-input-search
@@ -328,11 +331,177 @@
         </a-select>
       </div>
     </a-modal>
+
+    <!-- 采集商品抽屉 -->
+    <a-drawer
+      v-model:open="collectDrawerVisible"
+      title="采集商品"
+      placement="right"
+      :width="collectStep === 1 ? 520 : 900"
+      :closable="true"
+      rootClassName="rounded-drawer"
+    >
+      <template #closeIcon>
+        <close-outlined style="font-size: 16px;" />
+      </template>
+      <template #extra>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <template v-if="collectStep === 2">
+            <a-button @click="backToSearch">返回配置</a-button>
+            <a-button type="primary" :disabled="selectedCollectItems.length === 0" @click="handleImportSelected">
+              <shopping-cart-outlined /> 导入选中 ({{ selectedCollectItems.length }})
+            </a-button>
+          </template>
+        </div>
+      </template>
+
+      <div class="collect-content">
+        <!-- 步骤1: 搜索配置 -->
+        <div v-if="collectStep === 1" class="collect-search-form">
+          <a-alert type="info" :show-icon="true" style="margin-bottom: 20px;">
+            <template #message>
+              <div>设置采集参数，系统将根据价格区间随机生成商品。关键词为选填项。</div>
+            </template>
+          </a-alert>
+
+          <a-form layout="vertical">
+            <a-form-item label="采集平台">
+              <a-select v-model:value="collectConfig.platform" placeholder="请选择平台" size="large">
+                <a-select-option v-for="opt in platformOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="导入分类">
+              <a-select v-model:value="collectConfig.category" placeholder="请选择分类" allow-clear size="large">
+                <a-select-option v-for="cat in categoryList" :key="cat.id" :value="cat.name">
+                  {{ cat.name }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="搜索关键词（选填）">
+              <a-input
+                v-model:value="collectConfig.keyword"
+                placeholder="可选，输入后会添加到商品名称前"
+                size="large"
+                allow-clear
+              />
+            </a-form-item>
+
+            <a-form-item label="价格区间 (USD)">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <a-input-number
+                  v-model:value="collectConfig.minPrice"
+                  placeholder="最低价"
+                  style="flex: 1;"
+                  size="large"
+                  :min="0"
+                  :precision="2"
+                />
+                <span style="color: #999;">—</span>
+                <a-input-number
+                  v-model:value="collectConfig.maxPrice"
+                  placeholder="最高价"
+                  style="flex: 1;"
+                  size="large"
+                  :min="0"
+                  :precision="2"
+                />
+              </div>
+            </a-form-item>
+
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="排序方式">
+                  <a-select v-model:value="collectConfig.sortBy" placeholder="请选择排序" size="large">
+                    <a-select-option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </a-select-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="采集数量">
+                  <a-input-number
+                    v-model:value="collectConfig.pageSize"
+                    placeholder="请输入数量"
+                    style="width: 100%;"
+                    size="large"
+                    :min="1"
+                    :max="100"
+                  />
+                </a-form-item>
+              </a-col>
+            </a-row>
+
+            <a-form-item style="margin-top: 8px;">
+              <a-button type="primary" size="large" block :loading="collectLoading" @click="handleCollectSearch">
+                <cloud-download-outlined /> 开始采集
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </div>
+
+        <!-- 步骤2: 采集结果 -->
+        <div v-else class="collect-results">
+          <div class="results-header">
+            <div class="results-info">
+              <a-checkbox :checked="collectSelectAll" @change="handleCollectSelectAll">
+                全选
+              </a-checkbox>
+              <span class="results-count">共采集到 <b>{{ collectResults.length }}</b> 个商品</span>
+              <span v-if="selectedCollectItems.length > 0" class="selected-count">
+                已选 <b>{{ selectedCollectItems.length }}</b> 个
+              </span>
+            </div>
+            <div class="results-filter">
+              <a-tag color="blue">{{ platformOptions.find(p => p.value === collectConfig.platform)?.label }}</a-tag>
+              <span v-if="collectConfig.minPrice !== null || collectConfig.maxPrice !== null">
+                价格: ${{ collectConfig.minPrice || 0 }} - ${{ collectConfig.maxPrice || '不限' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="results-grid">
+            <div
+              v-for="item in collectResults"
+              :key="item.id"
+              :class="['result-card', { selected: item.selected }]"
+              @click="handleCollectItemSelect(item)"
+            >
+              <div class="card-checkbox">
+                <a-checkbox :checked="item.selected" @click.stop />
+              </div>
+              <div class="card-image">
+                <img :src="item.image" :alt="item.name" @error="handleImageError" />
+              </div>
+              <div class="card-info">
+                <div class="card-name">{{ item.name }}</div>
+                <div class="card-meta">
+                  <span class="card-price">${{ item.price }}</span>
+                  <span class="card-original-price">${{ item.originalPrice }}</span>
+                </div>
+                <div class="card-stats">
+                  <span><star-filled style="color: #faad14;" /> {{ item.rating }}</span>
+                  <span>销量: {{ item.sales }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="collectResults.length === 0" class="empty-results">
+            <a-empty description="没有找到符合条件的商品" />
+          </div>
+        </div>
+      </div>
+    </a-drawer>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, inject } from 'vue'
+import { ref, reactive, inject, onMounted, onUnmounted } from 'vue'
 import {
   PlusOutlined,
   FullscreenOutlined,
@@ -340,7 +509,11 @@ import {
   ReloadOutlined,
   ColumnHeightOutlined,
   CloseOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  CloudDownloadOutlined,
+  SearchOutlined,
+  ShoppingCartOutlined,
+  StarFilled
 } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
@@ -385,18 +558,45 @@ const tableData = ref([
   { id: 36222, category: 'Default-2', name: 'Auto Parts OEM 33030-0K350 for Hilux Manual Transmission Gearbox Assembly', price: 936, cover: 'https://picsum.photos/200/200?random=6', status: '显示', time: '11/06 17:23' }
 ])
 
-// 分类列表
-const categoryList = ref([
-  { id: 1, name: 'Default-2' },
-  { id: 2, name: '电子产品' },
-  { id: 3, name: '服装配饰' }
-])
+// 分类列表 - 从 localStorage 读取
+const categoryList = ref([])
+
+// 加载分类列表
+const loadCategories = () => {
+  const saved = localStorage.getItem('goodsCategories')
+  if (saved) {
+    categoryList.value = JSON.parse(saved)
+  } else {
+    // 默认分类
+    categoryList.value = [
+      { id: 1, name: '电子产品' },
+      { id: 2, name: '服装配饰' },
+      { id: 3, name: '家居用品' }
+    ]
+  }
+}
+
+// 监听分类更新事件
+const handleCategoriesUpdate = (event) => {
+  if (event.detail) {
+    categoryList.value = event.detail
+  }
+}
+
+onMounted(() => {
+  loadCategories()
+  window.addEventListener('categoriesUpdate', handleCategoriesUpdate)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('categoriesUpdate', handleCategoriesUpdate)
+})
 
 // 分页
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 4014
+  total: 6
 })
 
 // 搜索抽屉
@@ -598,6 +798,263 @@ const handleDeleteLang = (index) => {
     currentLangIndex.value = editForm.titles.length - 1
   }
 }
+
+// ==================== 采集商品功能 ====================
+const collectDrawerVisible = ref(false)
+const collectLoading = ref(false)
+const collectStep = ref(1) // 1: 搜索配置, 2: 结果预览
+
+// 采集配置
+const collectConfig = reactive({
+  platform: 'amazon',
+  keyword: '',
+  minPrice: null,
+  maxPrice: null,
+  category: '',
+  sortBy: 'random',
+  pageSize: 20
+})
+
+// 采集结果
+const collectResults = ref([])
+const selectedCollectItems = ref([])
+
+// 平台选项
+const platformOptions = [
+  { value: 'amazon', label: '亚马逊 (Amazon)' },
+  { value: '1688', label: '1688' },
+  { value: 'taobao', label: '淘宝' },
+  { value: 'aliexpress', label: '速卖通 (AliExpress)' }
+]
+
+// 排序选项
+const sortOptions = [
+  { value: 'random', label: '随机排序' },
+  { value: 'price_asc', label: '价格从低到高' },
+  { value: 'price_desc', label: '价格从高到低' },
+  { value: 'sales', label: '销量优先' },
+  { value: 'rating', label: '评分优先' }
+]
+
+// 商品图片库（使用 fakestoreapi 真实电商图片）
+const productImages = [
+  'https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg',
+  'https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_.jpg',
+  'https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_.jpg',
+  'https://fakestoreapi.com/img/71YXzeOuslL._AC_UY879_.jpg',
+  'https://fakestoreapi.com/img/71pWzhdJNwL._AC_UL640_QL65_ML3_.jpg',
+  'https://fakestoreapi.com/img/61sbMiUnoGL._AC_UL640_QL65_ML3_.jpg',
+  'https://fakestoreapi.com/img/71YAIFU48IL._AC_UL640_QL65_ML3_.jpg',
+  'https://fakestoreapi.com/img/51UDEzMJVpL._AC_UL640_QL65_ML3_.jpg',
+  'https://fakestoreapi.com/img/61IBBVJvSDL._AC_SY879_.jpg',
+  'https://fakestoreapi.com/img/61U7T1koQqL._AC_SX679_.jpg',
+  'https://fakestoreapi.com/img/71kWymZ+c+L._AC_SX679_.jpg',
+  'https://fakestoreapi.com/img/61mtL65D4cL._AC_SX679_.jpg',
+  'https://fakestoreapi.com/img/81QpkIctqPL._AC_SX679_.jpg',
+  'https://fakestoreapi.com/img/81Zt42ioCgL._AC_SX679_.jpg',
+  'https://fakestoreapi.com/img/51Y5NI-I5jL._AC_UX679_.jpg',
+  'https://fakestoreapi.com/img/81XH0e8fefL._AC_UY879_.jpg',
+  'https://fakestoreapi.com/img/71HblAHs5xL._AC_UY879_-2.jpg',
+  'https://fakestoreapi.com/img/71z3kpMAYsL._AC_UY879_.jpg',
+  'https://fakestoreapi.com/img/51eg55uWmdL._AC_UX679_.jpg',
+  'https://fakestoreapi.com/img/61pHAEJ4NML._AC_UX679_.jpg'
+]
+
+// 商品名称库（用于随机生成）
+const productNames = [
+  'Wireless Bluetooth Earbuds TWS Headphones',
+  'Smart Watch Fitness Tracker Heart Rate Monitor',
+  'Portable Power Bank 20000mAh Fast Charging',
+  'LED Desk Lamp Touch Control Dimmable',
+  'Mechanical Gaming Keyboard RGB Backlit',
+  'Wireless Mouse Ergonomic Design Silent Click',
+  'USB-C Hub Multiport Adapter 7 in 1',
+  'Noise Cancelling Headphones Over Ear',
+  'Mini Projector HD 1080P Home Theater',
+  'Electric Toothbrush Sonic Rechargeable',
+  'Air Purifier HEPA Filter Home Office',
+  'Robot Vacuum Cleaner Smart Navigation',
+  'Portable Blender USB Rechargeable',
+  'Ring Light LED Selfie Photography',
+  'Wireless Charger Pad Fast Charging',
+  'Action Camera 4K Waterproof',
+  'Bluetooth Speaker Portable Outdoor',
+  'Digital Kitchen Scale Food Weight',
+  'Electric Kettle Temperature Control',
+  'Massage Gun Deep Tissue Muscle',
+  'Security Camera WiFi Indoor Outdoor',
+  'Tablet Stand Holder Adjustable',
+  'Car Phone Mount Magnetic Dashboard',
+  'USB Flash Drive 128GB Metal',
+  'Gaming Headset Surround Sound',
+  'Webcam HD 1080P Microphone',
+  'External SSD 1TB Portable',
+  'Smart Plug WiFi Remote Control',
+  'LED Strip Lights RGB Color Changing',
+  'Wireless Doorbell Camera Video'
+]
+
+// 打开采集抽屉
+const openCollectDrawer = () => {
+  collectStep.value = 1
+  collectResults.value = []
+  selectedCollectItems.value = []
+  collectConfig.keyword = ''
+  collectConfig.minPrice = null
+  collectConfig.maxPrice = null
+  collectConfig.category = ''
+  collectConfig.sortBy = 'random'
+  collectConfig.pageSize = 20
+  collectDrawerVisible.value = true
+}
+
+// 执行采集搜索
+const handleCollectSearch = () => {
+  // 验证价格区间
+  if (collectConfig.minPrice !== null && collectConfig.maxPrice !== null) {
+    if (collectConfig.minPrice > collectConfig.maxPrice) {
+      message.warning('最低价格不能大于最高价格')
+      return
+    }
+  }
+
+  // 验证采集数量
+  if (!collectConfig.pageSize || collectConfig.pageSize < 1) {
+    message.warning('请输入有效的采集数量')
+    return
+  }
+
+  collectLoading.value = true
+
+  // 模拟采集数据
+  setTimeout(() => {
+    const mockResults = []
+    const basePrice = collectConfig.minPrice !== null ? collectConfig.minPrice : 10
+    const maxPrice = collectConfig.maxPrice !== null ? collectConfig.maxPrice : 500
+    const count = Math.min(collectConfig.pageSize, 100) // 最多100条
+
+    for (let i = 1; i <= count; i++) {
+      const price = (Math.random() * (maxPrice - basePrice) + basePrice).toFixed(2)
+      // 随机选择商品名称
+      const baseName = productNames[Math.floor(Math.random() * productNames.length)]
+      // 如果有关键词，添加到名称中
+      const name = collectConfig.keyword
+        ? `${collectConfig.keyword} ${baseName}`
+        : baseName
+
+      mockResults.push({
+        id: `collect-${Date.now()}-${i}`,
+        name: name,
+        price: parseFloat(price),
+        originalPrice: (parseFloat(price) * (1.2 + Math.random() * 0.3)).toFixed(2),
+        // 从图片库中随机选择
+        image: productImages[Math.floor(Math.random() * productImages.length)],
+        rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+        reviews: Math.floor(Math.random() * 5000) + 100,
+        sales: Math.floor(Math.random() * 10000) + 50,
+        platform: collectConfig.platform,
+        sourceUrl: `https://www.amazon.com/dp/B0${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        selected: false
+      })
+    }
+
+    // 排序
+    let sorted = [...mockResults]
+    if (collectConfig.sortBy === 'price_asc') {
+      sorted.sort((a, b) => a.price - b.price)
+    } else if (collectConfig.sortBy === 'price_desc') {
+      sorted.sort((a, b) => b.price - a.price)
+    } else if (collectConfig.sortBy === 'sales') {
+      sorted.sort((a, b) => b.sales - a.sales)
+    } else if (collectConfig.sortBy === 'rating') {
+      sorted.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
+    }
+    // random 不需要排序
+
+    collectResults.value = sorted
+    collectStep.value = 2
+    collectLoading.value = false
+    message.success(`成功采集 ${sorted.length} 个商品`)
+  }, 1500)
+}
+
+// 返回搜索配置
+const backToSearch = () => {
+  collectStep.value = 1
+}
+
+// 全选/取消全选
+const collectSelectAll = ref(false)
+const handleCollectSelectAll = (e) => {
+  const checked = e.target.checked
+  collectResults.value.forEach(item => {
+    item.selected = checked
+  })
+  updateSelectedItems()
+}
+
+// 单个选择
+const handleCollectItemSelect = (item) => {
+  item.selected = !item.selected
+  updateSelectedItems()
+}
+
+// 更新已选列表
+const updateSelectedItems = () => {
+  selectedCollectItems.value = collectResults.value.filter(item => item.selected)
+  collectSelectAll.value = collectResults.value.length > 0 &&
+    collectResults.value.every(item => item.selected)
+}
+
+// 导入选中商品
+const handleImportSelected = () => {
+  if (selectedCollectItems.value.length === 0) {
+    message.warning('请先选择要导入的商品')
+    return
+  }
+
+  Modal.confirm({
+    title: '确认导入',
+    content: `确定要导入 ${selectedCollectItems.value.length} 个商品吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    onOk() {
+      // 模拟导入
+      const newGoods = selectedCollectItems.value.map((item, index) => ({
+        id: tableData.value.length + index + 1,
+        category: collectConfig.category || 'Default-2',
+        name: item.name,
+        price: item.price,
+        cover: item.image,
+        status: '显示',
+        time: new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + ' ' +
+              new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      }))
+
+      tableData.value = [...newGoods, ...tableData.value]
+      pagination.total += newGoods.length
+
+      message.success(`成功导入 ${selectedCollectItems.value.length} 个商品`)
+      collectDrawerVisible.value = false
+    }
+  })
+}
+
+// 图片加载错误处理
+const handleImageError = (e) => {
+  // 使用备用图片
+  e.target.src = 'https://via.placeholder.com/200x200/f5f5f5/999999?text=No+Image'
+}
+
+// 采集结果表格列
+const collectColumns = [
+  { title: '商品图片', dataIndex: 'image', key: 'image', width: 100, align: 'center' },
+  { title: '商品名称', dataIndex: 'name', key: 'name', width: 300 },
+  { title: '价格', dataIndex: 'price', key: 'price', width: 100, align: 'center' },
+  { title: '评分', dataIndex: 'rating', key: 'rating', width: 80, align: 'center' },
+  { title: '销量', dataIndex: 'sales', key: 'sales', width: 100, align: 'center' },
+  { title: '操作', key: 'action', width: 80, align: 'center' }
+]
 </script>
 
 <style scoped lang="less">
@@ -1088,6 +1545,205 @@ const handleDeleteLang = (index) => {
 // 添加语言弹窗
 .add-lang-content {
   padding: 16px 0;
+}
+
+// 采集商品功能样式
+.collect-content {
+  .collect-search-form {
+    :deep(.ant-form-item-label > label) {
+      font-weight: 500;
+      color: #333;
+    }
+
+    :deep(.ant-select-selector) {
+      height: 44px !important;
+
+      .ant-select-selection-item,
+      .ant-select-selection-placeholder {
+        line-height: 42px !important;
+      }
+    }
+
+    :deep(.ant-input-lg) {
+      height: 44px;
+    }
+
+    :deep(.ant-input-number-lg) {
+      height: 44px;
+
+      .ant-input-number-input {
+        height: 42px;
+      }
+    }
+
+    :deep(.ant-form-item) {
+      margin-bottom: 20px;
+    }
+  }
+
+  .collect-results {
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      margin-bottom: 16px;
+
+      .results-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .results-count {
+          font-size: 14px;
+          color: #666;
+
+          b {
+            color: #1890ff;
+          }
+        }
+
+        .selected-count {
+          font-size: 14px;
+          color: #52c41a;
+
+          b {
+            font-weight: 600;
+          }
+        }
+      }
+
+      .results-filter {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: #666;
+      }
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-height: calc(100vh - 240px);
+      overflow-y: auto;
+      padding: 4px;
+
+      .result-card {
+        position: relative;
+        border: 2px solid #f0f0f0;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #fff;
+
+        &:hover {
+          border-color: #1890ff;
+          box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+        }
+
+        &.selected {
+          border-color: #1890ff;
+          background: #e6f7ff;
+
+          .card-checkbox {
+            :deep(.ant-checkbox-inner) {
+              background-color: #1890ff;
+              border-color: #1890ff;
+            }
+          }
+        }
+
+        .card-checkbox {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          z-index: 2;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 4px;
+          padding: 2px;
+        }
+
+        .card-image {
+          width: 100%;
+          height: 140px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+          }
+
+          &:hover img {
+            transform: scale(1.05);
+          }
+        }
+
+        .card-info {
+          padding: 10px;
+
+          .card-name {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.4;
+            height: 34px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 6px;
+          }
+
+          .card-meta {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 4px;
+
+            .card-price {
+              font-size: 15px;
+              font-weight: 600;
+              color: #ff4d4f;
+            }
+
+            .card-original-price {
+              font-size: 11px;
+              color: #999;
+              text-decoration: line-through;
+            }
+          }
+
+          .card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #999;
+
+            span {
+              display: flex;
+              align-items: center;
+              gap: 3px;
+            }
+          }
+        }
+      }
+    }
+
+    .empty-results {
+      padding: 60px 0;
+      text-align: center;
+    }
+  }
 }
 
 // 页面过渡动画

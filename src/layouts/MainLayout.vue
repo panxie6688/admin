@@ -23,34 +23,57 @@
           />
 
           <!-- 菜单模式切换按钮 -->
-          <a-tooltip :title="topMenuMode ? '切换侧边菜单' : '切换顶部菜单'">
+          <a-tooltip :title="topMenuMode ? $t('header.switchSideMenu') : $t('header.switchTopMenu')">
             <appstore-outlined class="trigger" @click="toggleMenuMode" />
           </a-tooltip>
 
           <!-- 暗黑模式切换按钮 -->
-          <a-tooltip :title="darkMode ? '切换亮色模式' : '切换暗黑模式'">
+          <a-tooltip :title="darkMode ? $t('header.lightMode') : $t('header.darkMode')">
             <bulb-outlined v-if="darkMode" class="trigger" @click="toggleDarkMode" />
             <bulb-filled v-else class="trigger" @click="toggleDarkMode" />
           </a-tooltip>
         </div>
 
         <div class="header-right">
-          <a-badge :count="28" class="header-badge">
-            <a-button type="text" class="header-btn">
+          <!-- 语言切换 -->
+          <a-dropdown :trigger="['click']">
+            <a-button type="text" class="header-btn lang-btn">
+              <template #icon><GlobalOutlined /></template>
+              {{ currentLang.label }}
+              <DownOutlined style="font-size: 10px; margin-left: 4px;" />
+            </a-button>
+            <template #overlay>
+              <a-menu @click="handleLangChange">
+                <a-menu-item
+                  v-for="lang in languages"
+                  :key="lang.code"
+                  :class="{ 'ant-dropdown-menu-item-selected': currentLang.code === lang.code }"
+                >
+                  <span class="lang-flag">{{ lang.flag }}</span>
+                  {{ lang.label }}
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+
+          <a-badge :count="pendingCounts.inbox" class="header-badge">
+            <a-button type="text" class="header-btn" @click="goToPage('/message/inbox')">
               <template #icon><message-outlined /></template>
-              留言
+              {{ $t('header.message') }}
             </a-button>
           </a-badge>
 
-          <a-button type="text" class="header-btn">
-            <template #icon><edit-outlined /></template>
-            订单
-          </a-button>
+          <a-badge :count="pendingCounts.order" class="header-badge">
+            <a-button type="text" class="header-btn" @click="goToPage('/trade/order')">
+              <template #icon><edit-outlined /></template>
+              {{ $t('header.order') }}
+            </a-button>
+          </a-badge>
 
-          <a-badge :count="48" class="header-badge">
-            <a-button type="text" class="header-btn">
+          <a-badge :count="pendingCounts.withdraw" class="header-badge">
+            <a-button type="text" class="header-btn" @click="goToPage('/trade/withdraw')">
               <template #icon><wallet-outlined /></template>
-              提现
+              {{ $t('header.withdraw') }}
             </a-button>
           </a-badge>
 
@@ -59,7 +82,7 @@
               <fullscreen-exit-outlined v-if="isFullscreen" />
               <fullscreen-outlined v-else />
             </template>
-            {{ isFullscreen ? '退出全屏' : '打开全屏' }}
+            {{ isFullscreen ? $t('header.exitFullscreen') : $t('header.fullscreen') }}
           </a-button>
 
           <div class="user-group">
@@ -71,10 +94,10 @@
               </a-button>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item key="profile">个人信息</a-menu-item>
-                  <a-menu-item key="password">修改密码</a-menu-item>
+                  <a-menu-item key="profile">{{ $t('header.profile') }}</a-menu-item>
+                  <a-menu-item key="password">{{ $t('header.password') }}</a-menu-item>
                   <a-menu-divider />
-                  <a-menu-item key="logout" @click="handleLogout">退出登录</a-menu-item>
+                  <a-menu-item key="logout" @click="handleLogout">{{ $t('header.logout') }}</a-menu-item>
                 </a-menu>
               </template>
             </a-dropdown>
@@ -122,7 +145,7 @@
 
         <!-- 内容区 -->
         <a-layout-content class="content">
-          <a-spin :spinning="pageLoading" tip="加载中...">
+          <a-spin :spinning="pageLoading" :tip="$t('common.loading')">
             <router-view v-slot="{ Component, route }">
               <transition name="fade" mode="out-in">
                 <component :is="Component" :key="route.path" />
@@ -136,9 +159,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, h, watch, provide, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, h, watch, provide, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { theme } from 'ant-design-vue'
+import { setLocale } from '@/locales'
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
@@ -162,12 +187,14 @@ import {
   AppstoreOutlined,
   BulbOutlined,
   BulbFilled,
-  MoreOutlined
+  MoreOutlined,
+  GlobalOutlined
 } from '@ant-design/icons-vue'
 import defaultLogo from '@/assets/logo.svg'
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 
 const collapsed = ref(false)
 const hideSider = ref(false)
@@ -179,6 +206,44 @@ const isFullscreen = ref(false)
 const pageLoading = ref(false)
 
 const userInfo = reactive(JSON.parse(localStorage.getItem('userInfo') || '{}'))
+
+// 待处理数量（模拟数据，实际应从后端接口获取）
+const pendingCounts = reactive({
+  inbox: 28,      // 未回复留言数
+  order: 0,       // 待处理订单数
+  withdraw: 47    // 待审核提现数
+})
+
+// 是否跳过展开菜单（用于顶部快捷按钮跳转）
+const skipOpenMenu = ref(false)
+
+// 跳转页面（不展开菜单）
+const goToPage = (path) => {
+  skipOpenMenu.value = true
+  router.push(path)
+}
+
+// 语言列表（只显示已支持的语言）
+const languages = ref([
+  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
+  { code: 'en-US', label: 'English', flag: '🇺🇸' }
+])
+
+// 当前语言
+const currentLang = ref(
+  languages.value.find(l => l.code === localStorage.getItem('adminLang')) || languages.value[0]
+)
+
+// 切换语言
+const handleLangChange = ({ key }) => {
+  const lang = languages.value.find(l => l.code === key)
+  if (lang) {
+    currentLang.value = lang
+    setLocale(lang.code)
+    // 触发语言变更事件，供其他组件监听
+    window.dispatchEvent(new CustomEvent('langChange', { detail: lang }))
+  }
+}
 
 // 网站设置
 const siteSettings = reactive({
@@ -262,96 +327,96 @@ provide('contentFullscreen', contentFullscreen)
 provide('toggleContentFullscreen', toggleContentFullscreen)
 
 // 菜单配置
-const menuItems = [
+const menuItems = computed(() => [
   {
     key: 'home',
     icon: () => h(HomeOutlined),
-    label: '首页',
+    label: t('menu.home'),
     path: '/'
   },
   {
     key: 'account',
     icon: () => h(UserOutlined),
-    label: '账户管理',
+    label: t('menu.account'),
     children: [
-      { key: 'account-admin', label: '管理员', path: '/account/admin' },
-      { key: 'account-member', label: '会员列表', path: '/account/member' },
-      { key: 'account-online', label: '在线管理', path: '/account/online' },
-      { key: 'account-auth', label: '身份认证', path: '/account/auth' },
-      { key: 'account-level', label: '层级查询', path: '/account/level' }
+      { key: 'account-admin', label: t('menu.admin'), path: '/account/admin' },
+      { key: 'account-member', label: t('menu.member'), path: '/account/member' },
+      { key: 'account-online', label: t('menu.online'), path: '/account/online' },
+      { key: 'account-auth', label: t('menu.auth'), path: '/account/auth' },
+      { key: 'account-level', label: t('menu.level'), path: '/account/level' }
     ]
   },
   {
     key: 'vip',
     icon: () => h(CrownOutlined),
-    label: '等级设置',
+    label: t('menu.vip'),
     path: '/vip'
   },
   {
     key: 'trade',
     icon: () => h(TransactionOutlined),
-    label: '交易管理',
+    label: t('menu.trade'),
     children: [
-      { key: 'trade-order', label: '订单列表', path: '/trade/order' },
-      { key: 'trade-withdraw', label: '提现管理', path: '/trade/withdraw' },
-      { key: 'trade-recharge', label: '后台充值记录', path: '/trade/recharge' },
-      { key: 'trade-crypto', label: '充币订单', path: '/trade/crypto' },
-      { key: 'trade-fiat', label: '法币转账充值', path: '/trade/fiat' }
+      { key: 'trade-order', label: t('menu.order'), path: '/trade/order' },
+      { key: 'trade-withdraw', label: t('menu.withdraw'), path: '/trade/withdraw' },
+      { key: 'trade-recharge', label: t('menu.recharge'), path: '/trade/recharge' },
+      { key: 'trade-crypto', label: t('menu.crypto'), path: '/trade/crypto' },
+      { key: 'trade-fiat', label: t('menu.fiat'), path: '/trade/fiat' }
     ]
   },
   {
     key: 'shop',
     icon: () => h(ShoppingOutlined),
-    label: '商品管理',
+    label: t('menu.shop'),
     children: [
-      { key: 'shop-category', label: '分类管理', path: '/shop/category' },
-      { key: 'shop-goods', label: '商品列表', path: '/shop/goods' }
+      { key: 'shop-category', label: t('menu.category'), path: '/shop/category' },
+      { key: 'shop-goods', label: t('menu.goods'), path: '/shop/goods' }
     ]
   },
   {
     key: 'system',
     icon: () => h(SettingOutlined),
-    label: '系统管理',
+    label: t('menu.system'),
     children: [
-      { key: 'system-setting', label: '系统设置', path: '/system/setting' },
-      { key: 'system-level', label: '层级设置', path: '/system/level' },
-      { key: 'system-service', label: '在线客服', path: '/system/service' },
-      { key: 'system-log', label: '发送日志', path: '/system/log' },
-      { key: 'system-admin-log', label: '管理员日志', path: '/system/admin-log' }
+      { key: 'system-setting', label: t('menu.setting'), path: '/system/setting' },
+      { key: 'system-level', label: t('menu.levelSetting'), path: '/system/level' },
+      { key: 'system-service', label: t('menu.service'), path: '/system/service' },
+      { key: 'system-log', label: t('menu.log'), path: '/system/log' },
+      { key: 'system-admin-log', label: t('menu.adminLog'), path: '/system/admin-log' }
     ]
   },
   {
     key: 'message',
     icon: () => h(BellOutlined),
-    label: '消息',
+    label: t('menu.message'),
     children: [
-      { key: 'message-notice', label: '公告', path: '/message/notice' },
-      { key: 'message-inbox', label: '站内信', path: '/message/inbox' },
-      { key: 'message-system', label: '系统通知', path: '/message/system' }
+      { key: 'message-notice', label: t('menu.notice'), path: '/message/notice' },
+      { key: 'message-inbox', label: t('menu.inbox'), path: '/message/inbox' },
+      { key: 'message-system', label: t('menu.systemMsg'), path: '/message/system' }
     ]
   },
   {
     key: 'display',
     icon: () => h(DesktopOutlined),
-    label: '前端展示',
+    label: t('menu.display'),
     children: [
-      { key: 'display-banner', label: '轮播图', path: '/display/banner' },
-      { key: 'display-grid', label: '宫格列表', path: '/display/grid' }
+      { key: 'display-banner', label: t('menu.banner'), path: '/display/banner' },
+      { key: 'display-grid', label: t('menu.grid'), path: '/display/grid' }
     ]
   },
   {
     key: 'article',
     icon: () => h(FileTextOutlined),
-    label: '文章管理',
+    label: t('menu.article'),
     path: '/article'
   },
   {
     key: 'comment',
     icon: () => h(CommentOutlined),
-    label: '评论',
+    label: t('menu.comment'),
     path: '/comment'
   }
-]
+])
 
 // 处理菜单点击
 const handleMenuClick = ({ key }) => {
@@ -368,7 +433,7 @@ const handleMenuClick = ({ key }) => {
     return null
   }
 
-  const path = findPath(menuItems)
+  const path = findPath(menuItems.value)
   if (path && path !== route.path) {
     pageLoading.value = true
     router.push(path)
@@ -394,7 +459,7 @@ watch(
     const findKey = (items, parentKey = null) => {
       for (const item of items) {
         if (item.path === path) {
-          if (parentKey) {
+          if (parentKey && !skipOpenMenu.value) {
             openKeys.value = [parentKey]
           }
           return item.key
@@ -407,10 +472,12 @@ watch(
       return null
     }
 
-    const key = findKey(menuItems)
+    const key = findKey(menuItems.value)
     if (key) {
       selectedKeys.value = [key]
     }
+    // 重置跳过标志
+    skipOpenMenu.value = false
   },
   { immediate: true }
 )
@@ -507,6 +574,14 @@ document.addEventListener('fullscreenchange', () => {
         color: #7c4dff;
         background: rgba(255, 255, 255, 0.8);
       }
+    }
+
+    .lang-btn {
+      min-width: 100px;
+    }
+
+    .lang-flag {
+      margin-right: 6px;
     }
 
     .user-group {

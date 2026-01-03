@@ -3,22 +3,22 @@
     <!-- 顶部操作栏 -->
     <div class="page-header">
       <div class="header-left">
-        <span class="page-title">管理员</span>
+        <span class="page-title">{{ $t('admin.title') }}</span>
         <a-button type="primary" @click="openDrawer">
-          <plus-outlined /> 添加数据
+          <plus-outlined /> {{ $t('admin.addAdmin') }}
         </a-button>
       </div>
       <div class="header-right">
         <a-input-search
           v-model:value="searchText"
-          placeholder="单号、会员信息"
+          :placeholder="$t('filter.keyword')"
           style="width: 200px"
           @search="onSearch"
         />
         <a-button type="primary" @click="showMoreSearch = !showMoreSearch">
-          更多搜索
+          {{ $t('common.moreSearch') }}
         </a-button>
-        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? '退出全屏' : '全屏'">
+        <a-tooltip v-if="!topMenuMode" :title="contentFullscreen ? $t('common.exitFullscreen') : $t('common.fullscreen')">
           <a-button class="icon-btn" @click="toggleContentFullscreen">
             <template #icon>
               <FullscreenExitOutlined v-if="contentFullscreen" />
@@ -26,13 +26,13 @@
             </template>
           </a-button>
         </a-tooltip>
-        <a-tooltip title="刷新">
+        <a-tooltip :title="$t('common.refresh')">
           <a-button class="icon-btn" @click="handleRefresh">
             <template #icon><ReloadOutlined /></template>
           </a-button>
         </a-tooltip>
         <a-dropdown>
-          <a-tooltip title="密度">
+          <a-tooltip :title="$t('density.density')">
             <a-button class="icon-btn">
               <template #icon><ColumnHeightOutlined /></template>
             </a-button>
@@ -40,13 +40,13 @@
           <template #overlay>
             <a-menu @click="handleDensityChange">
               <a-menu-item key="default" :class="{ 'active-density': tableSize === 'default' }">
-                宽松
+                {{ $t('density.default') }}
               </a-menu-item>
               <a-menu-item key="middle" :class="{ 'active-density': tableSize === 'middle' }">
-                中等
+                {{ $t('density.middle') }}
               </a-menu-item>
               <a-menu-item key="small" :class="{ 'active-density': tableSize === 'small' }">
-                紧凑
+                {{ $t('density.small') }}
               </a-menu-item>
             </a-menu>
           </template>
@@ -69,13 +69,44 @@
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'status'">
             <a-tag :color="record.status === 1 ? 'success' : 'error'" class="status-tag">
-              {{ record.status === 1 ? '正常' : '禁用' }}
+              {{ record.status === 1 ? $t('admin.normal') : $t('admin.disabled') }}
             </a-tag>
+          </template>
+          <template v-if="column.key === 'currentLoginIp'">
+            <template v-if="record.currentLoginIp && record.currentLoginIp !== '-'">
+              <a-popover
+                v-model:open="record.ipPopoverVisible"
+                trigger="click"
+                placement="top"
+                :arrow="{ pointAtCenter: true }"
+              >
+                <template #content>
+                  <div class="ip-popover-content">
+                    <div class="ip-info-item">
+                      <span class="label">{{ $t('log.ipAddress') }}：</span>
+                      <span class="value">{{ ipModal.ip }}</span>
+                    </div>
+                    <div class="ip-info-item">
+                      <span class="label">{{ $t('log.location') }}：</span>
+                      <span class="value">{{ ipModal.location }}</span>
+                    </div>
+                    <div class="ip-info-item">
+                      <span class="label">{{ $t('log.isp') }}：</span>
+                      <span class="value">{{ ipModal.isp }}</span>
+                    </div>
+                  </div>
+                </template>
+                <a class="ip-link" @click="handleIpClick(record)">{{ record.currentLoginIp }}</a>
+              </a-popover>
+            </template>
+            <template v-else>
+              <span>-</span>
+            </template>
           </template>
           <template v-if="column.key === 'loginStatus'">
             <a-tag :color="record.loginStatus === '在线' ? 'processing' : 'error'" class="status-tag">
               <span :class="['status-dot', record.loginStatus === '在线' ? 'dot-online' : 'dot-offline']"></span>
-              {{ record.loginStatus }}
+              {{ record.loginStatus === '在线' ? $t('admin.online') : $t('admin.offline') }}
             </a-tag>
           </template>
           <template v-if="column.dataIndex === 'loginTime'">
@@ -86,8 +117,8 @@
           </template>
           <template v-if="column.key === 'action'">
             <div class="action-btns">
-              <a class="action-link" @click="handleEdit(record)">编辑</a>
-              <a class="action-link" @click="openPermissionDrawer(record)">权限管理</a>
+              <a class="action-link" @click="handleEdit(record)">{{ $t('common.edit') }}</a>
+              <a class="action-link" @click="openPermissionDrawer(record)">{{ $t('admin.permissionManage') }}</a>
             </div>
           </template>
         </template>
@@ -96,7 +127,7 @@
 
     <!-- 底部分页 -->
     <div class="page-footer">
-      <span class="total-text">统计: {{ pagination.total }}/条</span>
+      <span class="total-text">{{ $t('common.total') }}: {{ pagination.total }}/{{ $t('common.records') }}</span>
       <a-pagination
         v-model:current="pagination.current"
         v-model:page-size="pagination.pageSize"
@@ -109,7 +140,7 @@
     <!-- 添加/编辑管理员抽屉 -->
     <a-drawer
       v-model:open="drawerVisible"
-      :title="isEdit ? '编辑管理员' : '创建管理员'"
+      :title="isEdit ? $t('admin.editAdmin') : $t('admin.createAdmin')"
       placement="right"
       :width="480"
       class="admin-drawer"
@@ -118,9 +149,9 @@
     >
       <template #extra>
         <a-space>
-          <a-button @click="closeDrawer">取消</a-button>
+          <a-button @click="closeDrawer">{{ $t('common.cancel') }}</a-button>
           <a-button type="primary" :loading="submitLoading" @click="handleSubmit">
-            {{ isEdit ? '保存修改' : '确认创建' }}
+            {{ isEdit ? $t('common.save') : $t('common.confirm') }}
           </a-button>
         </a-space>
       </template>
@@ -134,7 +165,7 @@
         <!-- 谷歌验证器秘钥 -->
         <div class="form-section">
           <a-button type="primary" ghost class="secret-btn" @click="generateSecret">
-            <key-outlined /> 创建谷歌验证器秘钥
+            <key-outlined /> {{ $t('admin.createGoogleSecret') }}
           </a-button>
 
           <!-- 二维码展示区域 -->
@@ -147,7 +178,7 @@
               />
             </div>
             <div class="qrcode-info">
-              <p class="qrcode-tip">使用 Google Authenticator 扫描二维码</p>
+              <p class="qrcode-tip">{{ $t('admin.scanQrcode') }}</p>
               <div class="secret-display">
                 <span class="secret-label">秘钥：</span>
                 <span class="secret-value">{{ formState.googleAuth }}</span>
@@ -223,7 +254,7 @@
     <!-- 权限管理抽屉 -->
     <a-drawer
       v-model:open="permissionDrawerVisible"
-      :title="`编辑管理员权限-${currentAdmin?.username || ''}`"
+      :title="`${$t('admin.permissionManage')}-${currentAdmin?.username || ''}`"
       placement="right"
       :width="360"
       class="permission-drawer"
@@ -232,9 +263,9 @@
     >
       <template #extra>
         <a-space>
-          <a-button @click="permissionDrawerVisible = false">取消</a-button>
+          <a-button @click="permissionDrawerVisible = false">{{ $t('common.cancel') }}</a-button>
           <a-button type="primary" :loading="permissionLoading" @click="savePermission">
-            保存
+            {{ $t('common.save') }}
           </a-button>
         </a-space>
       </template>
@@ -272,7 +303,7 @@
     <!-- 筛选抽屉 -->
     <a-drawer
       v-model:open="showMoreSearch"
-      title="筛选"
+      :title="$t('common.filter')"
       placement="right"
       :width="380"
       class="filter-drawer"
@@ -281,59 +312,59 @@
     >
       <template #extra>
         <a-space>
-          <a-button type="link" danger @click="resetFilter">重置</a-button>
-          <a-button type="primary" @click="submitFilter">提交</a-button>
+          <a-button type="link" danger @click="resetFilter">{{ $t('common.reset') }}</a-button>
+          <a-button type="primary" @click="submitFilter">{{ $t('common.submit') }}</a-button>
         </a-space>
       </template>
       <a-form layout="vertical" class="filter-form">
-        <a-form-item label="账号">
-          <a-input v-model:value="filterForm.username" placeholder="输入" />
+        <a-form-item :label="$t('admin.account')">
+          <a-input v-model:value="filterForm.username" :placeholder="$t('common.pleaseInput')" />
         </a-form-item>
-        <a-form-item label="谷歌验证器">
-          <a-input v-model:value="filterForm.googleAuth" placeholder="输入" />
+        <a-form-item :label="$t('admin.googleAuth')">
+          <a-input v-model:value="filterForm.googleAuth" :placeholder="$t('common.pleaseInput')" />
         </a-form-item>
-        <a-form-item label="状态">
-          <a-select v-model:value="filterForm.status" placeholder="全部">
-            <a-select-option value="">全部</a-select-option>
-            <a-select-option value="frozen">冻结</a-select-option>
-            <a-select-option value="active">启动</a-select-option>
+        <a-form-item :label="$t('common.status')">
+          <a-select v-model:value="filterForm.status" :placeholder="$t('common.all')">
+            <a-select-option value="">{{ $t('common.all') }}</a-select-option>
+            <a-select-option value="frozen">{{ $t('admin.disabled') }}</a-select-option>
+            <a-select-option value="active">{{ $t('common.enable') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="开始时间" class="date-picker-item">
+        <a-form-item :label="$t('filter.startTime')" class="date-picker-item">
           <a-date-picker
             v-model:value="filterForm.startTime"
-            placeholder="请选择日期"
+            :placeholder="$t('common.pleaseSelect')"
             style="width: 100%"
             size="large"
           />
         </a-form-item>
-        <a-form-item label="结束时间" class="date-picker-item">
+        <a-form-item :label="$t('filter.endTime')" class="date-picker-item">
           <a-date-picker
             v-model:value="filterForm.endTime"
-            placeholder="请选择日期"
+            :placeholder="$t('common.pleaseSelect')"
             style="width: 100%"
             size="large"
           />
         </a-form-item>
-        <a-form-item label="搜索">
-          <a-input v-model:value="filterForm.keyword" placeholder="搜索内容">
+        <a-form-item :label="$t('common.search')">
+          <a-input v-model:value="filterForm.keyword" :placeholder="$t('filter.keyword')">
             <template #suffix>
               <search-outlined style="color: #bfbfbf" />
             </template>
           </a-input>
         </a-form-item>
-        <a-form-item label="排序字段">
-          <a-select v-model:value="filterForm.sortField" placeholder="创建时间">
-            <a-select-option value="createTime">创建时间</a-select-option>
-            <a-select-option value="loginTime">登录时间</a-select-option>
-            <a-select-option value="username">账号</a-select-option>
+        <a-form-item :label="$t('filter.sortField')">
+          <a-select v-model:value="filterForm.sortField" :placeholder="$t('common.createTime')">
+            <a-select-option value="createTime">{{ $t('common.createTime') }}</a-select-option>
+            <a-select-option value="loginTime">{{ $t('admin.loginTime') }}</a-select-option>
+            <a-select-option value="username">{{ $t('admin.account') }}</a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="排序类型">
-          <a-select v-model:value="filterForm.sortType" placeholder="降序排序">
-            <a-select-option value="">全部</a-select-option>
-            <a-select-option value="desc">降序排序</a-select-option>
-            <a-select-option value="asc">升序排序</a-select-option>
+        <a-form-item :label="$t('filter.sortType')">
+          <a-select v-model:value="filterForm.sortType" :placeholder="$t('filter.descending')">
+            <a-select-option value="">{{ $t('common.all') }}</a-select-option>
+            <a-select-option value="desc">{{ $t('filter.descending') }}</a-select-option>
+            <a-select-option value="asc">{{ $t('filter.ascending') }}</a-select-option>
           </a-select>
         </a-form-item>
       </a-form>
@@ -344,6 +375,7 @@
 <script setup>
 import { ref, reactive, inject, h, computed, watch } from 'vue'
 import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import QrcodeVue from 'qrcode.vue'
 import {
   PlusOutlined,
@@ -379,6 +411,7 @@ const isEdit = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
 const editingId = ref(null)
+const { t } = useI18n()
 
 // 筛选表单
 const filterForm = reactive({
@@ -667,45 +700,111 @@ const handleSubmit = async () => {
   }
 }
 
-const columns = [
-  { title: '账号', dataIndex: 'username', key: 'username', align: 'center' },
-  { title: '状态', dataIndex: 'status', key: 'status', align: 'center' },
-  { title: '指定IP', dataIndex: 'ip', key: 'ip', align: 'center' },
-  { title: '登录状态', dataIndex: 'loginStatus', key: 'loginStatus', align: 'center' },
-  { title: '登录时间', dataIndex: 'loginTime', key: 'loginTime', align: 'center' },
-  { title: '创建时间', dataIndex: 'createTime', key: 'createTime', align: 'center' },
-  { title: '备注', dataIndex: 'remark', key: 'remark', align: 'center' },
-  { title: '操作', key: 'action', align: 'center' }
-]
+const columns = computed(() => [
+  { title: t('admin.account'), dataIndex: 'username', key: 'username', align: 'center' },
+  { title: t('admin.status'), dataIndex: 'status', key: 'status', align: 'center' },
+  { title: t('admin.designatedIp'), dataIndex: 'ip', key: 'ip', align: 'center' },
+  { title: t('admin.currentLoginIp'), dataIndex: 'currentLoginIp', key: 'currentLoginIp', align: 'center' },
+  { title: t('admin.loginStatus'), dataIndex: 'loginStatus', key: 'loginStatus', align: 'center' },
+  { title: t('admin.loginTime'), dataIndex: 'loginTime', key: 'loginTime', align: 'center' },
+  { title: t('admin.createTime'), dataIndex: 'createTime', key: 'createTime', align: 'center' },
+  { title: t('admin.remark'), dataIndex: 'remark', key: 'remark', align: 'center' },
+  { title: t('common.operation'), key: 'action', align: 'center' }
+])
 
 const tableData = ref([
-  { id: 1, username: '山鬼', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-21 08:45', createTime: '06/27 12:01', remark: '-' },
-  { id: 2, username: '河神', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-08-17 18:30', createTime: '06/23 09:21', remark: '-' },
-  { id: 3, username: '阿赖', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-23 18:48', createTime: '05/25 13:15', remark: '-' },
-  { id: 4, username: '成龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-20 17:28', createTime: '05/25 13:14', remark: '-' },
-  { id: 5, username: '小胡', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-08-01 10:19', createTime: '05/25 13:14', remark: '-' },
-  { id: 6, username: '阿辉', status: 1, ip: '-', loginStatus: '离线', loginTime: '2025-07-23 17:37', createTime: '05/25 13:14', remark: '-' },
-  { id: 7, username: '阿柒', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-06-16 11:37', createTime: '05/25 13:13', remark: '-' },
-  { id: 8, username: '阿淼', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-23 21:03', createTime: '05/25 13:13', remark: '-' },
-  { id: 9, username: '阿福', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-19 18:50', createTime: '05/25 13:13', remark: '-' },
-  { id: 10, username: '弈龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-31 11:38', createTime: '05/17 16:41', remark: '-' },
-  { id: 11, username: '苍龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-11-18 22:10', createTime: '05/17 16:41', remark: '-' },
-  { id: 12, username: '青龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-08-14 08:49', createTime: '05/17 16:40', remark: '-' },
-  { id: 13, username: '高阳', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-07-29 09:47', createTime: '04/28 17:46', remark: '-' },
-  { id: 14, username: '雷龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-12-08 08:51', createTime: '04/28 17:45', remark: '-' },
-  { id: 15, username: '白泽', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-11-08 09:36', createTime: '04/28 17:44', remark: '-' },
-  { id: 16, username: '测试', status: 1, ip: '-', loginStatus: '离线', loginTime: '2025-04-27 11:43', createTime: '04/27 11:43', remark: '-' },
-  { id: 17, username: '小陆', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-12-09 02:42', createTime: '04/20 16:51', remark: '-' },
-  { id: 18, username: '黑龙', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-05-23 13:03', createTime: '04/04 16:08', remark: '-' },
-  { id: 19, username: '达鑫', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-12-05 12:45', createTime: '04/04 16:06', remark: '-' },
-  { id: 20, username: '杨一', status: 1, ip: '-', loginStatus: '在线', loginTime: '2025-09-28 08:54', createTime: '03/30 18:24', remark: '-' }
+  { id: 1, username: '山鬼', status: 1, ip: '-', currentLoginIp: '192.168.1.100', loginStatus: '在线', loginTime: '2025-07-21 08:45', createTime: '06/27 12:01', remark: '-' },
+  { id: 2, username: '河神', status: 1, ip: '-', currentLoginIp: '67.170.145.182', loginStatus: '在线', loginTime: '2025-08-17 18:30', createTime: '06/23 09:21', remark: '-' },
+  { id: 3, username: '阿赖', status: 1, ip: '-', currentLoginIp: '104.28.39.14', loginStatus: '在线', loginTime: '2025-07-23 18:48', createTime: '05/25 13:15', remark: '-' },
+  { id: 4, username: '成龙', status: 1, ip: '-', currentLoginIp: '68.202.239.125', loginStatus: '在线', loginTime: '2025-07-20 17:28', createTime: '05/25 13:14', remark: '-' },
+  { id: 5, username: '小胡', status: 1, ip: '-', currentLoginIp: '107.77.199.91', loginStatus: '在线', loginTime: '2025-08-01 10:19', createTime: '05/25 13:14', remark: '-' },
+  { id: 6, username: '阿辉', status: 1, ip: '-', currentLoginIp: '99.92.94.175', loginStatus: '离线', loginTime: '2025-07-23 17:37', createTime: '05/25 13:14', remark: '-' },
+  { id: 7, username: '阿柒', status: 1, ip: '-', currentLoginIp: '134.122.34.218', loginStatus: '在线', loginTime: '2025-06-16 11:37', createTime: '05/25 13:13', remark: '-' },
+  { id: 8, username: '阿淼', status: 1, ip: '-', currentLoginIp: '166.194.204.13', loginStatus: '在线', loginTime: '2025-07-23 21:03', createTime: '05/25 13:13', remark: '-' },
+  { id: 9, username: '阿福', status: 1, ip: '-', currentLoginIp: '104.2.53.119', loginStatus: '在线', loginTime: '2025-07-19 18:50', createTime: '05/25 13:13', remark: '-' },
+  { id: 10, username: '弈龙', status: 1, ip: '-', currentLoginIp: '174.245.17.78', loginStatus: '在线', loginTime: '2025-07-31 11:38', createTime: '05/17 16:41', remark: '-' },
+  { id: 11, username: '苍龙', status: 1, ip: '-', currentLoginIp: '98.24.22.138', loginStatus: '在线', loginTime: '2025-11-18 22:10', createTime: '05/17 16:41', remark: '-' },
+  { id: 12, username: '青龙', status: 1, ip: '-', currentLoginIp: '75.141.152.135', loginStatus: '在线', loginTime: '2025-08-14 08:49', createTime: '05/17 16:40', remark: '-' },
+  { id: 13, username: '高阳', status: 1, ip: '-', currentLoginIp: '128.14.78.178', loginStatus: '在线', loginTime: '2025-07-29 09:47', createTime: '04/28 17:46', remark: '-' },
+  { id: 14, username: '雷龙', status: 1, ip: '-', currentLoginIp: '175.100.59.110', loginStatus: '在线', loginTime: '2025-12-08 08:51', createTime: '04/28 17:45', remark: '-' },
+  { id: 15, username: '白泽', status: 1, ip: '-', currentLoginIp: '36.37.253.114', loginStatus: '在线', loginTime: '2025-11-08 09:36', createTime: '04/28 17:44', remark: '-' },
+  { id: 16, username: '测试', status: 1, ip: '-', currentLoginIp: '-', loginStatus: '离线', loginTime: '2025-04-27 11:43', createTime: '04/27 11:43', remark: '-' },
+  { id: 17, username: '小陆', status: 1, ip: '-', currentLoginIp: '146.70.24.106', loginStatus: '在线', loginTime: '2025-12-09 02:42', createTime: '04/20 16:51', remark: '-' },
+  { id: 18, username: '黑龙', status: 1, ip: '-', currentLoginIp: '172.56.103.10', loginStatus: '在线', loginTime: '2025-05-23 13:03', createTime: '04/04 16:08', remark: '-' },
+  { id: 19, username: '达鑫', status: 1, ip: '-', currentLoginIp: '174.200.121.156', loginStatus: '在线', loginTime: '2025-12-05 12:45', createTime: '04/04 16:06', remark: '-' },
+  { id: 20, username: '杨一', status: 1, ip: '-', currentLoginIp: '108.249.177.162', loginStatus: '在线', loginTime: '2025-09-28 08:54', createTime: '03/30 18:24', remark: '-' },
+  { id: 21, username: '金凤', status: 1, ip: '-', currentLoginIp: '45.67.89.123', loginStatus: '在线', loginTime: '2025-10-15 14:22', createTime: '03/25 10:15', remark: '-' },
+  { id: 22, username: '银龙', status: 1, ip: '-', currentLoginIp: '78.90.12.34', loginStatus: '离线', loginTime: '2025-09-20 16:45', createTime: '03/20 09:30', remark: '-' },
+  { id: 23, username: '玄武', status: 1, ip: '-', currentLoginIp: '123.45.67.89', loginStatus: '在线', loginTime: '2025-11-05 11:30', createTime: '03/15 14:20', remark: '-' },
+  { id: 24, username: '朱雀', status: 1, ip: '-', currentLoginIp: '89.12.34.56', loginStatus: '在线', loginTime: '2025-10-28 09:15', createTime: '03/10 16:45', remark: '-' },
+  { id: 25, username: '麒麟', status: 1, ip: '-', currentLoginIp: '56.78.90.12', loginStatus: '离线', loginTime: '2025-08-30 18:20', createTime: '03/05 11:30', remark: '-' },
+  { id: 26, username: '凤凰', status: 1, ip: '-', currentLoginIp: '34.56.78.90', loginStatus: '在线', loginTime: '2025-12-01 10:45', createTime: '02/28 15:25', remark: '-' },
+  { id: 27, username: '神龟', status: 1, ip: '-', currentLoginIp: '90.12.34.56', loginStatus: '在线', loginTime: '2025-11-22 13:55', createTime: '02/23 08:40', remark: '-' },
+  { id: 28, username: '飞虎', status: 1, ip: '-', currentLoginIp: '67.89.01.23', loginStatus: '离线', loginTime: '2025-10-10 17:30', createTime: '02/18 12:15', remark: '-' },
+  { id: 29, username: '战狼', status: 1, ip: '-', currentLoginIp: '12.34.56.78', loginStatus: '在线', loginTime: '2025-12-10 08:20', createTime: '02/13 09:50', remark: '-' },
+  { id: 30, username: '雄鹰', status: 1, ip: '-', currentLoginIp: '23.45.67.89', loginStatus: '在线', loginTime: '2025-11-28 15:40', createTime: '02/08 14:35', remark: '-' },
+  { id: 31, username: '猛虎', status: 1, ip: '-', currentLoginIp: '78.90.12.34', loginStatus: '在线', loginTime: '2025-10-05 12:25', createTime: '02/03 10:20', remark: '-' },
+  { id: 32, username: '蛟龙', status: 1, ip: '-', currentLoginIp: '45.67.89.01', loginStatus: '离线', loginTime: '2025-09-15 19:10', createTime: '01/29 16:45', remark: '-' },
+  { id: 33, username: '神鹰', status: 1, ip: '-', currentLoginIp: '89.01.23.45', loginStatus: '在线', loginTime: '2025-12-05 11:35', createTime: '01/24 11:30', remark: '-' },
+  { id: 34, username: '烈焰', status: 1, ip: '-', currentLoginIp: '56.78.90.12', loginStatus: '在线', loginTime: '2025-11-18 14:50', createTime: '01/19 08:55', remark: '-' },
+  { id: 35, username: '寒冰', status: 1, ip: '-', currentLoginIp: '34.56.78.90', loginStatus: '离线', loginTime: '2025-10-22 16:40', createTime: '01/14 13:40', remark: '-' },
+  { id: 36, username: '雷霆', status: 1, ip: '-', currentLoginIp: '90.12.34.56', loginStatus: '在线', loginTime: '2025-12-08 09:25', createTime: '01/09 15:15', remark: '-' },
+  { id: 37, username: '暴风', status: 1, ip: '-', currentLoginIp: '67.89.01.23', loginStatus: '在线', loginTime: '2025-11-25 17:55', createTime: '01/04 10:50', remark: '-' },
+  { id: 38, username: '烈日', status: 1, ip: '-', currentLoginIp: '12.34.56.78', loginStatus: '离线', loginTime: '2025-09-30 13:15', createTime: '12/30 12:25', remark: '-' },
+  { id: 39, username: '明月', status: 1, ip: '-', currentLoginIp: '23.45.67.89', loginStatus: '在线', loginTime: '2025-12-12 10:30', createTime: '12/25 09:10', remark: '-' },
+  { id: 40, username: '星辰', status: 1, ip: '-', currentLoginIp: '78.90.12.34', loginStatus: '在线', loginTime: '2025-11-30 15:45', createTime: '12/20 14:55', remark: '-' }
 ])
 
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 37
+  total: 40
 })
+
+// IP归属地气泡卡片数据
+const ipModal = reactive({
+  ip: '',
+  location: '',
+  isp: ''
+})
+
+// 点击 IP 查询归属地
+const handleIpClick = async (record) => {
+  // 关闭其他行的popover
+  tableData.value.forEach(item => {
+    if (item.id !== record.id) {
+      item.ipPopoverVisible = false
+    }
+  })
+
+  // 设置加载状态
+  ipModal.ip = record.currentLoginIp
+  ipModal.location = '查询中...'
+  ipModal.isp = '查询中...'
+  record.ipPopoverVisible = true
+
+  try {
+    // 使用 ip-api.com 免费API实时查询IP归属地（简体中文）
+    const response = await fetch(`http://ip-api.com/json/${record.currentLoginIp}?lang=zh-CN`)
+    const data = await response.json()
+
+    if (data.status === 'success') {
+      // 拼接地区信息
+      const location = [data.country, data.regionName, data.city]
+        .filter(Boolean)
+        .join(' ')
+      ipModal.location = location || '未知地区'
+      ipModal.isp = data.isp || data.org || '未知运营商'
+    } else {
+      ipModal.location = data.message || '无法查询'
+      ipModal.isp = '不适用'
+    }
+  } catch (error) {
+    console.error('IP查询失败:', error)
+    ipModal.location = '查询失败'
+    ipModal.isp = '网络错误'
+  }
+}
 
 const onSearch = (value) => {
   console.log('搜索', value)
@@ -1193,6 +1292,44 @@ const handleDensityChange = ({ key }) => {
   .ant-drawer-body {
     padding: 16px;
     background: #fff;
+  }
+}
+
+// IP链接样式
+.ip-link {
+  color: #1890ff;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// IP归属地气泡卡片样式
+.ip-popover-content {
+  min-width: 200px;
+
+  .ip-info-item {
+    display: flex;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      width: 70px;
+      color: #666;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+
+    .value {
+      color: #333;
+      font-weight: 500;
+      font-size: 13px;
+    }
   }
 }
 </style>

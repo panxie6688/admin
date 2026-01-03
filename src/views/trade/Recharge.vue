@@ -399,14 +399,36 @@ const tableData = ref([
   { id: 15, orderNo: '20251023176127120108179123', member: '1-9804280512', username: 'Sylenam', amount: 11, type: '增加', time: '2025-10-23 20:00:01', reason: '赠送余额' },
   { id: 16, orderNo: '20251023176126981677965861', member: '1-9804280512', username: 'Sylenam', amount: 93.25, type: '增加', time: '2025-10-23 19:36:57', reason: '赠送余额' },
   { id: 17, orderNo: '20251023176126677081833537', member: '1-9804280512', username: 'Sylenam', amount: 1593, type: '增加', time: '2025-10-23 18:46:11', reason: '赠送余额' },
-  { id: 18, orderNo: '20251023176125936789214874', member: '1-9804280512', username: 'Sylenam', amount: 2902, type: '增加', time: '2025-10-23 16:42:48', reason: '赠送余额' }
+  { id: 18, orderNo: '20251023176125936789214874', member: '1-9804280512', username: 'Sylenam', amount: 2902, type: '增加', time: '2025-10-23 16:42:48', reason: '赠送余额' },
+  { id: 19, orderNo: '20251022176120123456789012', member: '1-5678901234', username: 'UserAlpha', amount: 850, type: '增加', time: '2025-10-22 14:25:33', reason: '赠送余额' },
+  { id: 20, orderNo: '20251021176115234567890123', member: '1-6789012345', username: 'BetaUser', amount: 1200, type: '增加', time: '2025-10-21 09:18:45', reason: '活动奖励' },
+  { id: 21, orderNo: '20251020176110345678901234', member: '1-7890123456', username: 'GammaTest', amount: 320, type: '扣减', time: '2025-10-20 16:42:12', reason: '订单退款' },
+  { id: 22, orderNo: '20251019176105456789012345', member: '1-8901234567', username: 'DeltaDemo', amount: 2500, type: '增加', time: '2025-10-19 11:33:28', reason: '赠送余额' },
+  { id: 23, orderNo: '20251018176100567890123456', member: '1-9012345678', username: 'EpsilonPro', amount: 780, type: '增加', time: '2025-10-18 08:55:19', reason: '充值返利' },
+  { id: 24, orderNo: '20251017176095678901234567', member: '1-0123456789', username: 'ZetaElite', amount: 450, type: '扣减', time: '2025-10-17 15:27:41', reason: '系统调整' },
+  { id: 25, orderNo: '20251016176090789012345678', member: '1-1234509876', username: 'EtaGold', amount: 1850, type: '增加', time: '2025-10-16 10:14:56', reason: '赠送余额' },
+  { id: 26, orderNo: '20251015176085890123456789', member: '1-2345098765', username: 'ThetaSilver', amount: 620, type: '增加', time: '2025-10-15 17:38:22', reason: '推荐奖励' },
+  { id: 27, orderNo: '20251014176080901234567890', member: '1-3450987654', username: 'IotaBronze', amount: 930, type: '增加', time: '2025-10-14 12:45:08', reason: '赠送余额' },
+  { id: 28, orderNo: '20251013176076012345678901', member: '1-4509876543', username: 'KappaPrime', amount: 280, type: '扣减', time: '2025-10-13 09:22:35', reason: '余额调整' },
+  { id: 29, orderNo: '20251012176071123456789012', member: '1-5098765432', username: 'LambdaMax', amount: 1450, type: '增加', time: '2025-10-12 14:56:47', reason: '赠送余额' },
+  { id: 30, orderNo: '20251011176066234567890123', member: '1-6987654321', username: 'MuPlus', amount: 720, type: '增加', time: '2025-10-11 11:33:19', reason: '活动奖励' },
+  { id: 31, orderNo: '20251010176061345678901234', member: '1-7876543210', username: 'NuStandard', amount: 1100, type: '增加', time: '2025-10-10 16:48:52', reason: '赠送余额' },
+  { id: 32, orderNo: '20251009176056456789012345', member: '1-8765432109', username: 'XiBasic', amount: 550, type: '扣减', time: '2025-10-09 08:15:28', reason: '订单扣款' },
+  { id: 33, orderNo: '20251008176051567890123456', member: '1-9654321098', username: 'OmicronNew', amount: 1680, type: '增加', time: '2025-10-08 13:42:15', reason: '赠送余额' },
+  { id: 34, orderNo: '20251007176046678901234567', member: '1-0543210987', username: 'PiVeteran', amount: 890, type: '增加', time: '2025-10-07 10:28:33', reason: '充值返利' },
+  { id: 35, orderNo: '20251006176041789012345678', member: '1-1432109876', username: 'RhoExpert', amount: 2200, type: '增加', time: '2025-10-06 15:55:47', reason: '赠送余额' },
+  { id: 36, orderNo: '20251005176036890123456789', member: '1-2321098765', username: 'SigmaMaster', amount: 430, type: '扣减', time: '2025-10-05 09:12:29', reason: '系统调整' },
+  { id: 37, orderNo: '20251004176031901234567890', member: '1-3210987654', username: 'TauAdvanced', amount: 1350, type: '增加', time: '2025-10-04 14:38:18', reason: '赠送余额' },
+  { id: 38, orderNo: '20251003176027012345678901', member: '1-4109876543', username: 'UpsilonPro', amount: 670, type: '增加', time: '2025-10-03 11:25:42', reason: '推荐奖励' },
+  { id: 39, orderNo: '20251002176022123456789012', member: '1-5098765432', username: 'PhiElite', amount: 1920, type: '增加', time: '2025-10-02 16:52:35', reason: '赠送余额' },
+  { id: 40, orderNo: '20251001176017234567890123', member: '1-6987654321', username: 'ChiSuper', amount: 810, type: '增加', time: '2025-10-01 08:45:11', reason: '活动奖励' }
 ])
 
 // 分页配置
 const pagination = reactive({
   current: 1,
   pageSize: 20,
-  total: 7701
+  total: 40
 })
 
 // 更多搜索
