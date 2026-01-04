@@ -1,6 +1,7 @@
 <template>
   <div class="rich-text-editor">
     <Editor
+      :key="placeholder"
       :model-value="modelValue"
       @update:model-value="$emit('update:modelValue', $event)"
       :api-key="apiKey"
@@ -104,11 +105,11 @@ const editorInit = computed(() => ({
   }
 
   :deep(.tox-toolbar__primary) {
-    background: #fafafa !important;
+    background: #fff !important;
   }
 
   :deep(.tox-menubar) {
-    background: #fafafa !important;
+    background: #fff !important;
     border-bottom: 1px solid #e8e8e8 !important;
   }
 

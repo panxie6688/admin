@@ -26,7 +26,9 @@
       "Bash(npx @nestjs/cli new:*)",
       "Bash(grep:*)",
       "Bash(xargs:*)",
-      "Bash(npm run start:dev:*)"
+      "Bash(npm run start:dev:*)",
+      "Bash(if not exist \"D:\\work\\untitled\\admin\\public\\images\" mkdir \"D:\\work\\untitled\\admin\\public\\images\")",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

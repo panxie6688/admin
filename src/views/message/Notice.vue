@@ -16,9 +16,9 @@
           @search="handleSearch"
         />
         <a-button type="primary" @click="moreSearchVisible = true">更多搜索</a-button>
-        <a-tooltip title="全屏">
-          <a-button class="icon-btn" @click="toggleFullscreen">
-            <fullscreen-outlined v-if="!isFullscreen" />
+        <a-tooltip v-if="!topMenuMode" title="全屏">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <fullscreen-outlined v-if="!contentFullscreen" />
             <fullscreen-exit-outlined v-else />
           </a-button>
         </a-tooltip>
@@ -58,15 +58,19 @@
         <template #bodyCell="{ column, record }">
           <!-- 图片列 -->
           <template v-if="column.key === 'image'">
-            <div class="image-cell" @click="openEditPage(record)">
-              <img :src="record.image" alt="公告图片" />
-              <right-outlined class="arrow-icon" />
-            </div>
+            <a-image
+              v-if="record.image"
+              :src="record.image"
+              :width="140"
+              :height="70"
+              style="object-fit: contain; border-radius: 4px;"
+            />
+            <span v-else>-</span>
           </template>
 
           <!-- 排序列 -->
           <template v-else-if="column.key === 'sort'">
-            <div class="sort-cell" @click="openEditPage(record)">
+            <div class="sort-cell" @click="openSortModal(record)">
               <span class="sort-value">{{ record.sort }}</span>
               <right-outlined class="arrow-icon" />
             </div>
@@ -83,9 +87,17 @@
           <!-- 操作列 -->
           <template v-else-if="column.key === 'action'">
             <div class="action-links">
-              <a class="link-text" @click="openEditPage(record)">文本</a>
+              <a class="link-text" @click="openContentPreview(record)">文本</a>
               <a class="link-edit" @click="openEditPage(record)">编辑</a>
-              <a class="link-delete" @click="handleDelete(record)">删除</a>
+              <a-popconfirm
+                title="确定删除该公告吗？"
+                placement="top"
+                ok-text="确定"
+                cancel-text="取消"
+                @confirm="handleDelete(record)"
+              >
+                <a class="link-delete">删除</a>
+              </a-popconfirm>
             </div>
           </template>
         </template>
@@ -123,25 +135,55 @@
           <a-button type="primary" @click="applyFilter">提交</a-button>
         </a-space>
       </template>
-      <a-form layout="vertical">
-        <a-form-item label="状态">
-          <a-select v-model:value="filterForm.status" placeholder="全部" allowClear>
-            <a-select-option value="">全部</a-select-option>
-            <a-select-option value="1">显示</a-select-option>
-            <a-select-option value="0">隐藏</a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="创建时间">
-          <a-range-picker v-model:value="filterForm.dateRange" style="width: 100%" />
-        </a-form-item>
-        <a-form-item label="关键词">
-          <a-input v-model:value="filterForm.keyword" placeholder="请输入关键词" />
-        </a-form-item>
-      </a-form>
+      <div class="filter-form">
+        <a-form layout="vertical">
+          <a-form-item label="状态">
+            <a-select v-model:value="filterForm.status" placeholder="全部" allowClear size="large">
+              <a-select-option value="">全部</a-select-option>
+              <a-select-option value="1">显示</a-select-option>
+              <a-select-option value="0">隐藏</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="创建时间">
+            <a-range-picker
+              v-model:value="filterForm.dateRange"
+              style="width: 100%"
+              size="large"
+              :presets="dateRangePresets"
+              format="YYYY-MM-DD"
+            />
+          </a-form-item>
+          <a-form-item label="更新时间">
+            <a-range-picker
+              v-model:value="filterForm.updateDateRange"
+              style="width: 100%"
+              size="large"
+              :presets="dateRangePresets"
+              format="YYYY-MM-DD"
+            />
+          </a-form-item>
+          <a-form-item label="排序方式">
+            <a-select v-model:value="filterForm.sortField" size="large">
+              <a-select-option value="createTime">按创建时间</a-select-option>
+              <a-select-option value="updateTime">按更新时间</a-select-option>
+              <a-select-option value="sort">按排序值</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="排序顺序">
+            <a-select v-model:value="filterForm.sortOrder" size="large">
+              <a-select-option value="desc">降序（从大到小）</a-select-option>
+              <a-select-option value="asc">升序（从小到大）</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="关键词">
+            <a-input v-model:value="filterForm.keyword" placeholder="请输入关键词" size="large" allowClear />
+          </a-form-item>
+        </a-form>
+      </div>
     </a-drawer>
 
     <!-- 编辑页面（全屏覆盖） -->
-    <transition name="slide-up">
+    <transition name="slide-right">
       <div v-if="editPageVisible" class="edit-page">
         <div class="edit-page-content">
           <!-- 顶部标题栏 -->
@@ -174,33 +216,37 @@
               </div>
             </div>
 
-            <!-- 图片上传 -->
-            <div class="image-upload-area">
-              <div v-if="editForm.image" class="upload-preview-with-actions">
-                <img :src="editForm.image" alt="预览" />
-                <div class="preview-overlay">
-                  <a-upload
-                    :show-upload-list="false"
-                    :before-upload="() => false"
-                    @change="handleImageUpload"
-                  >
-                    <a-button type="primary" size="small">重新上传</a-button>
-                  </a-upload>
-                  <a-button type="primary" danger size="small" @click="editForm.image = ''">重 置</a-button>
+            <!-- 公告封面上传 -->
+            <div class="cover-upload-area">
+              <div class="upload-container">
+                <div v-if="editForm.image" class="cover-preview">
+                  <img :src="editForm.image" alt="封面预览" />
+                  <div class="preview-overlay">
+                    <a-upload
+                      :show-upload-list="false"
+                      :before-upload="() => false"
+                      accept="image/*"
+                      @change="handleImageUpload"
+                    >
+                      <a-button type="primary" size="small">重新上传</a-button>
+                    </a-upload>
+                    <a-button type="primary" danger size="small" @click="editForm.image = ''">重 置</a-button>
+                  </div>
                 </div>
+                <a-upload
+                  v-else
+                  :show-upload-list="false"
+                  :before-upload="() => false"
+                  accept="image/*"
+                  @change="handleImageUpload"
+                  class="cover-uploader"
+                >
+                  <div class="upload-box">
+                    <plus-outlined class="upload-icon" />
+                    <span class="upload-text">公告封面(选填)</span>
+                  </div>
+                </a-upload>
               </div>
-              <a-upload
-                v-else
-                :show-upload-list="false"
-                :before-upload="() => false"
-                @change="handleImageUpload"
-                class="image-uploader"
-              >
-                <div class="upload-btn">
-                  <plus-outlined />
-                  <span>上传图片</span>
-                </div>
-              </a-upload>
             </div>
           </div>
 
@@ -219,31 +265,41 @@
                     class="lang-item"
                     :class="{ active: currentLangIndex === index }"
                   >
-                    <span class="lang-name" @click="currentLangIndex = index">{{ item.lang }}</span>
-                    <delete-outlined
-                      class="delete-icon"
-                      @click.stop="removeLang(index)"
-                    />
+                    <span class="lang-name" @click="currentLangIndex = index">{{ item.langName || item.lang }}</span>
+                    <a-popconfirm
+                      title="确定删除该语言吗？"
+                      placement="top"
+                      ok-text="确定"
+                      cancel-text="取消"
+                      @confirm="removeLang(index)"
+                    >
+                      <delete-outlined class="delete-icon" @click.stop />
+                    </a-popconfirm>
+                  </div>
+                  <div v-if="editForm.languages.length === 0" class="lang-empty">
+                    暂无语言
                   </div>
                 </div>
               </div>
 
               <!-- 右侧编辑区 -->
               <div class="editor-panel">
-                <template v-if="editForm.languages.length > 0">
+                <template v-if="currentLang">
                   <div class="field-row">
                     <label>标题</label>
-                    <a-input
-                      v-model:value="editForm.languages[currentLangIndex].title"
-                      placeholder="请输入标题"
+                    <a-textarea
+                      v-model:value="currentLang.title"
+                      :placeholder="`请输入标题（${currentLang.langName || currentLang.lang || ''}）`"
+                      :rows="3"
                     />
                   </div>
                   <div class="field-row editor-row">
                     <label>内容</label>
                     <div class="editor-wrapper">
                       <RichTextEditor
-                        v-model="editForm.languages[currentLangIndex].content"
-                        :placeholder="`请输入内容（${editForm.languages[currentLangIndex]?.lang || ''}）`"
+                        :key="currentLangIndex"
+                        v-model="currentLang.content"
+                        :placeholder="`请输入内容（${currentLang.langName || currentLang.lang || ''}）`"
                         height="100%"
                       />
                     </div>
@@ -291,8 +347,9 @@
           allow-clear
           size="large"
           :filter-option="filterLangOption"
+          :getPopupContainer="(triggerNode) => triggerNode.parentNode"
         >
-          <a-select-option v-for="lang in availableLangs" :key="lang.code" :value="lang.code">
+          <a-select-option v-for="lang in availableLangs" :key="lang.code" :value="lang.code" :name="lang.name">
             {{ lang.name }} ({{ lang.code }})
           </a-select-option>
         </a-select>
@@ -332,12 +389,60 @@
         />
       </div>
     </a-modal>
+
+    <!-- 修改排序弹窗 -->
+    <a-modal
+      v-model:open="sortModalVisible"
+      :width="400"
+      @ok="handleSortConfirm"
+      @cancel="sortModalVisible = false"
+      okText="确 定"
+      cancelText="取 消"
+      :rootClassName="'warning-modal'"
+    >
+      <template #title>
+        <div class="modal-title-with-icon">
+          <span class="warning-icon">!</span>
+          <span>修改排序</span>
+        </div>
+      </template>
+      <div class="sort-modal-content">
+        <div class="current-sort">当前排序: {{ sortForm.currentSort }}</div>
+        <div class="sort-type-row">排序按：从大到小</div>
+        <a-input
+          v-model:value="sortForm.newSort"
+          size="large"
+        />
+      </div>
+    </a-modal>
+
+    <!-- 查看公告内容弹窗 -->
+    <a-modal
+      v-model:open="contentPreviewVisible"
+      :width="500"
+      :footer="null"
+      :closable="true"
+      centered
+    >
+      <template #title>
+        <div style="font-size: 14px; color: #999;">查看公告内容</div>
+        <div style="font-size: 16px; font-weight: 600; color: #333; margin-top: 4px;">{{ contentPreviewData.title }}</div>
+      </template>
+      <div class="content-preview-body">
+        <div v-if="contentPreviewData.content" class="preview-content" v-html="contentPreviewData.content"></div>
+        <div v-else class="preview-empty">暂无内容</div>
+      </div>
+      <div class="content-preview-footer">
+        <a-button type="primary" @click="contentPreviewVisible = false">知道了</a-button>
+      </div>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-import { message, Modal } from 'ant-design-vue'
+import { ref, reactive, computed, inject } from 'vue'
+import { message } from 'ant-design-vue'
+import dayjs from 'dayjs'
 import {
   PlusOutlined,
   FullscreenOutlined,
@@ -350,21 +455,15 @@ import {
 } from '@ant-design/icons-vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 
+// 注入顶部菜单模式状态和内容全屏
+const topMenuMode = inject('topMenuMode', ref(false))
+const contentFullscreen = inject('contentFullscreen', ref(false))
+const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
+
 // 表格密度
 const tableSize = ref('default')
 const handleSizeChange = ({ key }) => {
   tableSize.value = key
-}
-
-// 全屏
-const isFullscreen = ref(false)
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value
-  if (isFullscreen.value) {
-    document.documentElement.requestFullscreen?.()
-  } else {
-    document.exitFullscreen?.()
-  }
 }
 
 // 搜索
@@ -383,17 +482,31 @@ const moreSearchVisible = ref(false)
 const filterForm = reactive({
   status: '',
   dateRange: null,
-  keyword: ''
+  updateDateRange: null,
+  keyword: '',
+  sortField: 'createTime',
+  sortOrder: 'desc'
 })
 const resetFilter = () => {
   filterForm.status = ''
   filterForm.dateRange = null
+  filterForm.updateDateRange = null
   filterForm.keyword = ''
+  filterForm.sortField = 'createTime'
+  filterForm.sortOrder = 'desc'
 }
 const applyFilter = () => {
   moreSearchVisible.value = false
   message.success('筛选已应用')
 }
+
+// 日期快捷选项
+const dateRangePresets = ref([
+  { label: '今天', value: [dayjs().startOf('day'), dayjs().endOf('day')] },
+  { label: '近7天', value: [dayjs().subtract(6, 'day').startOf('day'), dayjs().endOf('day')] },
+  { label: '近30天', value: [dayjs().subtract(29, 'day').startOf('day'), dayjs().endOf('day')] },
+  { label: '本月', value: [dayjs().startOf('month'), dayjs().endOf('month')] }
+])
 
 // 表格列
 const columns = [
@@ -401,14 +514,15 @@ const columns = [
     title: '标题',
     dataIndex: 'title',
     key: 'title',
-    align: 'center'
+    align: 'center',
+    width: 120
   },
   {
     title: '图片',
     dataIndex: 'image',
     key: 'image',
     align: 'center',
-    width: 100
+    width: 160
   },
   {
     title: '排序',
@@ -452,42 +566,62 @@ const tableData = ref([
   {
     id: 1,
     title: 'First Set Deposit',
-    image: 'https://via.placeholder.com/60x40/1a237e/ffffff?text=KINEX',
+    image: '/images/notice-cover.webp',
     sort: 5,
     statusChecked: true,
-    createTime: '09/30 02:16',
+    createTime: '2024/05/10',
     updateTime: '03/26 17:15',
-    languages: [{ lang: 'en-us', title: 'First Set Deposit', content: '' }]
+    languages: [{
+      lang: 'en-us',
+      langName: '英语(美国)',
+      title: 'First Set Deposit',
+      content: '<p><img src="/images/notice-content-1.webp" alt="公告图片" style="max-width: 100%;"/></p>'
+    }]
   },
   {
     id: 2,
     title: 'Membership level',
-    image: 'https://via.placeholder.com/60x40/1a237e/ffffff?text=KINEX',
+    image: '/images/notice-cover.webp',
     sort: 10,
     statusChecked: true,
-    createTime: '09/30 02:05',
+    createTime: '2024/05/08',
     updateTime: '03/26 17:16',
-    languages: [{ lang: 'en-us', title: 'Membership level', content: '' }]
+    languages: [{
+      lang: 'en-us',
+      langName: '英语(美国)',
+      title: 'Membership level',
+      content: '<p><img src="/images/notice-content-1.webp" alt="公告图片" style="max-width: 100%;"/></p>'
+    }]
   },
   {
     id: 3,
     title: 'Salary Structure',
-    image: 'https://via.placeholder.com/60x40/1a237e/ffffff?text=KINEX',
+    image: '/images/notice-cover.webp',
     sort: 20,
     statusChecked: true,
-    createTime: '09/30 02:00',
+    createTime: '2024/05/05',
     updateTime: '03/26 17:16',
-    languages: [{ lang: 'en-us', title: 'Salary Structure', content: '' }]
+    languages: [{
+      lang: 'en-us',
+      langName: '英语(美国)',
+      title: 'Salary Structure',
+      content: '<p><img src="/images/notice-content-1.webp" alt="公告图片" style="max-width: 100%;"/></p>'
+    }]
   },
   {
     id: 4,
     title: 'Bouns For Registration',
-    image: 'https://via.placeholder.com/60x40/1a237e/ffffff?text=KINEX',
+    image: '/images/notice-cover.webp',
     sort: 30,
     statusChecked: true,
-    createTime: '09/03 19:58',
+    createTime: '2024/04/20',
     updateTime: '03/26 17:16',
-    languages: [{ lang: 'en-us', title: 'Bouns For Registration', content: '' }]
+    languages: [{
+      lang: 'en-us',
+      langName: '英语(美国)',
+      title: 'Bouns For Registration',
+      content: '<p><img src="/images/notice-content-1.webp" alt="公告图片" style="max-width: 100%;"/></p>'
+    }]
   }
 ])
 
@@ -508,20 +642,54 @@ const handleStatusChange = (record, checked) => {
 
 // 删除
 const handleDelete = (record) => {
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除公告"${record.title}"吗？`,
-    okText: '确定',
-    cancelText: '取消',
-    onOk() {
-      const index = tableData.value.findIndex(item => item.id === record.id)
-      if (index > -1) {
-        tableData.value.splice(index, 1)
-        pagination.total = tableData.value.length
-        message.success('删除成功')
-      }
-    }
-  })
+  const index = tableData.value.findIndex(item => item.id === record.id)
+  if (index > -1) {
+    tableData.value.splice(index, 1)
+    pagination.total = tableData.value.length
+    message.success('删除成功')
+  }
+}
+
+// 修改排序弹窗
+const sortModalVisible = ref(false)
+const sortForm = reactive({
+  recordId: null,
+  currentSort: 0,
+  newSort: ''
+})
+
+const openSortModal = (record) => {
+  sortForm.recordId = record.id
+  sortForm.currentSort = record.sort
+  sortForm.newSort = String(record.sort)
+  sortModalVisible.value = true
+}
+
+const handleSortConfirm = () => {
+  const newSortValue = parseInt(sortForm.newSort) || 0
+  const index = tableData.value.findIndex(item => item.id === sortForm.recordId)
+  if (index > -1) {
+    tableData.value[index].sort = newSortValue
+    message.success('排序已更新')
+  }
+  sortModalVisible.value = false
+}
+
+// 查看公告内容弹窗
+const contentPreviewVisible = ref(false)
+const contentPreviewData = reactive({
+  title: '',
+  content: '',
+  date: ''
+})
+
+const openContentPreview = (record) => {
+  // 从 languages 中获取第一个语言的标题和内容
+  const langData = record.languages?.[0] || {}
+  contentPreviewData.title = langData.title || record.title
+  contentPreviewData.content = langData.content || ''
+  contentPreviewData.date = record.createTime
+  contentPreviewVisible.value = true
 }
 
 // 编辑页面
@@ -535,6 +703,14 @@ const editForm = reactive({
   status: true,
   url: '',
   languages: []
+})
+
+// 当前选中的语言数据
+const currentLang = computed(() => {
+  if (editForm.languages.length > 0 && currentLangIndex.value < editForm.languages.length) {
+    return editForm.languages[currentLangIndex.value]
+  }
+  return null
 })
 
 const openAddPage = () => {
@@ -556,9 +732,24 @@ const openEditPage = (record) => {
   editForm.sort = String(record.sort)
   editForm.status = record.statusChecked
   editForm.url = record.url || ''
-  editForm.languages = record.languages?.length > 0
-    ? JSON.parse(JSON.stringify(record.languages))
-    : [{ lang: 'en-us', title: record.title, content: '' }]
+  // 处理语言数据，确保有 langName
+  if (record.languages?.length > 0) {
+    editForm.languages = record.languages.map(item => {
+      const langInfo = langRefData.find(l => l.code === item.lang)
+      return {
+        ...item,
+        langName: item.langName || (langInfo ? langInfo.name : item.lang)
+      }
+    })
+  } else {
+    const defaultLangInfo = langRefData.find(l => l.code === 'en-us')
+    editForm.languages = [{
+      lang: 'en-us',
+      langName: defaultLangInfo ? defaultLangInfo.name : 'en-us',
+      title: record.title,
+      content: ''
+    }]
+  }
   currentLangIndex.value = 0
   editPageVisible.value = true
 }
@@ -675,7 +866,11 @@ const langRefData = [
   { code: 'zh-tw', name: '中文(繁体)' }
 ]
 
-const availableLangs = langRefData
+// 可用语言列表（过滤已添加的）
+const availableLangs = computed(() => {
+  const addedCodes = editForm.languages.map(l => l.lang)
+  return langRefData.filter(lang => !addedCodes.includes(lang.code))
+})
 
 // 过滤后的语言数据
 const filteredLangRefData = computed(() => {
@@ -689,10 +884,12 @@ const filteredLangRefData = computed(() => {
   )
 })
 
-// 语言搜索过滤
+// 语言搜索过滤（支持按名称和代码搜索）
 const filterLangOption = (input, option) => {
   const searchText = input.toLowerCase()
-  return option.value.toLowerCase().includes(searchText)
+  const value = (option.value || '').toLowerCase()
+  const name = (option.name || '').toLowerCase()
+  return value.includes(searchText) || name.includes(searchText)
 }
 
 // 从参考表选择语言
@@ -712,8 +909,12 @@ const handleAddLang = () => {
     message.error('该语言已存在')
     return
   }
+  // 查找语言名称
+  const langInfo = langRefData.find(item => item.code === langCode)
+  const langName = langInfo ? langInfo.name : langCode
   editForm.languages.push({
     lang: langCode,
+    langName: langName,
     title: '',
     content: ''
   })
@@ -724,13 +925,9 @@ const handleAddLang = () => {
 }
 
 const removeLang = (index) => {
-  if (editForm.languages.length <= 1) {
-    message.error('至少保留一种语言')
-    return
-  }
   editForm.languages.splice(index, 1)
   if (currentLangIndex.value >= editForm.languages.length) {
-    currentLangIndex.value = editForm.languages.length - 1
+    currentLangIndex.value = Math.max(0, editForm.languages.length - 1)
   }
 }
 </script>
@@ -812,42 +1009,28 @@ const removeLang = (index) => {
     }
   }
 
-  // 图片单元格
-  .image-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-
-    img {
-      width: 60px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-
-    .arrow-icon {
-      color: #1890ff;
-      font-size: 12px;
-    }
-  }
-
   // 排序单元格
   .sort-cell {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
 
     .sort-value {
       color: #1890ff;
+      font-size: 14px;
     }
 
     .arrow-icon {
       color: #1890ff;
       font-size: 12px;
+    }
+
+    &:hover {
+      .sort-value {
+        text-decoration: underline;
+      }
     }
   }
 
@@ -904,23 +1087,23 @@ const removeLang = (index) => {
   }
 }
 
-// 过渡动画
-.slide-up-enter-active {
-  animation: slideUp 0.3s ease-out;
+// 过渡动画 - 从右到左滑入
+.slide-right-enter-active {
+  animation: slideRight 0.3s ease-out;
 }
 
-.slide-up-leave-active {
-  animation: slideUp 0.2s ease-in reverse;
+.slide-right-leave-active {
+  animation: slideRight 0.2s ease-in reverse;
 }
 
-@keyframes slideUp {
+@keyframes slideRight {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
 }
 
@@ -936,14 +1119,14 @@ const removeLang = (index) => {
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-y: auto;
 
   .edit-page-content {
     flex: 1;
     padding: 12px 16px;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    min-height: min-content;
 
     // 顶部标题栏
     .edit-header {
@@ -1092,6 +1275,83 @@ const removeLang = (index) => {
           }
         }
       }
+
+      // 公告封面上传
+      .cover-upload-area {
+        .upload-container {
+          .cover-preview {
+            max-width: 200px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e8e8e8;
+
+            > img {
+              display: block;
+              max-width: 100%;
+              height: auto;
+              background: #fafafa;
+            }
+
+            .preview-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(0, 0, 0, 0.5);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+              opacity: 0;
+              transition: opacity 0.3s;
+            }
+
+            &:hover .preview-overlay {
+              opacity: 1;
+            }
+          }
+
+          .cover-uploader {
+            .upload-box {
+              width: 120px;
+              height: 120px;
+              border: 1px dashed #d9d9d9;
+              border-radius: 6px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: all 0.3s;
+              background: #fafafa;
+
+              &:hover {
+                border-color: #1890ff;
+                background: #f0f7ff;
+
+                .upload-icon,
+                .upload-text {
+                  color: #1890ff;
+                }
+              }
+
+              .upload-icon {
+                font-size: 24px;
+                color: #bfbfbf;
+                margin-bottom: 8px;
+              }
+
+              .upload-text {
+                font-size: 13px;
+                color: #bfbfbf;
+              }
+            }
+          }
+        }
+      }
     }
 
     // 公告内容区域
@@ -1119,7 +1379,6 @@ const removeLang = (index) => {
           width: 160px;
           flex-shrink: 0;
           padding-right: 16px;
-          border-right: 1px solid #f0f0f0;
           display: flex;
           flex-direction: column;
 
@@ -1179,6 +1438,13 @@ const removeLang = (index) => {
                 }
               }
             }
+
+            .lang-empty {
+              text-align: center;
+              color: #bfbfbf;
+              font-size: 14px;
+              padding: 20px 0;
+            }
           }
         }
 
@@ -1200,9 +1466,18 @@ const removeLang = (index) => {
             }
 
             :deep(.ant-input) {
-              height: 40px;
+              height: 48px;
               border-radius: 6px;
               font-size: 14px;
+            }
+
+            :deep(.ant-input-textarea) {
+              .ant-input {
+                height: auto;
+                border-radius: 6px;
+                font-size: 14px;
+                resize: none;
+              }
             }
 
             &.editor-row {
@@ -1237,20 +1512,188 @@ const removeLang = (index) => {
     }
   }
 }
+</style>
 
+<!-- 弹窗样式 - 非 scoped，因为弹窗通过 Teleport 渲染到 body -->
+<style lang="less">
 // 语言代码表弹窗样式
 .lang-ref-content {
-  :deep(.ant-table-thead > tr > th) {
+  .ant-table-thead > tr > th {
     font-size: 15px;
     font-weight: 600;
   }
 
-  :deep(.lang-row-clickable) {
+  .lang-row-clickable {
     cursor: pointer;
 
     &:hover {
       background-color: #e6f7ff !important;
     }
+  }
+}
+
+// 修改排序弹窗内容
+.sort-modal-content {
+  padding: 8px 0;
+
+  .current-sort {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  .sort-type-row {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .ant-input {
+    height: 44px;
+    font-size: 16px;
+    border-radius: 6px;
+  }
+}
+
+// 查看公告内容弹窗
+.content-preview-body {
+  .preview-content {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.8;
+
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+  }
+
+  .preview-empty {
+    text-align: center;
+    color: #999;
+    padding: 40px 0;
+    font-size: 14px;
+  }
+}
+
+.content-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+// 添加语言弹窗样式
+.add-lang-content {
+  .warning-tip-box {
+    margin-bottom: 16px;
+    border-radius: 6px;
+
+    .tip-text {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.8;
+
+      .link {
+        color: #1890ff;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  .ant-select-lg {
+    .ant-select-selector {
+      height: 44px !important;
+      border-radius: 8px !important;
+
+      .ant-select-selection-search-input {
+        height: 42px !important;
+      }
+
+      .ant-select-selection-placeholder,
+      .ant-select-selection-item {
+        line-height: 42px !important;
+        font-size: 14px !important;
+      }
+    }
+  }
+
+  .ant-input-lg {
+    height: 44px;
+    border-radius: 8px;
+  }
+}
+
+// 警告弹窗样式
+.warning-modal {
+  .ant-modal-content {
+    border-radius: 8px;
+  }
+
+  .modal-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .warning-icon {
+      width: 22px;
+      height: 22px;
+      background: #faad14;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+    }
+  }
+}
+
+// 筛选表单样式
+.filter-form {
+  .ant-form-item {
+    margin-bottom: 20px;
+
+    .ant-form-item-label > label {
+      font-weight: 500;
+      color: #333;
+    }
+  }
+
+  .ant-select-lg .ant-select-selector {
+    height: 44px !important;
+    border-radius: 8px !important;
+
+    .ant-select-selection-search-input {
+      height: 42px !important;
+    }
+
+    .ant-select-selection-placeholder,
+    .ant-select-selection-item {
+      line-height: 42px !important;
+    }
+  }
+
+  .ant-picker-large {
+    height: 44px;
+    border-radius: 8px;
+
+    .ant-picker-input > input {
+      font-size: 14px;
+    }
+  }
+
+  .ant-input-lg {
+    height: 44px;
+    border-radius: 8px;
   }
 }
 </style>

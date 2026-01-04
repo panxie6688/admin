@@ -16,9 +16,9 @@
           @search="handleSearch"
         />
         <a-button type="primary" @click="filterDrawer.visible = true">更多搜索</a-button>
-        <a-tooltip title="全屏">
-          <a-button class="icon-btn" @click="toggleFullscreen">
-            <fullscreen-outlined v-if="!isFullscreen" />
+        <a-tooltip v-if="!topMenuMode" title="全屏">
+          <a-button class="icon-btn" @click="toggleContentFullscreen">
+            <fullscreen-outlined v-if="!contentFullscreen" />
             <fullscreen-exit-outlined v-else />
           </a-button>
         </a-tooltip>
@@ -132,7 +132,7 @@
     </div>
 
     <!-- 添加数据/回复 - 全屏覆盖页面 -->
-    <transition name="slide-fade">
+    <transition name="slide-right">
       <div v-if="addPage.visible" class="fullscreen-page">
         <div class="fullscreen-card">
           <div class="fullscreen-header">
@@ -257,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, inject } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   PlusOutlined,
@@ -270,8 +270,10 @@ import {
 } from '@ant-design/icons-vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 
-// 全屏状态
-const isFullscreen = ref(false)
+// 注入顶部菜单模式状态和内容全屏
+const topMenuMode = inject('topMenuMode', ref(false))
+const contentFullscreen = inject('contentFullscreen', ref(false))
+const toggleContentFullscreen = inject('toggleContentFullscreen', () => {})
 
 // 搜索关键词
 const searchText = ref('')
@@ -505,11 +507,6 @@ const contentModal = reactive({
   visible: false,
   record: null
 })
-
-// 切换全屏
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value
-}
 
 // 刷新
 const handleRefresh = () => {
@@ -854,23 +851,24 @@ const handleReply = (record) => {
   }
 }
 
-// 弹出动画
-.slide-fade-enter-active {
-  transition: all 0.3s ease-out;
+// 从右到左滑入动画
+.slide-right-enter-active {
+  animation: slideRight 0.3s ease-out;
 }
 
-.slide-fade-leave-active {
-  transition: all 0.2s ease-in;
+.slide-right-leave-active {
+  animation: slideRight 0.2s ease-in reverse;
 }
 
-.slide-fade-enter-from {
-  transform: translateY(20px);
-  opacity: 0;
-}
-
-.slide-fade-leave-to {
-  transform: translateY(20px);
-  opacity: 0;
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 // 会员链接

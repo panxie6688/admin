@@ -45,8 +45,16 @@
                 class="lang-item"
                 :class="{ active: selectedLangIndex === index }"
               >
-                <span class="lang-name" @click="selectedLangIndex = index">{{ item.code }}</span>
-                <DeleteOutlined class="delete-icon" @click.stop="handleDeleteLang(index)" />
+                <span class="lang-name" @click="selectedLangIndex = index">{{ item.name || item.code }}</span>
+                <a-popconfirm
+                  title="确定删除该语言吗？"
+                  placement="top"
+                  ok-text="确定"
+                  cancel-text="取消"
+                  @confirm="handleDeleteLang(index)"
+                >
+                  <DeleteOutlined class="delete-icon" @click.stop />
+                </a-popconfirm>
               </div>
             </div>
           </div>
@@ -57,7 +65,7 @@
               <RichTextEditor
                 :key="currentLang.code"
                 v-model="currentLang.content"
-                :placeholder="`请输入内容（${currentLang.code}）`"
+                :placeholder="`请输入内容（${currentLang.name || currentLang.code}）`"
               />
             </template>
             <div v-else class="editor-empty">
@@ -94,17 +102,24 @@
 
         <a-select
           v-model:value="selectedNewLang"
-          style="width: 100%;"
+          style="width: 100%; margin-bottom: 12px;"
           placeholder="选择语言"
           show-search
           allow-clear
           size="large"
           :filter-option="filterLangOption"
+          :getPopupContainer="(triggerNode) => triggerNode.parentNode"
         >
-          <a-select-option v-for="lang in availableLangs" :key="lang.code" :value="lang.code">
+          <a-select-option v-for="lang in availableLangs" :key="lang.code" :value="lang.code" :name="lang.name">
             {{ lang.name }} ({{ lang.code }})
           </a-select-option>
         </a-select>
+
+        <a-input
+          v-model:value="newLangText"
+          placeholder="请输入"
+          size="large"
+        />
       </div>
     </a-modal>
 
@@ -141,7 +156,7 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { DeleteOutlined } from '@ant-design/icons-vue'
-import { message, Modal } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 
 // 菜单配置
@@ -164,45 +179,45 @@ const selectedMenu = ref(['agreement'])
 // 所有菜单的内容数据（按菜单key存储）
 const allContents = reactive({
   agreement: [
-    { code: 'zh-cn', content: '<p>欢迎来到 Kinex Media 及其一系列服务！</p><p>为了保护网站和商家之间的个人信息安全，您必须仔细阅读平台的"条款和条件"。充分理解条款和条件非常重要，特别是服务条款和任何相关限制，以及与每个条款和条件相关的任何单独协议。您必须相应地接受或拒绝责任。</p><p>通过使用本网站，您确认您已年满 18 岁，并已阅读并同意条款和条件。否则，您将无权下载、安装软件或使用服务。</p>' },
-    { code: 'en-us', content: '' },
-    { code: 'es-es', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '<p>欢迎来到 Kinex Media 及其一系列服务！</p><p>为了保护网站和商家之间的个人信息安全，您必须仔细阅读平台的"条款和条件"。充分理解条款和条件非常重要，特别是服务条款和任何相关限制，以及与每个条款和条件相关的任何单独协议。您必须相应地接受或拒绝责任。</p><p>通过使用本网站，您确认您已年满 18 岁，并已阅读并同意条款和条件。否则，您将无权下载、安装软件或使用服务。</p>' },
+    { code: 'en-us', name: '英语(美国)', content: '' },
+    { code: 'es-es', name: '西班牙语(西班牙)', content: '' }
   ],
   privacy: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   about: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   important: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   faq: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   popup: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   wallet: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   header: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   lottery: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ],
   recharge: [
-    { code: 'zh-cn', content: '' },
-    { code: 'en-us', content: '' }
+    { code: 'zh-cn', name: '中文(简体)', content: '' },
+    { code: 'en-us', name: '英语(美国)', content: '' }
   ]
 })
 
@@ -230,6 +245,7 @@ watch(selectedMenu, () => {
 // 添加语言弹窗
 const addLangModalVisible = ref(false)
 const selectedNewLang = ref('')
+const newLangText = ref('')
 
 // 语言参考表弹窗
 const langRefModalVisible = ref(false)
@@ -294,6 +310,14 @@ const availableLangs = computed(() => {
   return langRefData.filter(lang => !addedCodes.includes(lang.code))
 })
 
+// 语言选项（用于 Select 组件）
+const langOptions = computed(() => {
+  return availableLangs.value.map(lang => ({
+    value: lang.code,
+    label: `${lang.name} (${lang.code})`
+  }))
+})
+
 // 过滤后的语言数据
 const filteredLangRefData = computed(() => {
   if (!langSearchText.value) {
@@ -306,40 +330,49 @@ const filteredLangRefData = computed(() => {
   )
 })
 
-// 语言搜索过滤
+// 语言搜索过滤（支持按名称和代码搜索）
 const filterLangOption = (input, option) => {
   const searchText = input.toLowerCase()
-  return option.value.toLowerCase().includes(searchText) ||
-         option.children[0].toLowerCase().includes(searchText)
+  const value = (option.value || '').toLowerCase()
+  const name = (option.name || '').toLowerCase()
+  return value.includes(searchText) || name.includes(searchText)
 }
 
 // 打开添加语言弹窗
 const handleAddLang = () => {
   selectedNewLang.value = ''
+  newLangText.value = ''
   addLangModalVisible.value = true
 }
 
 // 确认添加语言
 const handleConfirmAddLang = () => {
-  if (!selectedNewLang.value) {
-    message.warning('请选择语言')
+  const langCode = selectedNewLang.value || newLangText.value
+  if (!langCode) {
+    message.warning('请选择或输入语言')
     return
   }
 
   const currentLangs = allContents[currentMenuKey.value]
-  const exists = currentLangs.some(l => l.code === selectedNewLang.value)
+  const exists = currentLangs.some(l => l.code === langCode)
   if (exists) {
     message.warning('该语言已添加')
     return
   }
 
+  // 查找语言名称
+  const langInfo = langRefData.find(l => l.code === langCode)
+  const langName = langInfo ? langInfo.name : langCode
+
   currentLangs.push({
-    code: selectedNewLang.value,
+    code: langCode,
+    name: langName,
     content: ''
   })
   selectedLangIndex.value = currentLangs.length - 1
   addLangModalVisible.value = false
   selectedNewLang.value = ''
+  newLangText.value = ''
   message.success('添加成功')
 }
 
@@ -353,23 +386,13 @@ const handleSelectLangFromRef = (record) => {
 // 删除语言
 const handleDeleteLang = (index) => {
   const currentLangs = allContents[currentMenuKey.value]
-  const langItem = currentLangs[index]
-  Modal.confirm({
-    title: '确认删除',
-    content: `确定要删除语言 "${langItem.code}" 吗？`,
-    okText: '确定',
-    cancelText: '取消',
-    okType: 'danger',
-    onOk() {
-      currentLangs.splice(index, 1)
-      if (currentLangs.length === 0) {
-        selectedLangIndex.value = 0
-      } else if (selectedLangIndex.value >= currentLangs.length) {
-        selectedLangIndex.value = currentLangs.length - 1
-      }
-      message.success('删除成功')
-    }
-  })
+  currentLangs.splice(index, 1)
+  if (currentLangs.length === 0) {
+    selectedLangIndex.value = 0
+  } else if (selectedLangIndex.value >= currentLangs.length) {
+    selectedLangIndex.value = currentLangs.length - 1
+  }
+  message.success('删除成功')
 }
 
 // 保存
@@ -607,6 +630,11 @@ const handleSave = () => {
         font-size: 14px !important;
       }
     }
+  }
+
+  .ant-input-lg {
+    height: 44px;
+    border-radius: 8px;
   }
 }
 
