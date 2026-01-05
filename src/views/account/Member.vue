@@ -1989,6 +1989,241 @@
       </div>
     </transition>
 
+    <!-- 在线管理页面 -->
+    <transition name="slide-up">
+      <div class="online-info-page" :class="`size-${onlineInfoModal.tableSize}`" v-if="onlineInfoModal.visible">
+        <div class="online-info-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="online-info-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ onlineInfoModal.record?.username || '会员' }} - 在线管理</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="onlineInfoModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+                @search="onOnlineInfoSearch"
+              />
+              <a-button type="primary" @click="handleMoreOnlineInfoSearch">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseOnlineInfo">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="onlineInfoModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleOnlineInfoFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="onlineInfoModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshOnlineInfo">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleOnlineInfoDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': onlineInfoModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': onlineInfoModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': onlineInfoModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 在线管理表格 -->
+          <div class="online-info-table-wrapper">
+            <a-table
+              :columns="onlineInfoColumns"
+              :data-source="onlineInfoModal.list"
+              :loading="onlineInfoModal.loading"
+              :pagination="false"
+              :size="onlineInfoModal.tableSize"
+              bordered
+              :scroll="{ x: 980, y: 'calc(100vh - 280px)' }"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'member'">
+                  <a-dropdown>
+                    <a style="color: #1890ff; cursor: pointer;" @click.prevent>
+                      {{ record.memberId }} <caret-down-outlined style="font-size: 10px; margin-left: 4px;" />
+                    </a>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="1">查看详情</a-menu-item>
+                        <a-menu-item key="2">编辑</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-if="column.key === 'username'">
+                  <span style="color: #1890ff;">{{ record.username }}</span>
+                </template>
+                <template v-if="column.key === 'action'">
+                  <a-popconfirm
+                    :title="`确认要强制退出用户 '${record.username}' 吗？`"
+                    ok-text="确定"
+                    cancel-text="取消"
+                    placement="topRight"
+                    @confirm="handleOnlineInfoForceLogout(record)"
+                  >
+                    <a style="color: #ff4d4f; cursor: pointer;">强制退出</a>
+                  </a-popconfirm>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 底部分页 -->
+          <div class="online-info-footer">
+            <span class="total-text">统计: {{ onlineInfoModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="onlineInfoModal.pagination.current"
+              :total="onlineInfoModal.pagination.total"
+              :page-size="onlineInfoModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+
+        <!-- 更多搜索抽屉 -->
+        <a-drawer
+          v-model:open="onlineInfoModal.searchDrawer.visible"
+          title="筛选"
+          placement="right"
+          :width="450"
+          root-class-name="rounded-drawer"
+        >
+          <template #extra>
+            <a-space>
+              <a-button type="link" danger @click="handleResetOnlineInfoSearch">重置</a-button>
+              <a-button type="primary" @click="handleSubmitOnlineInfoSearch">提交</a-button>
+            </a-space>
+          </template>
+
+          <a-form layout="vertical">
+            <a-form-item label="总代理">
+              <a-select
+                v-model:value="onlineInfoModal.searchDrawer.topAgent"
+                placeholder="请选择"
+                allow-clear
+              >
+                <a-select-option value="">全部</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="代理">
+              <a-select
+                v-model:value="onlineInfoModal.searchDrawer.agent"
+                placeholder="请选择"
+                allow-clear
+              >
+                <a-select-option value="">全部</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="会员UID">
+              <div style="display: flex; gap: 8px;">
+                <a-input
+                  v-model:value="onlineInfoModal.searchDrawer.memberUid"
+                  placeholder="请输入会员ID"
+                  style="flex: 1;"
+                  size="large"
+                />
+                <a-button type="primary" @click="handleSearchOnlineInfoUid" size="large">搜 索</a-button>
+              </div>
+            </a-form-item>
+
+            <a-form-item label="客户端">
+              <a-input
+                v-model:value="onlineInfoModal.searchDrawer.client"
+                placeholder="输入"
+              />
+            </a-form-item>
+
+            <a-form-item label="IP">
+              <a-input
+                v-model:value="onlineInfoModal.searchDrawer.ip"
+                placeholder="输入"
+              />
+            </a-form-item>
+
+            <a-form-item label="登录方式">
+              <a-select
+                v-model:value="onlineInfoModal.searchDrawer.loginType"
+                placeholder="选择"
+                allow-clear
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="none">无</a-select-option>
+                <a-select-option value="email">邮箱</a-select-option>
+                <a-select-option value="phone">手机号</a-select-option>
+                <a-select-option value="scan">扫码</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="开始时间">
+              <a-date-picker
+                v-model:value="onlineInfoModal.searchDrawer.startTime"
+                placeholder="请选择日期"
+                style="width: 100%"
+                size="large"
+              />
+            </a-form-item>
+
+            <a-form-item label="结束时间">
+              <a-date-picker
+                v-model:value="onlineInfoModal.searchDrawer.endTime"
+                placeholder="请选择日期"
+                style="width: 100%"
+                size="large"
+              />
+            </a-form-item>
+
+            <a-form-item label="搜索(手机号、邮箱等等)">
+              <a-input
+                v-model:value="onlineInfoModal.searchDrawer.searchContent"
+                placeholder="搜索内容"
+              >
+                <template #suffix>
+                  <search-outlined style="color: #bfbfbf" />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <a-form-item label="排序字段">
+              <a-select
+                v-model:value="onlineInfoModal.searchDrawer.sortField"
+                placeholder="请选择"
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="time">时间</a-select-option>
+              </a-select>
+            </a-form-item>
+
+            <a-form-item label="排序类型">
+              <a-select
+                v-model:value="onlineInfoModal.searchDrawer.sortType"
+                placeholder="请选择"
+              >
+                <a-select-option value="">全部</a-select-option>
+                <a-select-option value="desc">降序排序</a-select-option>
+                <a-select-option value="asc">升序排序</a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-form>
+        </a-drawer>
+      </div>
+    </transition>
+
     <!-- 赠送记录页面 -->
     <transition name="slide-up">
       <div class="gift-record-page" :class="`size-${giftRecordModal.tableSize}`" v-if="giftRecordModal.visible">
@@ -2293,6 +2528,944 @@
         </div>
       </div>
     </transition>
+
+    <!-- 安全日志页面 -->
+    <transition name="slide-up">
+      <div class="security-log-page" :class="`size-${securityLogModal.tableSize}`" v-if="securityLogModal.visible">
+        <div class="security-log-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="security-log-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ securityLogModal.record?.username || '' }} - 安全日志</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="securityLogModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="securityLogSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseSecurityLog">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="securityLogModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleSecurityLogFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="securityLogModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshSecurityLog">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleSecurityLogDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': securityLogModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': securityLogModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': securityLogModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="security-log-table-wrapper">
+            <a-table
+              :columns="securityLogColumns"
+              :data-source="filteredSecurityLogData"
+              :pagination="false"
+              :size="securityLogModal.tableSize"
+              bordered
+              :scroll="{ x: 1000 }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'client'">
+                  <span style="color: #1890ff;">{{ record.client }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'ip'">
+                  <span style="color: #1890ff;">{{ record.ip }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'authType'">
+                  <span :style="{ color: record.authType === '无' ? '#ff4d4f' : '#1890ff' }">{{ record.authType }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'event'">
+                  <span style="color: #1890ff;">{{ record.event }}</span>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="security-log-footer">
+            <span class="total-text">统计: {{ securityLogModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="securityLogModal.pagination.current"
+              :total="securityLogModal.pagination.total"
+              :page-size="securityLogModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 安全日志-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="securityLogSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="450"
+      root-class-name="rounded-drawer"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="link" danger @click="handleResetSecurityLogSearch">重置</a-button>
+          <a-button type="primary" @click="handleSecurityLogSearch">提交</a-button>
+        </a-space>
+      </template>
+      <a-form layout="vertical">
+        <a-form-item label="会员UID">
+          <div style="display: flex; gap: 8px;">
+            <a-input v-model:value="securityLogSearchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
+            <a-button type="primary" @click="handleSearchSecurityLogUid">搜 索</a-button>
+          </div>
+        </a-form-item>
+        <a-form-item label="客户端">
+          <a-input v-model:value="securityLogSearchDrawer.client" placeholder="输入" />
+        </a-form-item>
+        <a-form-item label="IP">
+          <a-input v-model:value="securityLogSearchDrawer.ip" placeholder="输入" />
+        </a-form-item>
+        <a-form-item label="验证方式">
+          <a-select v-model:value="securityLogSearchDrawer.authType" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="无">无</a-select-option>
+            <a-select-option value="短信验证">短信验证</a-select-option>
+            <a-select-option value="邮箱验证">邮箱验证</a-select-option>
+            <a-select-option value="谷歌验证">谷歌验证</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="事件">
+          <a-select v-model:value="securityLogSearchDrawer.eventType" placeholder="选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="注册">注册</a-select-option>
+            <a-select-option value="登录">登录</a-select-option>
+            <a-select-option value="修改密码">修改密码</a-select-option>
+            <a-select-option value="修改支付密码">修改支付密码</a-select-option>
+            <a-select-option value="绑定银行卡">绑定银行卡</a-select-option>
+            <a-select-option value="绑定钱包">绑定钱包</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="securityLogSearchDrawer.startTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="securityLogSearchDrawer.endTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="排序字段">
+          <a-select v-model:value="securityLogSearchDrawer.sortField" placeholder="请选择">
+            <a-select-option value="time">时间</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="排序类型">
+          <a-select v-model:value="securityLogSearchDrawer.sortType" placeholder="请选择">
+            <a-select-option value="desc">降序排序</a-select-option>
+            <a-select-option value="asc">升序排序</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
+
+    <!-- 登录日志页面 -->
+    <transition name="slide-up">
+      <div class="login-log-page" :class="`size-${loginLogModal.tableSize}`" v-if="loginLogModal.visible">
+        <div class="login-log-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="login-log-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ loginLogModal.record?.username || '' }} - 登录日志</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="loginLogModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="loginLogSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseLoginLog">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="loginLogModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleLoginLogFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="loginLogModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshLoginLog">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleLoginLogDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': loginLogModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': loginLogModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': loginLogModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="login-log-table-wrapper">
+            <a-table
+              :columns="loginLogColumns"
+              :data-source="filteredLoginLogData"
+              :pagination="false"
+              :size="loginLogModal.tableSize"
+              bordered
+              :scroll="{ x: 1100 }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'client'">
+                  <span style="color: #1890ff;">{{ record.client }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'ip'">
+                  <span style="color: #1890ff;">{{ record.ip }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'status'">
+                  <span :style="{ color: record.status === '成功' ? '#52c41a' : '#ff4d4f' }">
+                    <span v-if="record.status === '成功'" style="margin-right: 4px;">●</span>
+                    {{ record.status }}
+                  </span>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="login-log-footer">
+            <span class="total-text">统计: {{ loginLogModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="loginLogModal.pagination.current"
+              :total="loginLogModal.pagination.total"
+              :page-size="loginLogModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 登录日志-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="loginLogSearchDrawer.visible"
+      title="更多搜索"
+      placement="right"
+      :width="400"
+      class="rounded-drawer"
+    >
+      <a-form layout="vertical">
+        <a-form-item label="状态">
+          <a-select v-model:value="loginLogSearchDrawer.status" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="成功">成功</a-select-option>
+            <a-select-option value="失败">失败</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="客户端">
+          <a-select v-model:value="loginLogSearchDrawer.client" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="H5">H5</a-select-option>
+            <a-select-option value="Android">Android</a-select-option>
+            <a-select-option value="iOS">iOS</a-select-option>
+            <a-select-option value="PC">PC</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="loginLogSearchDrawer.startTime" style="width: 100%;" show-time placeholder="选择开始时间" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="loginLogSearchDrawer.endTime" style="width: 100%;" show-time placeholder="选择结束时间" />
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <a-button @click="handleResetLoginLogSearch">重 置</a-button>
+          <a-button type="primary" @click="handleLoginLogSearch">查 询</a-button>
+        </div>
+      </template>
+    </a-drawer>
+
+    <!-- VIP变更日志页面 -->
+    <transition name="slide-up">
+      <div class="vip-change-log-page" :class="`size-${vipChangeLogModal.tableSize}`" v-if="vipChangeLogModal.visible">
+        <div class="vip-change-log-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="vip-change-log-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ vipChangeLogModal.record?.username || '' }} - VIP变更日志</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="vipChangeLogModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="vipChangeLogSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseVipChangeLog">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="vipChangeLogModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleVipChangeLogFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="vipChangeLogModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshVipChangeLog">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleVipChangeLogDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': vipChangeLogModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': vipChangeLogModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': vipChangeLogModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="vip-change-log-table-wrapper">
+            <a-table
+              :columns="vipChangeLogColumns"
+              :data-source="filteredVipChangeLogData"
+              :pagination="false"
+              :size="vipChangeLogModal.tableSize"
+              bordered
+              :scroll="{ x: 1000 }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'beforeLevel'">
+                  <a-tag color="orange">{{ record.beforeLevel }}</a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'afterLevel'">
+                  <a-tag color="blue">{{ record.afterLevel }}</a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'changeType'">
+                  <span :style="{ color: record.changeType === '升级' ? '#52c41a' : '#ff4d4f' }">{{ record.changeType }}</span>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="vip-change-log-footer">
+            <span class="total-text">统计: {{ vipChangeLogModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="vipChangeLogModal.pagination.current"
+              :total="vipChangeLogModal.pagination.total"
+              :page-size="vipChangeLogModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- VIP变更日志-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="vipChangeLogSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="450"
+      root-class-name="rounded-drawer"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="link" danger @click="handleResetVipChangeLogSearch">重置</a-button>
+          <a-button type="primary" @click="handleVipChangeLogSearch">提交</a-button>
+        </a-space>
+      </template>
+      <a-form layout="vertical">
+        <a-form-item label="会员UID">
+          <div style="display: flex; gap: 8px;">
+            <a-input v-model:value="vipChangeLogSearchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
+            <a-button type="primary">搜 索</a-button>
+          </div>
+        </a-form-item>
+        <a-form-item label="变更类型">
+          <a-select v-model:value="vipChangeLogSearchDrawer.changeType" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="升级">升级</a-select-option>
+            <a-select-option value="降级">降级</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="变更前等级">
+          <a-select v-model:value="vipChangeLogSearchDrawer.beforeLevel" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="VIP0">VIP0</a-select-option>
+            <a-select-option value="VIP1">VIP1</a-select-option>
+            <a-select-option value="VIP2">VIP2</a-select-option>
+            <a-select-option value="VIP3">VIP3</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="变更后等级">
+          <a-select v-model:value="vipChangeLogSearchDrawer.afterLevel" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="VIP0">VIP0</a-select-option>
+            <a-select-option value="VIP1">VIP1</a-select-option>
+            <a-select-option value="VIP2">VIP2</a-select-option>
+            <a-select-option value="VIP3">VIP3</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="vipChangeLogSearchDrawer.startTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="vipChangeLogSearchDrawer.endTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="排序字段">
+          <a-select v-model:value="vipChangeLogSearchDrawer.sortField" placeholder="请选择">
+            <a-select-option value="time">时间</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="排序类型">
+          <a-select v-model:value="vipChangeLogSearchDrawer.sortType" placeholder="请选择">
+            <a-select-option value="desc">降序排序</a-select-option>
+            <a-select-option value="asc">升序排序</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
+
+    <!-- 累计利润页面 -->
+    <transition name="slide-up">
+      <div class="total-profit-page" :class="`size-${totalProfitModal.tableSize}`" v-if="totalProfitModal.visible">
+        <div class="total-profit-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="total-profit-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ totalProfitModal.record?.username || '' }} - 累计利润</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="totalProfitModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="totalProfitSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseTotalProfit">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="totalProfitModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleTotalProfitFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="totalProfitModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshTotalProfit">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleTotalProfitDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': totalProfitModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': totalProfitModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': totalProfitModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="total-profit-table-wrapper">
+            <a-table
+              :columns="totalProfitColumns"
+              :data-source="filteredTotalProfitData"
+              :pagination="false"
+              :size="totalProfitModal.tableSize"
+              bordered
+              :scroll="{ x: 900 }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'profit'">
+                  <span :style="{ color: parseFloat(record.profit) >= 0 ? '#52c41a' : '#ff4d4f' }">{{ record.profit }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'totalProfit'">
+                  <span :style="{ color: parseFloat(record.totalProfit) >= 0 ? '#52c41a' : '#ff4d4f' }">{{ record.totalProfit }}</span>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="total-profit-footer">
+            <span class="total-text">统计: {{ totalProfitModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="totalProfitModal.pagination.current"
+              :total="totalProfitModal.pagination.total"
+              :page-size="totalProfitModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 累计利润-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="totalProfitSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="450"
+      root-class-name="rounded-drawer"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="link" danger @click="handleResetTotalProfitSearch">重置</a-button>
+          <a-button type="primary" @click="handleTotalProfitSearch">提交</a-button>
+        </a-space>
+      </template>
+      <a-form layout="vertical">
+        <a-form-item label="会员UID">
+          <div style="display: flex; gap: 8px;">
+            <a-input v-model:value="totalProfitSearchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
+            <a-button type="primary">搜 索</a-button>
+          </div>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="totalProfitSearchDrawer.startTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="totalProfitSearchDrawer.endTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="排序字段">
+          <a-select v-model:value="totalProfitSearchDrawer.sortField" placeholder="请选择">
+            <a-select-option value="time">时间</a-select-option>
+            <a-select-option value="profit">利润</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="排序类型">
+          <a-select v-model:value="totalProfitSearchDrawer.sortType" placeholder="请选择">
+            <a-select-option value="desc">降序排序</a-select-option>
+            <a-select-option value="asc">升序排序</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
+
+    <!-- 商品次数日志页面 -->
+    <transition name="slide-up">
+      <div class="goods-count-log-page" :class="`size-${goodsCountLogModal.tableSize}`" v-if="goodsCountLogModal.visible">
+        <div class="goods-count-log-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="goods-count-log-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ goodsCountLogModal.record?.username || '' }} - 商品次数日志</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="goodsCountLogModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="goodsCountLogSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseGoodsCountLog">关闭窗口</a-button>
+              <a-tooltip v-if="!topMenuMode" :title="goodsCountLogModal.isFullscreen ? '退出全屏' : '全屏'">
+                <a-button class="icon-btn" @click="toggleGoodsCountLogFullscreen">
+                  <template #icon>
+                    <FullscreenExitOutlined v-if="goodsCountLogModal.isFullscreen" />
+                    <FullscreenOutlined v-else />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshGoodsCountLog">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleGoodsCountLogDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': goodsCountLogModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': goodsCountLogModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': goodsCountLogModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="goods-count-log-table-wrapper">
+            <a-table
+              :columns="goodsCountLogColumns"
+              :data-source="filteredGoodsCountLogData"
+              :pagination="false"
+              :size="goodsCountLogModal.tableSize"
+              bordered
+              :scroll="{ x: 900, y: 'calc(100vh - 220px)' }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'changeType'">
+                  <a-tag :color="record.changeType === '增加' ? 'success' : 'error'">{{ record.changeType }}</a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'changeCount'">
+                  <span :style="{ color: record.changeType === '增加' ? '#52c41a' : '#ff4d4f' }">{{ record.changeCount }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'remark'">
+                  <a-popover placement="top" trigger="click">
+                    <template #content>
+                      <div style="max-width: 300px; white-space: pre-wrap;">{{ record.remark }}</div>
+                    </template>
+                    <a style="color: #1890ff; cursor: pointer;">... more</a>
+                  </a-popover>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="goods-count-log-footer">
+            <span class="total-text">统计: {{ goodsCountLogModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="goodsCountLogModal.pagination.current"
+              :total="goodsCountLogModal.pagination.total"
+              :page-size="goodsCountLogModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 商品次数日志-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="goodsCountLogSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="380"
+      root-class-name="rounded-drawer"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="link" danger @click="handleResetGoodsCountLogSearch">重置</a-button>
+          <a-button type="primary" @click="handleGoodsCountLogSearch">提交</a-button>
+        </a-space>
+      </template>
+      <a-form layout="vertical">
+        <a-form-item label="会员UID">
+          <div style="display: flex; gap: 8px;">
+            <a-input v-model:value="goodsCountLogSearchDrawer.memberUid" placeholder="输入" style="flex: 1;" />
+            <a-button type="primary">搜 索</a-button>
+          </div>
+        </a-form-item>
+        <a-form-item label="变更类型">
+          <a-select v-model:value="goodsCountLogSearchDrawer.changeType" placeholder="请选择" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="增加">增加</a-select-option>
+            <a-select-option value="减少">减少</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="goodsCountLogSearchDrawer.startTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="goodsCountLogSearchDrawer.endTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="排序字段">
+          <a-select v-model:value="goodsCountLogSearchDrawer.sortField" placeholder="请选择">
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="time">创建时间</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="排序类型">
+          <a-select v-model:value="goodsCountLogSearchDrawer.sortType" placeholder="请选择">
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="desc">降序排序</a-select-option>
+            <a-select-option value="asc">升序排序</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
+
+    <!-- 充币订单页面 -->
+    <transition name="slide-up">
+      <div class="crypto-order-page" :class="`size-${cryptoOrderModal.tableSize}`" v-if="cryptoOrderModal.visible">
+        <div class="crypto-order-page-content">
+          <!-- 顶部操作栏 -->
+          <div class="crypto-order-toolbar">
+            <div class="toolbar-left">
+              <h3 class="page-title">{{ cryptoOrderModal.record?.username || '' }} - 充币订单</h3>
+            </div>
+            <div class="toolbar-right">
+              <a-input-search
+                v-model:value="cryptoOrderModal.searchText"
+                placeholder="单号、会员信息"
+                style="width: 180px"
+              />
+              <a-button type="primary" @click="cryptoOrderSearchDrawer.visible = true">更多搜索</a-button>
+              <a-button type="primary" danger @click="handleCloseCryptoOrder">关闭窗口</a-button>
+              <a-tooltip title="刷新">
+                <span class="toolbar-icon" @click="handleRefreshCryptoOrder">
+                  <reload-outlined />
+                </span>
+              </a-tooltip>
+              <a-dropdown>
+                <a-tooltip title="密度">
+                  <span class="toolbar-icon">
+                    <column-height-outlined />
+                  </span>
+                </a-tooltip>
+                <template #overlay>
+                  <a-menu @click="handleCryptoOrderDensityChange">
+                    <a-menu-item key="default" :class="{ 'active-density': cryptoOrderModal.tableSize === 'default' }">宽松</a-menu-item>
+                    <a-menu-item key="middle" :class="{ 'active-density': cryptoOrderModal.tableSize === 'middle' }">中等</a-menu-item>
+                    <a-menu-item key="small" :class="{ 'active-density': cryptoOrderModal.tableSize === 'small' }">紧凑</a-menu-item>
+                  </a-menu>
+                </template>
+              </a-dropdown>
+            </div>
+          </div>
+
+          <!-- 表格区域 -->
+          <div class="crypto-order-table-wrapper">
+            <a-table
+              :columns="cryptoOrderColumns"
+              :data-source="cryptoOrderModal.list"
+              :pagination="false"
+              :size="cryptoOrderModal.tableSize"
+              bordered
+              :scroll="{ x: 1200, y: 'calc(100vh - 220px)' }"
+              row-key="id"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.dataIndex === 'member'">
+                  <a-dropdown>
+                    <span class="member-link">{{ record.member }} <down-outlined /></span>
+                    <template #overlay>
+                      <a-menu>
+                        <a-menu-item key="detail">查看详情</a-menu-item>
+                        <a-menu-item key="finance">财务日志</a-menu-item>
+                      </a-menu>
+                    </template>
+                  </a-dropdown>
+                </template>
+                <template v-else-if="column.dataIndex === 'username'">
+                  <span style="color: #1890ff;">{{ record.username }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'fiatStatus'">
+                  <a-tag :color="getFiatStatusColor(record.fiatStatus)">{{ record.fiatStatus }}</a-tag>
+                </template>
+                <template v-else-if="column.dataIndex === 'fiatAmount'">
+                  <span style="color: #ff4d4f;">{{ record.fiatAmount || '-' }}</span>
+                </template>
+                <template v-else-if="column.dataIndex === 'status'">
+                  <a-tag :color="getCryptoStatusColor(record.status)">{{ record.status }}</a-tag>
+                </template>
+                <template v-else-if="column.key === 'action'">
+                  <div style="display: flex; gap: 8px; justify-content: center;">
+                    <a style="color: #1890ff;" @click="handleCryptoView(record)">查看</a>
+                    <template v-if="record.status === '待确认'">
+                      <a style="color: #52c41a;" @click="handleCryptoConfirm(record)">确认</a>
+                      <a style="color: #ff4d4f;" @click="handleCryptoReject(record)">驳回</a>
+                    </template>
+                    <template v-else>
+                      <span style="color: #d9d9d9;">确认</span>
+                      <span style="color: #d9d9d9;">驳回</span>
+                    </template>
+                  </div>
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- 分页 -->
+          <div class="crypto-order-footer">
+            <span class="total-text">统计: {{ cryptoOrderModal.pagination.total }}/条</span>
+            <a-pagination
+              v-model:current="cryptoOrderModal.pagination.current"
+              :total="cryptoOrderModal.pagination.total"
+              :page-size="cryptoOrderModal.pagination.pageSize"
+              size="small"
+              show-quick-jumper
+              :show-size-changer="false"
+            />
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 充币订单-更多搜索抽屉 -->
+    <a-drawer
+      v-model:open="cryptoOrderSearchDrawer.visible"
+      title="筛选"
+      placement="right"
+      :width="380"
+      root-class-name="rounded-drawer"
+    >
+      <template #extra>
+        <a-space>
+          <a-button type="link" danger @click="handleResetCryptoOrderSearch">重置</a-button>
+          <a-button type="primary" @click="handleCryptoOrderSearch">提交</a-button>
+        </a-space>
+      </template>
+      <a-form layout="vertical">
+        <a-form-item label="状态">
+          <a-select v-model:value="cryptoOrderSearchDrawer.status" placeholder="全部" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="confirmed">已确认</a-select-option>
+            <a-select-option value="pending">待确认</a-select-option>
+            <a-select-option value="rejected">已驳回</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="币种">
+          <a-select v-model:value="cryptoOrderSearchDrawer.coin" placeholder="全部" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="USDT">USDT</a-select-option>
+            <a-select-option value="BTC">BTC</a-select-option>
+            <a-select-option value="ETH">ETH</a-select-option>
+            <a-select-option value="TRX">TRX</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="链">
+          <a-select v-model:value="cryptoOrderSearchDrawer.chain" placeholder="全部" allow-clear>
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="TRC20">TRC20</a-select-option>
+            <a-select-option value="ERC20">ERC20</a-select-option>
+            <a-select-option value="BEP20">BEP20</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="开始时间">
+          <a-date-picker v-model:value="cryptoOrderSearchDrawer.startTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="结束时间">
+          <a-date-picker v-model:value="cryptoOrderSearchDrawer.endTime" style="width: 100%;" placeholder="请选择日期" />
+        </a-form-item>
+        <a-form-item label="排序字段">
+          <a-select v-model:value="cryptoOrderSearchDrawer.sortField" placeholder="请选择">
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="time">创建时间</a-select-option>
+            <a-select-option value="amount">数量</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item label="排序类型">
+          <a-select v-model:value="cryptoOrderSearchDrawer.sortType" placeholder="请选择">
+            <a-select-option value="">全部</a-select-option>
+            <a-select-option value="desc">降序排序</a-select-option>
+            <a-select-option value="asc">升序排序</a-select-option>
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-drawer>
 
     <!-- 上级用户层级页面 -->
     <transition name="slide-up">
@@ -6339,6 +7512,98 @@ const subUsersModal = reactive({
   expandedKeys: [] // 展开的节点
 })
 
+// 在线管理页面
+const onlineInfoModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  loading: false,
+  tableSize: 'small',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 20,
+    total: 0
+  },
+  // 更多搜索抽屉
+  searchDrawer: {
+    visible: false,
+    topAgent: undefined,
+    agent: undefined,
+    memberUid: '',
+    client: '',
+    ip: '',
+    loginType: undefined,
+    startTime: null,
+    endTime: null,
+    searchContent: '',
+    sortField: 'time',
+    sortType: 'desc'
+  }
+})
+
+// 在线管理表格列配置
+const onlineInfoColumns = [
+  {
+    title: '会员',
+    key: 'member',
+    dataIndex: 'memberId',
+    width: 150,
+    align: 'center'
+  },
+  {
+    title: '用户名',
+    key: 'username',
+    dataIndex: 'username',
+    width: 120,
+    align: 'center'
+  },
+  {
+    title: '登录账户',
+    dataIndex: 'loginAccount',
+    key: 'loginAccount',
+    width: 130,
+    align: 'center'
+  },
+  {
+    title: 'IP',
+    dataIndex: 'ip',
+    key: 'ip',
+    width: 130,
+    align: 'center'
+  },
+  {
+    title: '客户端',
+    dataIndex: 'client',
+    key: 'client',
+    width: 80,
+    align: 'center'
+  },
+  {
+    title: '设备',
+    dataIndex: 'device',
+    key: 'device',
+    width: 280,
+    align: 'center',
+    ellipsis: true
+  },
+  {
+    title: '操作',
+    key: 'action',
+    width: 90,
+    align: 'center',
+    fixed: 'right'
+  }
+]
+
+// 模拟在线管理数据
+const mockOnlineInfoData = [
+  { id: 1, memberId: '1-12352136489', username: 'jj03', loginAccount: 'JJ03', ip: '128.14.78.178', client: 'h5', device: 'Edge v 143.0.0.0(Windows v 10.0)' },
+  { id: 2, memberId: '1-2233445566677', username: '0003', loginAccount: '0003', ip: '175.100.59.110', client: 'h5', device: 'Chrome v 143.0.0.0(Windows v 10.0)' },
+  { id: 3, memberId: '1-4255550100', username: '4255550100', loginAccount: '4255550100', ip: '36.37.253.114', client: 'h5', device: 'Chrome v 143.0.0.0(Windows v 10.0)' }
+]
+
 // 模拟层级树数据 - 增加更多用户信息
 const mockSubUsersTreeData = {
   id: '1-16267817514',
@@ -7500,32 +8765,743 @@ const handleAuditAuth = (record) => {
   message.info(`审核: ${record.memberId}`)
 }
 
+// 在线管理 - 打开页面
 const handleOnlineInfo = (record) => {
-  message.info(`在线信息: ${record.uid}`)
+  onlineInfoModal.record = record
+  onlineInfoModal.visible = true
+  loadOnlineInfoData()
+}
+
+// 在线管理 - 加载数据
+const loadOnlineInfoData = () => {
+  onlineInfoModal.loading = true
+  setTimeout(() => {
+    // 根据当前会员筛选数据
+    onlineInfoModal.list = mockOnlineInfoData.map(item => ({
+      ...item,
+      memberId: onlineInfoModal.record?.uid || item.memberId
+    }))
+    onlineInfoModal.pagination.total = onlineInfoModal.list.length
+    onlineInfoModal.loading = false
+  }, 300)
+}
+
+// 在线管理 - 关闭页面
+const handleCloseOnlineInfo = () => {
+  onlineInfoModal.visible = false
+  onlineInfoModal.record = null
+  onlineInfoModal.searchText = ''
+  onlineInfoModal.list = []
+}
+
+// 在线管理 - 刷新
+const handleRefreshOnlineInfo = () => {
+  loadOnlineInfoData()
+  message.success('刷新成功')
+}
+
+// 在线管理 - 搜索
+const onOnlineInfoSearch = (value) => {
+  console.log('搜索在线信息:', value)
+  loadOnlineInfoData()
+}
+
+// 在线管理 - 打开更多搜索抽屉
+const handleMoreOnlineInfoSearch = () => {
+  onlineInfoModal.searchDrawer.visible = true
+}
+
+// 在线管理 - 重置搜索
+const handleResetOnlineInfoSearch = () => {
+  onlineInfoModal.searchDrawer.topAgent = undefined
+  onlineInfoModal.searchDrawer.agent = undefined
+  onlineInfoModal.searchDrawer.memberUid = ''
+  onlineInfoModal.searchDrawer.client = ''
+  onlineInfoModal.searchDrawer.ip = ''
+  onlineInfoModal.searchDrawer.loginType = undefined
+  onlineInfoModal.searchDrawer.startTime = null
+  onlineInfoModal.searchDrawer.endTime = null
+  onlineInfoModal.searchDrawer.searchContent = ''
+  onlineInfoModal.searchDrawer.sortField = 'time'
+  onlineInfoModal.searchDrawer.sortType = 'desc'
+}
+
+// 在线管理 - 提交搜索
+const handleSubmitOnlineInfoSearch = () => {
+  onlineInfoModal.searchDrawer.visible = false
+  loadOnlineInfoData()
+  message.success('搜索完成')
+}
+
+// 在线管理 - 搜索UID
+const handleSearchOnlineInfoUid = () => {
+  if (onlineInfoModal.searchDrawer.memberUid) {
+    message.info(`搜索会员UID: ${onlineInfoModal.searchDrawer.memberUid}`)
+  }
+}
+
+// 在线管理 - 密度切换
+const handleOnlineInfoDensityChange = ({ key }) => {
+  onlineInfoModal.tableSize = key
+}
+
+// 在线管理 - 全屏切换
+const toggleOnlineInfoFullscreen = () => {
+  onlineInfoModal.isFullscreen = !onlineInfoModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(onlineInfoModal.isFullscreen)
+  }
+}
+
+// 在线管理 - 强制退出
+const handleOnlineInfoForceLogout = (record) => {
+  message.success(`已强制退出用户: ${record.username}`)
+  // 从列表中移除
+  const index = onlineInfoModal.list.findIndex(item => item.id === record.id)
+  if (index > -1) {
+    onlineInfoModal.list.splice(index, 1)
+    onlineInfoModal.pagination.total = onlineInfoModal.list.length
+  }
 }
 
 const handleSecurityLog = (record) => {
-  message.info(`安全日志: ${record.uid}`)
+  securityLogModal.visible = true
+  securityLogModal.record = record
+  securityLogModal.searchText = ''
+  // 加载模拟数据
+  securityLogModal.list = [
+    { id: 1, member: record.uid, username: record.username, client: 'H5', ip: '175.100.59.110', authType: '无', event: '注册', time: '11/24 10:06' }
+  ]
+  securityLogModal.pagination.total = securityLogModal.list.length
+}
+
+// 安全日志 - 状态数据
+const securityLogModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'default',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    total: 0
+  }
+})
+
+// 安全日志 - 搜索抽屉
+const securityLogSearchDrawer = reactive({
+  visible: false,
+  memberUid: '',
+  client: '',
+  ip: '',
+  authType: '',
+  eventType: '',
+  startTime: null,
+  endTime: null,
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+// 安全日志 - 表格列
+const securityLogColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 120 },
+  { title: '客户端', dataIndex: 'client', width: 100, align: 'center' },
+  { title: 'IP', dataIndex: 'ip', width: 140 },
+  { title: '验证方式', dataIndex: 'authType', width: 100, align: 'center' },
+  { title: '事件', dataIndex: 'event', width: 100, align: 'center' },
+  { title: '时间', dataIndex: 'time', width: 120 }
+]
+
+// 安全日志 - 过滤数据
+const filteredSecurityLogData = computed(() => {
+  let data = securityLogModal.list
+  if (securityLogModal.searchText) {
+    const keyword = securityLogModal.searchText.toLowerCase()
+    data = data.filter(item =>
+      item.member?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword) ||
+      item.ip?.toLowerCase().includes(keyword)
+    )
+  }
+  return data
+})
+
+// 安全日志 - 关闭
+const handleCloseSecurityLog = () => {
+  securityLogModal.visible = false
+  securityLogModal.isFullscreen = false
+}
+
+// 安全日志 - 全屏切换
+const toggleSecurityLogFullscreen = () => {
+  securityLogModal.isFullscreen = !securityLogModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(securityLogModal.isFullscreen)
+  }
+}
+
+// 安全日志 - 刷新
+const handleRefreshSecurityLog = () => {
+  message.success('刷新成功')
+}
+
+// 安全日志 - 密度切换
+const handleSecurityLogDensityChange = ({ key }) => {
+  securityLogModal.tableSize = key
+}
+
+// 安全日志 - 搜索
+const handleSecurityLogSearch = () => {
+  securityLogSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+// 安全日志 - 重置搜索
+const handleResetSecurityLogSearch = () => {
+  securityLogSearchDrawer.memberUid = ''
+  securityLogSearchDrawer.client = ''
+  securityLogSearchDrawer.ip = ''
+  securityLogSearchDrawer.authType = ''
+  securityLogSearchDrawer.eventType = ''
+  securityLogSearchDrawer.startTime = null
+  securityLogSearchDrawer.endTime = null
+  securityLogSearchDrawer.sortField = 'time'
+  securityLogSearchDrawer.sortType = 'desc'
+}
+
+// 安全日志 - 搜索会员UID
+const handleSearchSecurityLogUid = () => {
+  message.success('搜索会员: ' + securityLogSearchDrawer.memberUid)
 }
 
 const handleLoginLog = (record) => {
-  message.info(`登录日志: ${record.uid}`)
+  loginLogModal.visible = true
+  loginLogModal.record = record
+  loginLogModal.searchText = ''
+  // 加载模拟数据
+  loginLogModal.list = [
+    { id: 1, member: record.uid, username: record.username, client: 'H5', ip: '175.100.59.110', method: 'name', account: record.username, status: '成功', time: '11/24 10:07' }
+  ]
+  loginLogModal.pagination.total = loginLogModal.list.length
+}
+
+// 登录日志 - 状态数据
+const loginLogModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'default',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    total: 0
+  }
+})
+
+// 登录日志 - 搜索抽屉
+const loginLogSearchDrawer = reactive({
+  visible: false,
+  status: '',
+  client: '',
+  startTime: null,
+  endTime: null
+})
+
+// 登录日志 - 表格列
+const loginLogColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 100 },
+  { title: '客户端', dataIndex: 'client', width: 80, align: 'center' },
+  { title: 'IP', dataIndex: 'ip', width: 120, align: 'center' },
+  { title: '方式', dataIndex: 'method', width: 80, align: 'center' },
+  { title: '账号', dataIndex: 'account', width: 100, align: 'center' },
+  { title: '状态', dataIndex: 'status', width: 80, align: 'center' },
+  { title: '时间', dataIndex: 'time', width: 100, align: 'center' }
+]
+
+// 登录日志 - 过滤数据
+const filteredLoginLogData = computed(() => {
+  let data = loginLogModal.list
+  if (loginLogModal.searchText) {
+    const keyword = loginLogModal.searchText.toLowerCase()
+    data = data.filter(item =>
+      item.member?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword) ||
+      item.ip?.toLowerCase().includes(keyword)
+    )
+  }
+  return data
+})
+
+// 登录日志 - 关闭
+const handleCloseLoginLog = () => {
+  loginLogModal.visible = false
+  loginLogModal.isFullscreen = false
+  if (setCollapsed) {
+    setCollapsed(false)
+  }
+}
+
+// 登录日志 - 全屏切换
+const toggleLoginLogFullscreen = () => {
+  loginLogModal.isFullscreen = !loginLogModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(loginLogModal.isFullscreen)
+  }
+}
+
+// 登录日志 - 刷新
+const handleRefreshLoginLog = () => {
+  message.success('刷新成功')
+}
+
+// 登录日志 - 密度切换
+const handleLoginLogDensityChange = ({ key }) => {
+  loginLogModal.tableSize = key
+}
+
+// 登录日志 - 搜索
+const handleLoginLogSearch = () => {
+  loginLogSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+// 登录日志 - 重置搜索
+const handleResetLoginLogSearch = () => {
+  loginLogSearchDrawer.status = ''
+  loginLogSearchDrawer.client = ''
+  loginLogSearchDrawer.startTime = null
+  loginLogSearchDrawer.endTime = null
 }
 
 const handleVipChangeLog = (record) => {
-  message.info(`VIP变更日志: ${record.uid}`)
+  vipChangeLogModal.visible = true
+  vipChangeLogModal.record = record
+  vipChangeLogModal.searchText = ''
+  // 加载模拟数据
+  vipChangeLogModal.list = [
+    { id: 1, member: record.uid, username: record.username, beforeLevel: 'VIP0', afterLevel: 'VIP1', changeType: '升级', operator: '系统', remark: '会员初始化VIP等级', time: '11/24 10:08' }
+  ]
+  vipChangeLogModal.pagination.total = vipChangeLogModal.list.length
+}
+
+// VIP变更日志 - 状态数据
+const vipChangeLogModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'default',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    total: 0
+  }
+})
+
+// VIP变更日志 - 搜索抽屉
+const vipChangeLogSearchDrawer = reactive({
+  visible: false,
+  memberUid: '',
+  changeType: '',
+  beforeLevel: '',
+  afterLevel: '',
+  startTime: null,
+  endTime: null,
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+// VIP变更日志 - 表格列
+const vipChangeLogColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 100 },
+  { title: '变更前等级', dataIndex: 'beforeLevel', width: 100, align: 'center' },
+  { title: '变更后等级', dataIndex: 'afterLevel', width: 100, align: 'center' },
+  { title: '变更类型', dataIndex: 'changeType', width: 80, align: 'center' },
+  { title: '操作人', dataIndex: 'operator', width: 80, align: 'center' },
+  { title: '备注', dataIndex: 'remark', width: 120 },
+  { title: '时间', dataIndex: 'time', width: 100, align: 'center' }
+]
+
+// VIP变更日志 - 过滤数据
+const filteredVipChangeLogData = computed(() => {
+  let data = vipChangeLogModal.list
+  if (vipChangeLogModal.searchText) {
+    const keyword = vipChangeLogModal.searchText.toLowerCase()
+    data = data.filter(item =>
+      item.member?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword)
+    )
+  }
+  return data
+})
+
+// VIP变更日志 - 关闭
+const handleCloseVipChangeLog = () => {
+  vipChangeLogModal.visible = false
+  vipChangeLogModal.isFullscreen = false
+  if (setCollapsed) {
+    setCollapsed(false)
+  }
+}
+
+// VIP变更日志 - 全屏切换
+const toggleVipChangeLogFullscreen = () => {
+  vipChangeLogModal.isFullscreen = !vipChangeLogModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(vipChangeLogModal.isFullscreen)
+  }
+}
+
+// VIP变更日志 - 刷新
+const handleRefreshVipChangeLog = () => {
+  message.success('刷新成功')
+}
+
+// VIP变更日志 - 密度切换
+const handleVipChangeLogDensityChange = ({ key }) => {
+  vipChangeLogModal.tableSize = key
+}
+
+// VIP变更日志 - 搜索
+const handleVipChangeLogSearch = () => {
+  vipChangeLogSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+// VIP变更日志 - 重置搜索
+const handleResetVipChangeLogSearch = () => {
+  vipChangeLogSearchDrawer.memberUid = ''
+  vipChangeLogSearchDrawer.changeType = ''
+  vipChangeLogSearchDrawer.beforeLevel = ''
+  vipChangeLogSearchDrawer.afterLevel = ''
+  vipChangeLogSearchDrawer.startTime = null
+  vipChangeLogSearchDrawer.endTime = null
+  vipChangeLogSearchDrawer.sortField = 'time'
+  vipChangeLogSearchDrawer.sortType = 'desc'
 }
 
 const handleTotalProfit = (record) => {
-  message.info(`累计利润: ${record.uid}`)
+  totalProfitModal.visible = true
+  totalProfitModal.record = record
+  totalProfitModal.searchText = ''
+  // 加载模拟数据
+  totalProfitModal.list = [
+    { id: 1, member: record.uid, username: record.username, orderNo: 'ORD202411240001', profit: '125.50', totalProfit: '1250.00', time: '11/24 10:09' }
+  ]
+  totalProfitModal.pagination.total = totalProfitModal.list.length
+}
+
+// 累计利润 - 状态数据
+const totalProfitModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'default',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    total: 0
+  }
+})
+
+// 累计利润 - 搜索抽屉
+const totalProfitSearchDrawer = reactive({
+  visible: false,
+  memberUid: '',
+  startTime: null,
+  endTime: null,
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+// 累计利润 - 表格列
+const totalProfitColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 100 },
+  { title: '订单号', dataIndex: 'orderNo', width: 160 },
+  { title: '利润', dataIndex: 'profit', width: 100, align: 'center' },
+  { title: '累计利润', dataIndex: 'totalProfit', width: 120, align: 'center' },
+  { title: '时间', dataIndex: 'time', width: 100, align: 'center' }
+]
+
+// 累计利润 - 过滤数据
+const filteredTotalProfitData = computed(() => {
+  let data = totalProfitModal.list
+  if (totalProfitModal.searchText) {
+    const keyword = totalProfitModal.searchText.toLowerCase()
+    data = data.filter(item =>
+      item.member?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword) ||
+      item.orderNo?.toLowerCase().includes(keyword)
+    )
+  }
+  return data
+})
+
+// 累计利润 - 关闭
+const handleCloseTotalProfit = () => {
+  totalProfitModal.visible = false
+  totalProfitModal.isFullscreen = false
+  if (setCollapsed) {
+    setCollapsed(false)
+  }
+}
+
+// 累计利润 - 全屏切换
+const toggleTotalProfitFullscreen = () => {
+  totalProfitModal.isFullscreen = !totalProfitModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(totalProfitModal.isFullscreen)
+  }
+}
+
+// 累计利润 - 刷新
+const handleRefreshTotalProfit = () => {
+  message.success('刷新成功')
+}
+
+// 累计利润 - 密度切换
+const handleTotalProfitDensityChange = ({ key }) => {
+  totalProfitModal.tableSize = key
+}
+
+// 累计利润 - 搜索
+const handleTotalProfitSearch = () => {
+  totalProfitSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+// 累计利润 - 重置搜索
+const handleResetTotalProfitSearch = () => {
+  totalProfitSearchDrawer.memberUid = ''
+  totalProfitSearchDrawer.startTime = null
+  totalProfitSearchDrawer.endTime = null
+  totalProfitSearchDrawer.sortField = 'time'
+  totalProfitSearchDrawer.sortType = 'desc'
 }
 
 const handleGoodsCountLog = (record) => {
-  message.info(`商品次数日志: ${record.uid}`)
+  goodsCountLogModal.visible = true
+  goodsCountLogModal.record = record
+  goodsCountLogModal.searchText = ''
+  // 加载模拟数据
+  goodsCountLogModal.list = [
+    { id: 1, member: '1-12548754125', username: 'QQ7788', changeType: '减少', changeCount: 1, beforeCount: 40, afterCount: 39, remark: '买入商品。订单号：202511241764000536565739', time: '11/24 10:08' },
+    { id: 2, member: '1-12548754125', username: 'QQ7788', changeType: '增加', changeCount: 40, beforeCount: 0, afterCount: 40, remark: '初始化VIP次数，40', time: '11/24 10:06' }
+  ]
+  goodsCountLogModal.pagination.total = goodsCountLogModal.list.length
 }
 
+// 商品次数日志 - 状态数据
+const goodsCountLogModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'default',
+  isFullscreen: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 10,
+    total: 0
+  }
+})
+
+// 商品次数日志 - 搜索抽屉
+const goodsCountLogSearchDrawer = reactive({
+  visible: false,
+  memberUid: '',
+  changeType: '',
+  startTime: null,
+  endTime: null,
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+// 商品次数日志 - 表格列
+const goodsCountLogColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, align: 'center', customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 100, align: 'center' },
+  { title: '方式', dataIndex: 'changeType', width: 80, align: 'center' },
+  { title: '次数-前', dataIndex: 'beforeCount', width: 80, align: 'center' },
+  { title: '次数', dataIndex: 'changeCount', width: 80, align: 'center' },
+  { title: '次数-后', dataIndex: 'afterCount', width: 80, align: 'center' },
+  { title: '备注', dataIndex: 'remark', width: 120, align: 'center', customCell: () => ({ style: { whiteSpace: 'pre-wrap', wordBreak: 'break-all' } }) },
+  { title: '时间', dataIndex: 'time', width: 100, align: 'center' }
+]
+
+// 商品次数日志 - 过滤数据
+const filteredGoodsCountLogData = computed(() => {
+  let data = goodsCountLogModal.list
+  if (goodsCountLogModal.searchText) {
+    const keyword = goodsCountLogModal.searchText.toLowerCase()
+    data = data.filter(item =>
+      item.member?.toLowerCase().includes(keyword) ||
+      item.username?.toLowerCase().includes(keyword) ||
+      item.goodsName?.toLowerCase().includes(keyword)
+    )
+  }
+  return data
+})
+
+// 商品次数日志 - 关闭
+const handleCloseGoodsCountLog = () => {
+  goodsCountLogModal.visible = false
+  goodsCountLogModal.isFullscreen = false
+  if (setCollapsed) {
+    setCollapsed(false)
+  }
+}
+
+// 商品次数日志 - 全屏切换
+const toggleGoodsCountLogFullscreen = () => {
+  goodsCountLogModal.isFullscreen = !goodsCountLogModal.isFullscreen
+  if (setCollapsed) {
+    setCollapsed(goodsCountLogModal.isFullscreen)
+  }
+}
+
+// 商品次数日志 - 刷新
+const handleRefreshGoodsCountLog = () => {
+  message.success('刷新成功')
+}
+
+// 商品次数日志 - 密度切换
+const handleGoodsCountLogDensityChange = ({ key }) => {
+  goodsCountLogModal.tableSize = key
+}
+
+// 商品次数日志 - 搜索
+const handleGoodsCountLogSearch = () => {
+  goodsCountLogSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+// 商品次数日志 - 重置搜索
+const handleResetGoodsCountLogSearch = () => {
+  goodsCountLogSearchDrawer.memberUid = ''
+  goodsCountLogSearchDrawer.changeType = ''
+  goodsCountLogSearchDrawer.startTime = null
+  goodsCountLogSearchDrawer.endTime = null
+  goodsCountLogSearchDrawer.sortField = 'time'
+  goodsCountLogSearchDrawer.sortType = 'desc'
+}
+
+// ========== 充币订单 ==========
+const cryptoOrderModal = reactive({
+  visible: false,
+  record: null,
+  searchText: '',
+  tableSize: 'small',
+  loading: false,
+  list: [],
+  pagination: {
+    current: 1,
+    pageSize: 20,
+    total: 0
+  }
+})
+
+const cryptoOrderSearchDrawer = reactive({
+  visible: false,
+  status: undefined,
+  coin: undefined,
+  chain: undefined,
+  memberId: '',
+  startTime: null,
+  endTime: null,
+  sortField: 'time',
+  sortType: 'desc'
+})
+
+const cryptoOrderColumns = [
+  { title: '会员', dataIndex: 'member', width: 150, fixed: 'left', customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '用户名', dataIndex: 'username', width: 100, customHeaderCell: () => ({ style: { color: '#1890ff' } }) },
+  { title: '币种', dataIndex: 'coin', width: 80, align: 'center' },
+  { title: '数量', dataIndex: 'amount', width: 100, align: 'center' },
+  { title: '法币相关', key: 'fiat', customHeaderCell: () => ({ style: { color: '#ff7875' } }), children: [
+    { title: '状态', dataIndex: 'fiatStatus', width: 90, align: 'center', customHeaderCell: () => ({ style: { color: '#ff7875' } }) },
+    { title: '金额', dataIndex: 'fiatAmount', width: 100, align: 'center', customHeaderCell: () => ({ style: { color: '#ff7875' } }) }
+  ]},
+  { title: '链', dataIndex: 'chain', width: 80, align: 'center' },
+  { title: '哈希', dataIndex: 'hash', width: 160, ellipsis: true },
+  { title: '时间', dataIndex: 'time', width: 160 },
+  { title: '状态', dataIndex: 'status', width: 90, align: 'center', fixed: 'right' },
+  { title: '操作', key: 'action', width: 140, fixed: 'right', align: 'center' }
+]
+
 const handleCryptoOrder = (record) => {
-  message.info(`充币订单: ${record.uid}`)
+  cryptoOrderModal.visible = true
+  cryptoOrderModal.record = record
+  cryptoOrderModal.searchText = ''
+  cryptoOrderModal.list = [
+    { id: 1, member: record.uid, username: record.username, coin: 'USDT', amount: 500.00, fiatStatus: '已兑换', fiatAmount: 500.00, chain: 'TRC20', hash: '0x9824Aa02a43282F1E7B38a3597dcfe2F279814a7', time: '2025-12-30 17:44:22', status: '已确认' },
+    { id: 2, member: record.uid, username: record.username, coin: 'USDT', amount: 1000.00, fiatStatus: '已兑换', fiatAmount: 1000.00, chain: 'ERC20', hash: '0x3DxKinCNCnjKxaVB7hnufAsRBH8P5vuAMS9d2c1', time: '2025-12-30 14:46:32', status: '已确认' },
+    { id: 3, member: record.uid, username: record.username, coin: 'BTC', amount: 0.05, fiatStatus: '未兑换', fiatAmount: null, chain: 'BTC', hash: 'bc1qewd3040acw00k0q3xvdmkch6etnn8gyOar8g7h', time: '2025-12-30 15:07:23', status: '待确认' }
+  ]
+  cryptoOrderModal.pagination.total = cryptoOrderModal.list.length
+}
+
+const handleCloseCryptoOrder = () => {
+  cryptoOrderModal.visible = false
+}
+
+const handleCryptoOrderDensityChange = ({ key }) => {
+  cryptoOrderModal.tableSize = key
+}
+
+const handleRefreshCryptoOrder = () => {
+  message.success('刷新成功')
+}
+
+const handleResetCryptoOrderSearch = () => {
+  cryptoOrderSearchDrawer.status = undefined
+  cryptoOrderSearchDrawer.coin = undefined
+  cryptoOrderSearchDrawer.chain = undefined
+  cryptoOrderSearchDrawer.memberId = ''
+  cryptoOrderSearchDrawer.startTime = null
+  cryptoOrderSearchDrawer.endTime = null
+  cryptoOrderSearchDrawer.sortField = 'time'
+  cryptoOrderSearchDrawer.sortType = 'desc'
+}
+
+const handleCryptoOrderSearch = () => {
+  cryptoOrderSearchDrawer.visible = false
+  message.success('搜索完成')
+}
+
+const getCryptoStatusColor = (status) => {
+  const map = { '已确认': 'success', '待确认': 'processing', '已驳回': 'error' }
+  return map[status] || 'default'
+}
+
+const getFiatStatusColor = (status) => {
+  const map = { '已兑换': 'success', '未兑换': 'warning', '兑换中': 'processing' }
+  return map[status] || 'default'
+}
+
+const handleCryptoView = (record) => {
+  message.info('查看详情: ' + record.id)
+}
+
+const handleCryptoConfirm = (record) => {
+  record.status = '已确认'
+  message.success('确认成功')
+}
+
+const handleCryptoReject = (record) => {
+  record.status = '已驳回'
+  message.success('已驳回')
 }
 </script>
 
@@ -10176,6 +12152,172 @@ const handleCryptoOrder = (record) => {
   }
 }
 
+/* 在线管理页面样式 */
+.online-info-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .online-info-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .online-info-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .online-info-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+
+        .ant-spin-nested-loading {
+          height: 100%;
+
+          .ant-spin-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+
+            .ant-table {
+              flex: 1;
+              overflow: hidden;
+            }
+          }
+        }
+      }
+
+      .ant-table {
+        font-size: 14px;
+
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 600;
+          font-size: 15px;
+          white-space: nowrap;
+          text-align: center;
+          color: #000;
+        }
+
+        .ant-table-tbody > tr > td {
+          font-size: 14px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    .online-info-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .online-info-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 20px 8px;
+    }
+  }
+
+  &.size-middle .online-info-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-small .online-info-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 6px;
+    }
+  }
+}
+
 /* 赠送记录页面样式 */
 .gift-record-page {
   position: absolute;
@@ -10564,6 +12706,558 @@ const handleCryptoOrder = (record) => {
 .rounded-drawer.add-gift-record-drawer-wrapper {
   .ant-drawer-body {
     padding-top: 12px;
+  }
+}
+
+/* 安全日志页面样式 */
+.security-log-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .security-log-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .security-log-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .security-log-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .security-log-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .security-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 20px 8px;
+    }
+  }
+
+  &.size-middle .security-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-small .security-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 6px;
+    }
+  }
+}
+
+/* 登录日志页面样式 */
+.login-log-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .login-log-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .login-log-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .login-log-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .login-log-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .login-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 20px 8px;
+    }
+  }
+
+  &.size-middle .login-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-small .login-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 6px;
+    }
+  }
+}
+
+/* VIP变更日志页面样式 */
+.vip-change-log-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .vip-change-log-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .vip-change-log-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .vip-change-log-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .vip-change-log-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .vip-change-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 20px 8px;
+    }
+  }
+
+  &.size-middle .vip-change-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-small .vip-change-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 6px;
+    }
+  }
+}
+
+/* 累计利润页面样式 */
+.total-profit-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .total-profit-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .total-profit-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .total-profit-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .total-profit-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .total-profit-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 20px 8px;
+    }
+  }
+
+  &.size-middle .total-profit-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-small .total-profit-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 6px;
+    }
   }
 }
 
@@ -11641,6 +14335,339 @@ const handleCryptoOrder = (record) => {
     }
     .ant-table-tbody > tr > td {
       padding: 8px 8px;
+    }
+  }
+}
+
+/* 商品次数日志页面样式 */
+.goods-count-log-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .goods-count-log-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .goods-count-log-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        :deep(.ant-input-search) {
+          .ant-input {
+            height: 32px;
+            font-size: 13px;
+          }
+          .ant-input-search-button {
+            height: 32px;
+          }
+        }
+
+        :deep(.ant-btn) {
+          height: 32px;
+          font-size: 13px;
+          padding: 0 15px;
+        }
+
+        .icon-btn {
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .goods-count-log-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+
+        .ant-spin-nested-loading {
+          height: 100%;
+
+          .ant-spin-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+
+            .ant-table {
+              flex: 1;
+              overflow: hidden;
+            }
+          }
+        }
+      }
+
+      .ant-table {
+        font-size: 14px;
+
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 600;
+          font-size: 15px;
+          white-space: nowrap;
+          text-align: center;
+          color: #000;
+        }
+
+        .ant-table-tbody > tr > td {
+          font-size: 14px;
+          vertical-align: middle;
+        }
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .goods-count-log-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+      border-top: 1px solid #f0f0f0;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      :deep(.ant-pagination) {
+        font-size: 13px;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .goods-count-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-middle .goods-count-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 8px;
+    }
+  }
+
+  &.size-small .goods-count-log-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 8px 4px;
+    }
+  }
+}
+
+/* 充币订单页面样式 */
+.crypto-order-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .crypto-order-page-content {
+    flex: 1;
+    padding: 12px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .crypto-order-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 12px;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .page-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #000;
+        }
+      }
+
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .toolbar-icon {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #666;
+          border-radius: 4px;
+          transition: all 0.2s;
+
+          &:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+    }
+
+    .crypto-order-table-wrapper {
+      flex: 1;
+      overflow: hidden;
+
+      .ant-table-wrapper {
+        height: 100%;
+
+        .ant-spin-nested-loading {
+          height: 100%;
+
+          .ant-spin-container {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+
+            .ant-table {
+              flex: 1;
+              overflow: hidden;
+            }
+          }
+        }
+      }
+
+      .ant-table {
+        font-size: 14px;
+
+        .ant-table-thead > tr > th {
+          background: #fafafa;
+          font-weight: 600;
+          font-size: 15px;
+          white-space: nowrap;
+          text-align: center;
+          color: #000;
+        }
+
+        .ant-table-tbody > tr > td {
+          font-size: 14px;
+          vertical-align: middle;
+        }
+      }
+
+      .member-link {
+        color: #1890ff;
+        cursor: pointer;
+      }
+    }
+
+    .crypto-order-footer {
+      display: flex;
+      align-items: center;
+      padding-top: 12px;
+      flex-shrink: 0;
+      gap: 16px;
+      border-top: 1px solid #f0f0f0;
+
+      .total-text {
+        font-size: 13px;
+        color: #666;
+      }
+    }
+  }
+
+  // 密度样式
+  &.size-default .crypto-order-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 16px 8px;
+    }
+  }
+
+  &.size-middle .crypto-order-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 8px;
+    }
+  }
+
+  &.size-small .crypto-order-table-wrapper .ant-table {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 8px 4px;
     }
   }
 }
